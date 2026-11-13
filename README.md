@@ -1,3 +1,5 @@
+<img src="docs/logo.png" width="128" align="right" alt="Logo">
+
 # Crowns Core
 
 Server-Mod für das Minecraft-Nationen-Rollenspiel **Crowns and Cannons**
