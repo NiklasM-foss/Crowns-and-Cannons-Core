@@ -1,12 +1,13 @@
 modLoader="javafml"
 loaderVersion="${loader_version_range}"
 license="${mod_license}"
-issueTrackerURL="http://192.168.178.234:3000/niklas/Crowns-Core/issues"
+issueTrackerURL="https://github.com/NiklasM-foss/Crowns-and-Cannons-Core/issues"
 
 [[mods]]
 modId="${mod_id}"
 version="${mod_version}"
 displayName="${mod_name}"
+displayURL="https://github.com/NiklasM-foss/Crowns-and-Cannons-Core"
 authors="${mod_authors}"
 description='''${mod_description}'''
 # Reine Server-Mod: Clients ohne diese Mod duerfen sich verbinden.
