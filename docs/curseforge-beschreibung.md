@@ -1,6 +1,44 @@
 # Crowns Core
 
-**Server-Mod für Nationen-Rollenspiel** · Forge 1.20.1 · *server-side only*
+**Server-side mod for nations roleplay** · Forge 1.20.1 · *server-side only*
+
+Crowns Core was written for the **Crowns and Cannons** project and enforces its rule set directly in the game. Players do not need to install it. The mod only goes into the server's `mods` folder.
+
+## Features
+
+- **Nations:** joining with approval by the head of state, officials, election mode per nation
+- **Wars:** declarations require a war type and a reason, PvP only between nations at war or in a duel, protected zone at spawn, peace only with consent of both sides
+- **Evidence log:** records block breaking, building, fire, opened chests, kills, camping and entering foreign territory, without preventing anything
+- **Treasury and loans:** national accounts, transfers between nations, loans with weekly instalments
+- **Colonies:** expeditions with expansion stages, approval by the game staff
+- **Elections and parliament:** elections for office per nation, resolutions with one vote per nation
+- **Visas:** the owning nation is notified when someone stands in its territory without a visa. Flying over does not count.
+- **Mail:** letters between nations that hostile nations can intercept
+- **Contracts:** store books with a checksum so nobody can change the text later
+- **Activity:** playtime per week and an automatic weekly report
+- **Discord:** war news, court, activity and news via webhooks
+
+`/cccore list` shows all commands in game. The full list is available as a PDF in the [GitHub repository](https://github.com/NiklasM-foss/Crowns-and-Cannons-Core/blob/main/docs/Befehle.pdf).
+
+## Optional integrations
+
+| Mod | Used for |
+|---|---|
+| Money for Everyone | player accounts for treasury payments and tolls |
+| Waystones | blocks the use of foreign waystones |
+| Open Parties and Claims | territory borders taken from claims |
+
+Without these mods everything runs on built-in fallbacks.
+
+## Language
+
+All in-game texts are **German**.
+
+---
+
+# Deutsch
+
+**Server-Mod für Nationen-Rollenspiel** · Forge 1.20.1 · *nur Server*
 
 Crowns Core wurde für das Projekt **Crowns and Cannons** geschrieben und bildet dessen Regelwerk direkt im Spiel ab. Clients brauchen die Mod nicht, sie gehört nur in den `mods`-Ordner des Servers.
 
@@ -33,9 +71,3 @@ Ohne diese Mods läuft alles mit eingebauten Ersatzlösungen.
 ## Sprache
 
 Alle Texte im Spiel sind auf Deutsch.
-
----
-
-# English
-
-Server-side mod for nations roleplay servers, built for the **Crowns and Cannons** project. Players do not need to install it. It adds nations, mandatory war declarations with PvP only between nations at war, an evidence log, treasuries and loans, colonies, elections, visas, interceptable mail, contracts with checksums, activity tracking and Discord webhooks. Money for Everyone, Waystones and Open Parties and Claims are supported as optional integrations. **All in-game texts are German.**
