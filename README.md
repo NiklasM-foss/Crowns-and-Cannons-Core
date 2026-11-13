@@ -10,8 +10,13 @@ unverändert. Alle Anbindungen an andere Mods sind optional.
 
 ## Module und Commands
 
+Die vollständige Liste mit Rollen steht in [docs/Befehle.pdf](docs/Befehle.pdf). Im
+Spiel zeigt `/cccore list` dieselbe Liste, `/cccore list meine` nur die Befehle, die
+man selbst nutzen darf, und `/cccore list <Modul>` ein einzelnes Modul.
+
 | Modul | Commands | Regelwerk |
 |---|---|---|
+| Hilfe | `/cccore`, `/cccore list [Seite,Modul,meine]` | |
 | Nationen | `/nation liste`, `info`, `beitreten <Land>`, `bestaetigen <Spieler>`, `ablehnen`, `verlassen`, `rauswerfen`, `beamter <Spieler>`, `wahlmodus <KEINE,DIREKT,PARLAMENT> [Amtszeit]`; Admin: `anlegen <Name> <Kürzel>`, `loeschen`, `staatschef <Land> <Spieler>`, `setzen <Spieler> <Land>`, `umbenennen` | Grundlage |
 | Kriege | `/krieg erklaeren <Gegner> <Kriegsart> <Grund>`, `liste`, `arten`, `frieden <Gegner>` (beide Seiten), `wechseln <Gegner> <Kriegsart>` (beide Seiten); Admin: `beenden <Nr> <Ergebnis>` | §4.1, §4.2 |
 | Duell | `/duell <Spieler>`, `annehmen`, `abbrechen` | Zweikampf ohne Krieg |
@@ -80,6 +85,15 @@ Voraussetzung: JDK 17. Dann im Projektordner:
 Die JAR liegt danach in `build/libs/`. Die Abhängigkeiten zum Kompilieren
 (Money for Everyone, Waystones, Balm, OPAC) kommen über CurseMaven und Modrinth
 und sind in `build.gradle` auf die Versionen des Modpacks gepinnt.
+
+Befehlsliste: Alle Befehle stehen einmal in
+`src/main/resources/crownscore/commands.tsv`. Daraus liest `/cccore list` im Spiel,
+und daraus entsteht die PDF. Nach einer Änderung an Befehlen die Datei anpassen und
+die PDF neu bauen (braucht Python 3 und Chrome oder Edge):
+
+```
+python tools/befehle_pdf.py
+```
 
 Testserver aus der IDE: `./gradlew runServer` (EULA in `run/eula.txt` bestätigen).
 

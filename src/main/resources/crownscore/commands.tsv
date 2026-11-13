@@ -1,0 +1,107 @@
+# Befehlsuebersicht von Crowns Core. Einzige Quelle fuer /cccore list und docs/Befehle.pdf.
+# Modulzeile:  @<schluessel> TAB <Titel> TAB <Kurzbeschreibung>
+# Befehlszeile: <Syntax> TAB <Rolle> TAB <Beschreibung>
+# Rollen: ALLE, BUERGER, BEAMTER, CHEF, ADMIN. Admins duerfen alles.
+@cccore	Hilfe	Übersicht über alle Befehle der Mod.
+/cccore	ALLE	Zeigt Version und eine kurze Hilfe.
+/cccore list [Seite|Modul|meine]	ALLE	Listet alle Befehle. Mit Modul nur dieses Modul, mit „meine“ nur die Befehle, die du nutzen darfst.
+@nation	Nationen	Mitgliedschaft, Staatschef, Beamte und Wahlmodus.
+/nation liste	ALLE	Alle Nationen mit Kürzel, Staatschef und Mitgliederzahl.
+/nation info [Land]	ALLE	Details zu einer Nation, ohne Angabe die eigene.
+/nation beitreten <Land>	ALLE	Beitrittsanfrage stellen. Staatschef oder Beamte bestätigen.
+/nation bestaetigen <Spieler>	BEAMTER	Beitrittsanfrage annehmen.
+/nation ablehnen <Spieler>	BEAMTER	Beitrittsanfrage ablehnen.
+/nation verlassen	BUERGER	Die eigene Nation verlassen. Während eines Krieges gesperrt.
+/nation rauswerfen <Spieler>	CHEF	Einen Bürger aus der Nation entfernen.
+/nation beamter <Spieler>	CHEF	Beamtenstatus vergeben oder wieder entziehen.
+/nation wahlmodus <KEINE|DIREKT|PARLAMENT> [Amtszeit]	CHEF	Legt fest, ob und wie die Nation wählt. Amtszeit in Tagen.
+/nation anlegen <Name> <Kürzel>	ADMIN	Neue Nation anlegen.
+/nation loeschen <Land>	ADMIN	Nation mit allen Daten löschen.
+/nation staatschef <Land> <Spieler>	ADMIN	Staatschef einsetzen.
+/nation setzen <Spieler> <Land>	ADMIN	Spieler direkt einer Nation zuordnen.
+/nation umbenennen <Land> <Neuer Name>	ADMIN	Nation umbenennen, das Kürzel bleibt.
+@krieg	Kriege	Kriegserklärung mit Kriegsart und Grund, Frieden und Wechsel der Kriegsart (Regel 4.1 und 4.2).
+/krieg liste	ALLE	Laufende Konflikte mit Kriegsart, Grund und Friedensangeboten.
+/krieg arten	ALLE	Alle Kriegsarten und ob dabei PvP erlaubt ist.
+/krieg erklaeren <Gegner> <Kriegsart> <Grund>	CHEF	Krieg erklären. Der Grund braucht mindestens 10 Zeichen.
+/krieg frieden <Gegner>	CHEF	Frieden anbieten oder ein Angebot annehmen. Beide Seiten müssen zustimmen.
+/krieg wechseln <Gegner> <Kriegsart>	CHEF	Kriegsart ändern. Beide Seiten müssen zustimmen.
+/krieg beenden <Nr> <Ergebnis>	ADMIN	Konflikt durch die Spielleitung beenden.
+@duell	Duell	Zweikampf zwischen zwei Spielern ohne Krieg.
+/duell <Spieler>	ALLE	Einen Spieler zum Duell fordern.
+/duell annehmen	ALLE	Eine Duellforderung annehmen.
+/duell abbrechen	ALLE	Forderung oder laufendes Duell abbrechen.
+@akte	Beweisakte	Protokoll von Abbau, Bauen, Feuer, Kisten, Tötungen, Camping und Einreise (Regel 3, 4.5 und 5).
+/akte spieler <Spieler> [Seite]	BEAMTER	Einträge eines Spielers. Beamte sehen nur Vorfälle im eigenen Gebiet.
+/akte gebiet <Land> [Seite]	BEAMTER	Alle Vorfälle im Gebiet einer Nation. Beamte nur für die eigene.
+/akte typ <Typ> [Seite]	ADMIN	Einträge nach Typ: BLOCK_ABBAU, BLOCK_SETZEN, KISTE, FEUER, CAMPING, EINREISE, TOETUNG, KRIEG.
+/akte neueste [Seite]	ADMIN	Die neuesten Einträge.
+/akte export <Spieler> [Anzahl]	ADMIN	Akte eines Spielers an den Gerichtskanal schicken.
+/akte loeschen <Spieler>	ADMIN	Alle Einträge eines Spielers löschen.
+@aktivitaet	Aktivität	Spielzeit pro Woche und am Wochenende (Regel 7.2 und 7.3).
+/aktivitaet	ALLE	Eigene Spielzeit dieser und letzter Woche.
+/aktivitaet <Spieler>	ADMIN	Spielzeit eines anderen Spielers.
+/aktivitaet bericht	ADMIN	Wochenbericht sofort erstellen und an Discord schicken.
+/pause <Spieler> <Tage>	ADMIN	Pause eintragen, der Spieler zählt nicht als inaktiv. 0 Tage beendet die Pause.
+@staatskasse	Staatskasse	Länderkonto jeder Nation.
+/staatskasse	BUERGER	Stand der eigenen Staatskasse.
+/staatskasse stand <Land>	ALLE	Stand der Staatskasse einer anderen Nation.
+/staatskasse einzahlen <Betrag>	BUERGER	Geld vom eigenen Konto in die Staatskasse zahlen.
+/staatskasse auszahlen <Betrag>	CHEF	Geld aus der Staatskasse auf das eigene Konto holen.
+/staatskasse ueberweisen <Land> <Betrag>	CHEF	Geld an die Staatskasse einer anderen Nation überweisen.
+/staatskasse konto	ALLE	Eigener Kontostand.
+/staatskasse setzen <Land> <Betrag>	ADMIN	Staatskasse auf einen Betrag setzen.
+/staatskasse geldgeben <Spieler> <Betrag>	ADMIN	Einem Spieler Geld gutschreiben.
+@darlehen	Darlehen	Kredite der Zentralbank an die Staatskasse.
+/darlehen	BUERGER	Laufendes Darlehen der eigenen Nation.
+/darlehen stand <Land>	ALLE	Darlehen einer anderen Nation.
+/darlehen bedingungen	ALLE	Höchstbetrag, Zins und Laufzeit.
+/darlehen aufnehmen <Betrag>	CHEF	Darlehen aufnehmen. Raten werden wöchentlich abgebucht.
+/darlehen tilgen <Betrag>	CHEF	Darlehen vorzeitig zurückzahlen.
+@kolonie	Kolonien	Kolonialbehörde für besetztes und unbesetztes Land.
+/kolonie kosten	ALLE	Kosten der Ausbaustufen.
+/kolonie liste	ALLE	Alle Kolonien und Expeditionen.
+/kolonie info <Name>	ALLE	Details zu einer Kolonie.
+/kolonie expedition <Name> <herrscher|frei>	BEAMTER	Expedition anmelden. „herrscher“ für besetztes, „frei“ für unbesetztes Land.
+/kolonie weiter <Name>	BEAMTER	Nächste Ausbaustufe bezahlen.
+/kolonie aufgeben <Name>	CHEF	Kolonie aufgeben.
+/kolonie genehmigen <Name>	ADMIN	Kolonie durch die Behörde genehmigen.
+/kolonie ablehnen <Name> <Grund>	ADMIN	Kolonie mit Begründung ablehnen.
+/kolonie radius <Name> <Radius>	ADMIN	Radius einer Kolonie ändern.
+/kolonie gebuehr <Name> <Betrag>	ADMIN	Gebühr einer Kolonie ändern.
+@wegstein	Wegsteine	Freigaben für die Wegsteine einer Nation.
+/wegstein liste	ALLE	Welche Nation ihre Wegsteine für wen öffnet.
+/wegstein freigeben <Land>	BEAMTER	Einer Nation die eigenen Wegsteine öffnen.
+/wegstein entziehen <Land>	BEAMTER	Die Freigabe wieder entziehen.
+@wahl	Wahlen	Wahlen in einer Nation und Abstimmungen im Parlament.
+/wahl starten <Minuten> <amt true|false> <Kandidaten>	CHEF	Wahl starten. Bei amt true wird der Sieger Staatschef. Im Wahlmodus DIREKT darf jeder Bürger starten.
+/wahl stimme <Kandidat>	BUERGER	Stimme abgeben.
+/wahl status	BUERGER	Stand der laufenden Wahl.
+/wahl abbrechen	ADMIN	Laufende Wahl abbrechen.
+/abstimmung starten <Minuten> <Titel>	CHEF	Resolution ins Parlament einbringen.
+/abstimmung ja	BEAMTER	Für die eigene Nation mit Ja stimmen.
+/abstimmung nein	BEAMTER	Für die eigene Nation mit Nein stimmen.
+/abstimmung enthaltung	BEAMTER	Für die eigene Nation enthalten.
+/abstimmung status	ALLE	Stand der Parlamentsabstimmung.
+/abstimmung abbrechen	ADMIN	Abstimmung abbrechen.
+@visum	Visa	Einreiseerlaubnis für fremde Spieler (Regel 5.1).
+/visum erteilen <Spieler> [Tage]	BEAMTER	Visum für das eigene Gebiet erteilen.
+/visum entziehen <Spieler>	BEAMTER	Visum entziehen.
+/visum liste	BUERGER	Gültige Visa der eigenen Nation.
+/visum meine	ALLE	Eigene gültige Visa.
+@post	Post	Briefe zwischen Nationen, mit Grenzposten und Spionage.
+/post senden <Land> <Text>	BUERGER	Brief an eine Nation schicken, höchstens 800 Zeichen.
+/post lesen [Seite]	BUERGER	Posteingang der eigenen Nation.
+/post abgefangen [Seite]	BUERGER	Briefe, die eure Agenten abgefangen haben.
+/post gesendet [Seite]	BUERGER	Gesendete Briefe der eigenen Nation.
+@vertrag	Verträge	Kopien von Büchern als Beweis vor Gericht (Regel 2).
+/vertrag hinterlegen <Titel>	ALLE	Buch in der Haupthand auf dem Server hinterlegen.
+/vertrag liste	ALLE	Alle hinterlegten Verträge mit Prüfsumme.
+/vertrag lesen <Nr>	ALLE	Text eines Vertrags lesen.
+/vertrag pruefen <Nr>	ALLE	Buch in der Hand mit dem hinterlegten Vertrag vergleichen.
+/vertrag export <Nr>	ADMIN	Vertrag an den Gerichtskanal schicken.
+@gebiet	Gebiete	Interne Gebiete, nur nötig ohne Open Parties and Claims.
+/gebiet hier	ALLE	Wem der Chunk gehört, in dem du stehst.
+/gebiet claim [Radius]	BEAMTER	Chunks für die eigene Nation beanspruchen, Radius bis 8.
+/gebiet freigeben [Radius]	BEAMTER	Chunks wieder freigeben.
+/gebiet anzahl	ALLE	Anzahl der Chunks pro Nation.

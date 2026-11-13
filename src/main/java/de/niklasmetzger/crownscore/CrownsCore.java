@@ -11,6 +11,7 @@ import de.niklasmetzger.crownscore.data.CrownsData;
 import de.niklasmetzger.crownscore.discord.DiscordWebhook;
 import de.niklasmetzger.crownscore.economy.Economy;
 import de.niklasmetzger.crownscore.election.ElectionCommand;
+import de.niklasmetzger.crownscore.help.CcCoreCommand;
 import de.niklasmetzger.crownscore.evidence.EvidenceCommand;
 import de.niklasmetzger.crownscore.evidence.EvidenceEvents;
 import de.niklasmetzger.crownscore.mail.MailCommand;
@@ -75,6 +76,7 @@ public class CrownsCore {
         MailCommand.register(d);
         ContractCommand.register(d);
         ClaimCommand.register(d);
+        CcCoreCommand.register(d);
     }
 
     @SubscribeEvent
