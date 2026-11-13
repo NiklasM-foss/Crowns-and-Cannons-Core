@@ -18,7 +18,7 @@ Crowns Core was written for the **Crowns and Cannons** project and enforces its 
 - **Activity:** playtime per week and an automatic weekly report
 - **Discord:** war news, court, activity and news via webhooks
 
-`/cccore list` shows all commands in game. The full list is available as a PDF in the [GitHub repository](https://github.com/NiklasM-foss/Crowns-and-Cannons-Core/blob/main/docs/Befehle.pdf).
+`/cccore list` shows all commands in game. The full command reference is in the [source code repository](https://github.com/NiklasM-foss/Crowns-and-Cannons-Core).
 
 ## Optional integrations
 
@@ -56,7 +56,7 @@ Crowns Core wurde für das Projekt **Crowns and Cannons** geschrieben und bildet
 - **Aktivität:** Spielzeit pro Woche, automatischer Wochenbericht
 - **Discord:** Kriegsnews, Gericht, Aktivität und News per Webhook
 
-Alle Befehle zeigt `/cccore list` im Spiel. Die vollständige Liste als PDF liegt im [GitHub-Repo](https://github.com/NiklasM-foss/Crowns-and-Cannons-Core/blob/main/docs/Befehle.pdf).
+Alle Befehle zeigt `/cccore list` im Spiel. Die vollständige Befehlsübersicht steht im [Quellcode-Repo](https://github.com/NiklasM-foss/Crowns-and-Cannons-Core).
 
 ## Optionale Anbindungen
 
