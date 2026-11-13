@@ -10,6 +10,9 @@ Wahlen, Visa, Post und den Aktivitätszähler.
 Reine Server-Mod: Clients brauchen sie nicht, der Modcode des Packs bleibt
 unverändert. Alle Anbindungen an andere Mods sind optional.
 
+**Download:** [CurseForge](https://www.curseforge.com/projects/1802743) ·
+Quellcode auf [GitHub](https://github.com/NiklasM-foss/Crowns-and-Cannons-Core)
+
 ## Module und Commands
 
 Die vollständige Liste mit Rollen steht in [docs/Befehle.pdf](docs/Befehle.pdf). Im
