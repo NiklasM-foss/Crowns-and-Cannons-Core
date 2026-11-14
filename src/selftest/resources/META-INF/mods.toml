@@ -1,0 +1,17 @@
+modLoader="javafml"
+loaderVersion="[47,)"
+license="All Rights Reserved"
+
+[[mods]]
+modId="crownscoretest"
+version="1.0.0"
+displayName="Crowns Core Selbsttest"
+description='''Nur fuer den Testserver: /cctest prueft Crowns Core mit Fake-Spielern.'''
+displayTest="IGNORE_SERVER_VERSION"
+
+[[dependencies.crownscoretest]]
+    modId="crownscore"
+    mandatory=true
+    versionRange="[1.2.0,)"
+    ordering="AFTER"
+    side="SERVER"

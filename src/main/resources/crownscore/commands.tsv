@@ -2,9 +2,18 @@
 # Modulzeile:  @<schluessel> TAB <Titel> TAB <Kurzbeschreibung>
 # Befehlszeile: <Syntax> TAB <Rolle> TAB <Beschreibung>
 # Rollen: ALLE, BUERGER, BEAMTER, CHEF, ADMIN. Admins duerfen alles.
+# Rechteknoten: crownscore.<feste Woerter>, z.B. crownscore.nation.beitreten. Die Rolle gilt, solange kein Recht gesetzt ist.
+# Jeder Befehl im Spiel muss hier stehen, sonst sehen ihn alle.
 @cccore	Hilfe	Übersicht über alle Befehle der Mod.
 /cccore	ALLE	Zeigt Version und eine kurze Hilfe.
-/cccore list [Seite|Modul|meine]	ALLE	Listet alle Befehle. Mit Modul nur dieses Modul, mit „meine“ nur die Befehle, die du nutzen darfst.
+/cccore list [Seite|Modul]	ALLE	Listet alle Befehle, die du nutzen darfst. Mit Modul nur dieses Modul.
+@modus	Spielermodus	RP, Farm oder AFK. Im RP gelten die normalen Kriegsregeln, im Farm- und AFK-Modus darf nur angreifen, wer einen Grund einträgt.
+/modus	ALLE	Zeigt deinen Modus und erklärt die drei Modi.
+/modus rp	ALLE	In den RP-Modus wechseln. Nach jedem Einloggen bist du automatisch im RP.
+/modus farm	ALLE	In den Farm-Modus wechseln, zum Beispiel beim Ressourcensammeln.
+/modus afk <bis>	ALLE	AFK wie eine Parkscheibe: Uhrzeit wie 20:00 oder Dauer wie 90m. Danach geht es automatisch zurück in den RP.
+/modus liste	ALLE	Wer online ist und in welchem Modus.
+/modus grund <Spieler> <Grund>	ALLE	Grund für einen Angriff auf jemanden im Farm- oder AFK-Modus eintragen. Er gilt 30 Minuten und landet in der Akte.
 @nation	Nationen	Mitgliedschaft, Staatschef, Beamte und Wahlmodus.
 /nation liste	ALLE	Alle Nationen mit Kürzel, Staatschef und Mitgliederzahl.
 /nation info [Land]	ALLE	Details zu einer Nation, ohne Angabe die eigene.
@@ -74,7 +83,7 @@
 /wegstein freigeben <Land>	BEAMTER	Einer Nation die eigenen Wegsteine öffnen.
 /wegstein entziehen <Land>	BEAMTER	Die Freigabe wieder entziehen.
 @wahl	Wahlen	Wahlen in einer Nation und Abstimmungen im Parlament.
-/wahl starten <Minuten> <amt true|false> <Kandidaten>	CHEF	Wahl starten. Bei amt true wird der Sieger Staatschef. Im Wahlmodus DIREKT darf jeder Bürger starten.
+/wahl starten <Minuten> <amt true|false> <Kandidaten>	BUERGER	Wahl starten. Bei amt true wird der Sieger Staatschef. Starten darf der Staatschef, im Wahlmodus DIREKT jeder Bürger.
 /wahl stimme <Kandidat>	BUERGER	Stimme abgeben.
 /wahl status	BUERGER	Stand der laufenden Wahl.
 /wahl abbrechen	ADMIN	Laufende Wahl abbrechen.
@@ -105,3 +114,41 @@
 /gebiet claim [Radius]	BEAMTER	Chunks für die eigene Nation beanspruchen, Radius bis 8.
 /gebiet freigeben [Radius]	BEAMTER	Chunks wieder freigeben.
 /gebiet anzahl	ALLE	Anzahl der Chunks pro Nation.
+@admin	Protokoll	Blockprotokoll wie CoreProtect: wer hat wann was abgebaut, gesetzt, aus Kisten genommen, getötet, geschrieben. Mit Rollback.
+/cccore admin status	ADMIN	Größe des Protokolls und Kurzhilfe.
+/cccore admin inspect	ADMIN	Inspektor an oder aus. Linksklick zeigt die Geschichte eines Blocks, Rechtsklick Behälter und den Platz davor.
+/cccore admin lookup <Parameter>	ADMIN	Protokoll durchsuchen. Parameter: u:Spieler t:2h r:20 a:block b:stone e:dirt #count.
+/cccore admin near [Radius]	ADMIN	Alles im Umkreis, Standard 5 Blöcke.
+/cccore admin seite <Nr>	ADMIN	Blättern in der letzten Abfrage.
+/cccore admin rollback <Parameter>	ADMIN	Änderungen zurücksetzen, Blöcke, Kisteninhalt und getötete Tiere. Ohne r: gilt Radius 10. Mit #preview erst ansehen.
+/cccore admin restore <Parameter>	ADMIN	Zurückgesetzte Änderungen wieder einspielen.
+/cccore admin anwenden	ADMIN	Die angezeigte Vorschau wirklich ausführen.
+/cccore admin abbrechen	ADMIN	Vorschau verwerfen.
+/cccore admin undo	ADMIN	Den letzten eigenen Rollback oder Restore rückgängig machen.
+/cccore admin purge <t:Zeit>	ADMIN	Einträge löschen, die älter sind als die Zeit, mindestens t:1d.
+@perms	Rechte	Rechteverwaltung wie LuckPerms: Gruppen mit Gewicht und Vererbung, Rechte für Spieler und Gruppen, Präfixe, Laufbahnen.
+/cccore perms info	ADMIN	Überblick und Hinweis, ob andere Mods die Rechte nutzen.
+/cccore perms listgroups	ADMIN	Alle Gruppen nach Gewicht.
+/cccore perms creategroup <Gruppe>	ADMIN	Neue Gruppe anlegen.
+/cccore perms deletegroup <Gruppe>	ADMIN	Gruppe löschen, default bleibt immer.
+/cccore perms listtracks	ADMIN	Alle Laufbahnen.
+/cccore perms createtrack <Laufbahn>	ADMIN	Neue Laufbahn anlegen, zum Beispiel für Ränge.
+/cccore perms deletetrack <Laufbahn>	ADMIN	Laufbahn löschen.
+/cccore perms search <Knoten>	ADMIN	Wer ein Recht direkt eingetragen hat.
+/cccore perms reload	ADMIN	Rechte neu aus world/crownscore/permissions.json laden.
+/cccore perms user <Spieler> info	ADMIN	Gruppen, Rechte und Präfix eines Spielers.
+/cccore perms user <Spieler> permission set <Knoten> [true|false] [Dauer] [Dimension]	ADMIN	Recht setzen, optional befristet wie 7d oder nur in einer Dimension.
+/cccore perms user <Spieler> permission unset <Knoten>	ADMIN	Recht entfernen.
+/cccore perms user <Spieler> permission check <Knoten>	ADMIN	Prüfen, ob ein Recht greift und woher es kommt.
+/cccore perms user <Spieler> parent add|set|remove <Gruppe> [Dauer]	ADMIN	Spieler in eine Gruppe aufnehmen, nur in diese setzen oder herausnehmen.
+/cccore perms user <Spieler> meta setprefix|setsuffix <Text>	ADMIN	Eigenes Präfix oder Suffix, Farben mit &, zum Beispiel &c[König].
+/cccore perms user <Spieler> promote|demote <Laufbahn>	ADMIN	Auf der Laufbahn eine Stufe hoch oder runter.
+/cccore perms group <Gruppe> info	ADMIN	Gewicht, Eltern, Präfix und Rechte einer Gruppe.
+/cccore perms group <Gruppe> permission set|unset|check <Knoten>	ADMIN	Rechte einer Gruppe, gleiche Optionen wie beim Spieler.
+/cccore perms group <Gruppe> parent add|remove <Gruppe>	ADMIN	Vererbung: die Gruppe bekommt alle Rechte der Elterngruppe.
+/cccore perms group <Gruppe> setweight <Zahl>	ADMIN	Gewicht, das höhere gewinnt bei Widersprüchen und beim Präfix.
+/cccore perms group <Gruppe> setdisplayname <Name>	ADMIN	Anzeigename der Gruppe.
+/cccore perms group <Gruppe> meta setprefix|setsuffix <Text>	ADMIN	Präfix oder Suffix der Gruppe im Chat und in der Tabliste.
+/cccore perms group <Gruppe> listmembers	ADMIN	Wer in der Gruppe ist.
+/cccore perms track <Laufbahn> info	ADMIN	Reihenfolge der Gruppen.
+/cccore perms track <Laufbahn> append|insert|remove <Gruppe>	ADMIN	Gruppe hinten anhängen, an einer Stelle einfügen oder entfernen.

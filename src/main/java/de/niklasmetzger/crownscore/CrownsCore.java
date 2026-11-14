@@ -24,7 +24,20 @@ import de.niklasmetzger.crownscore.war.WarCommand;
 import de.niklasmetzger.crownscore.war.WarEvents;
 import de.niklasmetzger.crownscore.waystone.WaystoneCommand;
 import de.niklasmetzger.crownscore.waystone.WaystoneModule;
+import de.niklasmetzger.crownscore.log.Inspector;
+import de.niklasmetzger.crownscore.log.LogDatabase;
+import de.niklasmetzger.crownscore.log.LogEvents;
+import de.niklasmetzger.crownscore.mode.ModeCommand;
+import de.niklasmetzger.crownscore.perms.CommandGate;
+import de.niklasmetzger.crownscore.perms.CommandPermissionHook;
+import de.niklasmetzger.crownscore.perms.DisplayEvents;
+import de.niklasmetzger.crownscore.perms.ForgePermHandler;
+import de.niklasmetzger.crownscore.perms.PermissionManager;
+import net.minecraftforge.common.ForgeConfig;
 import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.event.server.ServerAboutToStartEvent;
+import net.minecraftforge.eventbus.api.EventPriority;
+import net.minecraftforge.server.permission.events.PermissionGatherEvent;
 import net.minecraftforge.event.RegisterCommandsEvent;
 import net.minecraftforge.event.server.ServerStartedEvent;
 import net.minecraftforge.event.server.ServerStoppingEvent;
@@ -57,6 +70,9 @@ public class CrownsCore {
         MinecraftForge.EVENT_BUS.register(new EvidenceEvents());
         MinecraftForge.EVENT_BUS.register(new ActivityEvents());
         MinecraftForge.EVENT_BUS.register(new Scheduler());
+        MinecraftForge.EVENT_BUS.register(new LogEvents());
+        MinecraftForge.EVENT_BUS.register(new Inspector());
+        MinecraftForge.EVENT_BUS.register(new DisplayEvents());
     }
 
     @SubscribeEvent
@@ -77,6 +93,29 @@ public class CrownsCore {
         ContractCommand.register(d);
         ClaimCommand.register(d);
         CcCoreCommand.register(d);
+        ModeCommand.register(d);
+    }
+
+    /** Nach allen Mods: eigene Befehle nach Rolle ausblenden, alle Befehle ueber command.<name> steuerbar machen. */
+    @SubscribeEvent(priority = EventPriority.LOWEST)
+    public void onRegisterCommandsLast(RegisterCommandsEvent event) {
+        int gated = CommandGate.install(event.getDispatcher());
+        int hooked = CommandPermissionHook.install(event.getDispatcher());
+        LOGGER.info("Befehlsrechte: {} eigene Befehlsknoten nach Rolle, {} Wurzelbefehle ueber command.<name>", gated, hooked);
+    }
+
+    @SubscribeEvent
+    public void onPermissionHandlers(PermissionGatherEvent.Handler event) {
+        event.addPermissionHandler(ForgePermHandler.ID, ForgePermHandler::new);
+    }
+
+    @SubscribeEvent
+    public void onAboutToStart(ServerAboutToStartEvent event) {
+        PermissionManager.load(event.getServer());
+        if (CrownsConfig.RECHTE_FORGE_HANDLER.get() && "forge:default_handler".equals(ForgeConfig.SERVER.permissionHandler.get())) {
+            ForgeConfig.SERVER.permissionHandler.set(ForgePermHandler.ID.toString());
+            LOGGER.info("Rechte: Forge-Permission-Handler auf {} gestellt", ForgePermHandler.ID);
+        }
     }
 
     @SubscribeEvent
@@ -84,6 +123,7 @@ public class CrownsCore {
         CrownsData data = CrownsData.get(event.getServer());
         Economy.init();
         DiscordWebhook.start();
+        LogDatabase.open(event.getServer());
         if (ModList.get().isLoaded("waystones")) {
             WaystoneModule.init();
         }
@@ -96,5 +136,7 @@ public class CrownsCore {
     public void onServerStopping(ServerStoppingEvent event) {
         CrownsData.get(event.getServer()).setDirty();
         DiscordWebhook.shutdown();
+        LogDatabase.close();
+        PermissionManager.save();
     }
 }

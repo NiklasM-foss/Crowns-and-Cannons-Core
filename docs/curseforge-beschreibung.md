@@ -17,6 +17,10 @@ Crowns Core was written for the **Crowns and Cannons** project and enforces its 
 - **Contracts:** store books with a checksum so nobody can change the text later
 - **Activity:** playtime per week and an automatic weekly report
 - **Discord:** war news, court, activity and news via webhooks
+- **Player modes:** RP, Farm and AFK. Players in Farm or AFK mode may only be attacked with a stated reason, which goes into the evidence log. AFK runs until a set time like a parking disc.
+- **Block log and rollback** (similar to CoreProtect): inspector, lookups by player, time, radius, action and block, rollback and restore of blocks, chest contents and killed animals, preview and undo. Stored in an embedded database, no setup needed.
+- **Permissions** (similar to LuckPerms): groups with weight and inheritance, player permissions, wildcards, temporary and per-dimension permissions, prefixes and suffixes in chat and tab list, tracks for ranks, Forge permission handler, `command.<name>` for every command including vanilla.
+- **Hidden commands:** players only see the commands they are allowed to use, also in tab completion.
 
 `/cccore list` shows all commands in game. The full command reference is in the [source code repository](https://github.com/NiklasM-foss/Crowns-and-Cannons-Core).
 
@@ -55,6 +59,10 @@ Crowns Core wurde für das Projekt **Crowns and Cannons** geschrieben und bildet
 - **Verträge:** Bücher mit Prüfsumme hinterlegen, damit später niemand den Text ändern kann
 - **Aktivität:** Spielzeit pro Woche, automatischer Wochenbericht
 - **Discord:** Kriegsnews, Gericht, Aktivität und News per Webhook
+- **Spielermodus:** RP, Farm und AFK. Wer im Farm- oder AFK-Modus ist, darf nur mit eingetragenem Grund angegriffen werden, der Grund landet in der Akte. AFK läuft bis zu einer Uhrzeit wie eine Parkscheibe.
+- **Blockprotokoll und Rollback** (ähnlich CoreProtect): Inspektor, Abfragen nach Spieler, Zeit, Radius, Aktion und Block, Rollback und Restore von Blöcken, Kisteninhalten und getöteten Tieren, Vorschau und Undo. Eingebettete Datenbank, keine Einrichtung nötig.
+- **Rechte** (ähnlich LuckPerms): Gruppen mit Gewicht und Vererbung, Spielerrechte, Platzhalter, befristete und dimensionsgebundene Rechte, Präfix und Suffix in Chat und Tabliste, Laufbahnen für Ränge, Forge-Permission-Handler, `command.<name>` für jeden Befehl, auch Vanilla.
+- **Unsichtbare Befehle:** Spieler sehen nur die Befehle, die sie nutzen dürfen, auch in der Tab-Vervollständigung.
 
 Alle Befehle zeigt `/cccore list` im Spiel. Die vollständige Befehlsübersicht steht im [Quellcode-Repo](https://github.com/NiklasM-foss/Crowns-and-Cannons-Core).
 

@@ -43,49 +43,36 @@ public final class CcCoreCommand {
                         .then(Commands.argument("filter", StringArgumentType.word())
                                 .suggests((ctx, b) -> {
                                     List<String> out = new ArrayList<>();
-                                    out.add("meine");
-                                    for (Module m : CommandCatalog.modules()) out.add(m.key());
+                                    for (Module m : CommandCatalog.modules()) {
+                                        boolean any = CommandCatalog.entries().stream()
+                                                .anyMatch(e -> e.module() == m && Perms.allowed(ctx.getSource(), e.node(), e.role()));
+                                        if (any) out.add(m.key());
+                                    }
                                     return SharedSuggestionProvider.suggest(out, b);
                                 })
-                                .executes(ctx -> list(ctx, StringArgumentType.getString(ctx, "filter"))))));
+                                .executes(ctx -> list(ctx, StringArgumentType.getString(ctx, "filter")))))
+                .then(de.niklasmetzger.crownscore.log.LogCommand.build())
+                .then(de.niklasmetzger.crownscore.perms.PermsCommand.build()));
     }
 
     private static int about(CommandContext<CommandSourceStack> ctx) {
         String version = ModList.get().getModContainerById(CrownsCore.MODID)
                 .map(c -> c.getModInfo().getVersion().toString()).orElse("?");
         Msg.info(ctx.getSource(), "§fCrowns Core §7Version " + version);
-        Msg.line(ctx.getSource(), " §7" + CommandCatalog.entries().size() + " Befehle in " + CommandCatalog.modules().size() + " Modulen.");
-        Msg.line(ctx.getSource(), " §e/cccore list§7 zeigt alle, §e/cccore list meine§7 nur deine, §e/cccore list <Modul>§7 ein Modul.");
+        long mine = CommandCatalog.entries().stream().filter(e -> Perms.allowed(ctx.getSource(), e.node(), e.role())).count();
+        Msg.line(ctx.getSource(), " §7Du kannst " + mine + " von " + CommandCatalog.entries().size() + " Befehlen nutzen.");
+        Msg.line(ctx.getSource(), " §e/cccore list§7 zeigt sie, §e/cccore list <Modul>§7 ein einzelnes Modul.");
         return 1;
-    }
-
-    /** Rollen, die der Aufrufer tatsaechlich nutzen kann. */
-    private static Set<Role> rolesOf(CommandContext<CommandSourceStack> ctx) {
-        if (Perms.isAdmin(ctx.getSource())) return EnumSet.allOf(Role.class);
-        Set<Role> out = EnumSet.of(Role.ALLE);
-        if (ctx.getSource().getEntity() instanceof ServerPlayer p) {
-            CrownsData d = CommandUtil.data(ctx);
-            Nation n = d.nationOf(p.getUUID());
-            if (n != null) {
-                out.add(Role.BUERGER);
-                if (n.isBeamter(p.getUUID())) out.add(Role.BEAMTER);
-                if (n.isChef(p.getUUID())) out.add(Role.CHEF);
-            }
-        }
-        return out;
     }
 
     private static int list(CommandContext<CommandSourceStack> ctx, String filter) {
         int seite = 1;
         Module module = null;
-        boolean meine = false;
         String f = filter.trim();
         if (!f.isEmpty()) {
             if (f.chars().allMatch(Character::isDigit)) {
                 seite = Math.max(1, Integer.parseInt(f));
-            } else if (f.equalsIgnoreCase("meine")) {
-                meine = true;
-            } else {
+            } else if (!f.equalsIgnoreCase("meine")) {
                 module = CommandCatalog.module(f);
                 if (module == null) {
                     Msg.err(ctx.getSource(), "Modul \"" + f + "\" gibt es nicht. Module: " + moduleKeys());
@@ -94,11 +81,11 @@ public final class CcCoreCommand {
             }
         }
 
-        Set<Role> roles = rolesOf(ctx);
+        // Jeder sieht nur, was er auch benutzen darf
         List<Entry> list = new ArrayList<>();
         for (Entry e : CommandCatalog.entries()) {
             if (module != null && e.module() != module) continue;
-            if (meine && !roles.contains(e.role())) continue;
+            if (!Perms.allowed(ctx.getSource(), e.node(), e.role())) continue;
             list.add(e);
         }
         if (list.isEmpty()) {
@@ -106,14 +93,13 @@ public final class CcCoreCommand {
             return 0;
         }
 
-        // Modul- und Rollenfilter zeigen alles auf einmal, die Gesamtliste wird geblaettert.
-        boolean paged = module == null && !meine;
+        // Ein Modul zeigt alles auf einmal, die Gesamtliste wird geblaettert.
+        boolean paged = module == null;
         int pages = paged ? CommandUtil.pages(list.size(), PAGE) : 1;
         seite = Math.min(seite, pages);
         List<Entry> shown = paged ? CommandUtil.page(list, seite, PAGE) : list;
 
-        String titel = module != null ? "Befehle " + module.title()
-                : meine ? "Deine Befehle" : "Alle Befehle";
+        String titel = module != null ? "Befehle " + module.title() : "Deine Befehle";
         Msg.info(ctx.getSource(), "§f" + titel + " §7(" + list.size() + (paged ? ", Seite " + seite + "/" + pages : "") + ")");
         if (module != null && !module.intro().isEmpty()) Msg.line(ctx.getSource(), " §7" + module.intro());
 
@@ -123,7 +109,7 @@ public final class CcCoreCommand {
                 Msg.line(ctx.getSource(), "§6§l" + e.module().title());
                 last = e.module();
             }
-            ctx.getSource().sendSuccess(() -> entryLine(e, roles.contains(e.role())), false);
+            ctx.getSource().sendSuccess(() -> entryLine(e, true), false);
         }
 
         final int aktuell = seite;

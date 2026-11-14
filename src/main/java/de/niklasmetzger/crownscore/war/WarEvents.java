@@ -4,6 +4,8 @@ import de.niklasmetzger.crownscore.config.CrownsConfig;
 import de.niklasmetzger.crownscore.data.CrownsData;
 import de.niklasmetzger.crownscore.data.EvidenceEntry;
 import de.niklasmetzger.crownscore.data.War;
+import de.niklasmetzger.crownscore.mode.ModeService;
+import de.niklasmetzger.crownscore.mode.PlayerMode;
 import de.niklasmetzger.crownscore.util.Msg;
 import de.niklasmetzger.crownscore.util.TimeUtil;
 import net.minecraft.server.level.ServerPlayer;
@@ -39,13 +41,19 @@ public class WarEvents {
             deny(event, attacker, "Am Spawn ist PvP verboten.");
             return;
         }
-        if (DuelManager.inDuel(attacker.getUUID(), victim.getUUID())) return;
+        if (DuelManager.inDuel(attacker.getUUID(), victim.getUUID())) {
+            ModeService.kampf(attacker.getUUID(), victim.getUUID());
+            return;
+        }
 
         CrownsData d = CrownsData.get(attacker.server);
         String a = d.nationKeyOf(attacker.getUUID());
         String v = d.nationKeyOf(victim.getUUID());
         if (a == null || v == null) {
-            if (CrownsConfig.STAATENLOSE_PVP.get()) return;
+            if (CrownsConfig.STAATENLOSE_PVP.get()) {
+                modusErlaubt(event, attacker, victim);
+                return;
+            }
             deny(event, attacker, a == null ? "Du gehoerst keiner Nation an und darfst nicht kaempfen."
                     : victim.getGameProfile().getName() + " gehoert keiner Nation an. Fuer einen Zweikampf: /duell " + victim.getGameProfile().getName());
             return;
@@ -63,11 +71,28 @@ public class WarEvents {
             deny(event, attacker, w.art.anzeige + " erlaubt keinen offenen Kampf. Kriegsart wechseln oder Duell.");
             return;
         }
+        if (!modusErlaubt(event, attacker, victim)) return;
         if (w.ersterKampf == 0) {
             w.ersterKampf = TimeUtil.now();
             d.setDirty();
             Msg.broadcast(attacker.server, "Erster Kampf im " + w.art.anzeige + " zwischen " + d.anzeige(a) + " und " + d.anzeige(v) + "!");
         }
+    }
+
+    /** Ghasts Modusregel: Farm und AFK nur mit eingetragenem Grund. Wer angreift, landet selbst im RP. */
+    private boolean modusErlaubt(LivingAttackEvent event, ServerPlayer attacker, ServerPlayer victim) {
+        PlayerMode vm = ModeService.mode(victim.getUUID());
+        if (vm.geschuetzt() && !ModeService.hatGrund(attacker.getUUID(), victim.getUUID())) {
+            deny(event, attacker, victim.getGameProfile().getName() + " ist im " + vm.label + "-Modus. Angriff nur mit triftigem Grund: /modus grund "
+                    + victim.getGameProfile().getName() + " <Grund>");
+            return false;
+        }
+        ModeService.kampf(attacker.getUUID(), victim.getUUID());
+        if (ModeService.mode(attacker.getUUID()).geschuetzt()) {
+            ModeService.set(attacker, PlayerMode.RP, 0);
+            Msg.player(attacker, "§eWer angreift, ist im RP-Modus. Dein Modus wurde auf §aRP§e gesetzt.");
+        }
+        return true;
     }
 
     private void deny(LivingAttackEvent event, ServerPlayer attacker, String reason) {

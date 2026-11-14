@@ -44,7 +44,7 @@ public final class EvidenceCommand {
                 .then(Commands.literal("typ")
                         .then(Commands.argument("typ", StringArgumentType.word())
                                 .suggests((c, b) -> net.minecraft.commands.SharedSuggestionProvider.suggest(
-                                        List.of("BLOCK_ABBAU", "BLOCK_SETZEN", "KISTE", "FEUER", "CAMPING", "EINREISE", "TOETUNG", "KRIEG"), b))
+                                        List.of("BLOCK_ABBAU", "BLOCK_SETZEN", "KISTE", "FEUER", "CAMPING", "EINREISE", "TOETUNG", "KRIEG", "ANGRIFFSGRUND"), b))
                                 .executes(ctx -> typ(ctx, 1))
                                 .then(Commands.argument("seite", IntegerArgumentType.integer(1))
                                         .executes(ctx -> typ(ctx, IntegerArgumentType.getInteger(ctx, "seite"))))))

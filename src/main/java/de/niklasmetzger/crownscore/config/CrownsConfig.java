@@ -51,6 +51,24 @@ public final class CrownsConfig {
     public static final ForgeConfigSpec.IntValue POST_ABFANG_PROZENT;
     public static final ForgeConfigSpec.IntValue GEBIET_MAX_CHUNKS;
 
+    public static final ForgeConfigSpec.IntValue MODUS_GRUND_MINUTEN;
+    public static final ForgeConfigSpec.IntValue MODUS_KAMPFSPERRE_SEKUNDEN;
+    public static final ForgeConfigSpec.IntValue MODUS_AFK_MAX_STUNDEN;
+    public static final ForgeConfigSpec.BooleanValue MODUS_AFK_ZAEHLT;
+    public static final ForgeConfigSpec.BooleanValue MODUS_TABLISTE;
+
+    public static final ForgeConfigSpec.BooleanValue LOG_AKTIV;
+    public static final ForgeConfigSpec.BooleanValue LOG_CHAT;
+    public static final ForgeConfigSpec.BooleanValue LOG_BEFEHLE;
+    public static final ForgeConfigSpec.BooleanValue LOG_ITEMS;
+    public static final ForgeConfigSpec.BooleanValue LOG_KLICKS;
+    public static final ForgeConfigSpec.IntValue LOG_PRO_TICK;
+    public static final ForgeConfigSpec.IntValue LOG_MAX_ERGEBNISSE;
+
+    public static final ForgeConfigSpec.BooleanValue RECHTE_FORGE_HANDLER;
+    public static final ForgeConfigSpec.BooleanValue RECHTE_BEFEHLE;
+    public static final ForgeConfigSpec.BooleanValue RECHTE_PRAEFIX;
+
     static {
         ForgeConfigSpec.Builder b = new ForgeConfigSpec.Builder();
 
@@ -124,6 +142,31 @@ public final class CrownsConfig {
 
         b.comment("Interne Gebiete (nur wenn Open Parties and Claims fehlt oder zusaetzlich)").push("gebiet");
         GEBIET_MAX_CHUNKS = b.comment("Maximale Chunks pro Nation").defineInRange("maxChunks", 2000, 1, 1000000);
+        b.pop();
+
+        b.comment("Spielermodus: RP, Farm, AFK").push("modus");
+        MODUS_GRUND_MINUTEN = b.comment("So lange gilt ein angegebener Grund fuer einen Angriff auf jemanden im Farm- oder AFK-Modus").defineInRange("grundMinuten", 30, 1, 1440);
+        MODUS_KAMPFSPERRE_SEKUNDEN = b.comment("Nach einem Kampf darf man so lange nicht aus dem RP-Modus wechseln").defineInRange("kampfSperreSekunden", 60, 0, 3600);
+        MODUS_AFK_MAX_STUNDEN = b.comment("Laengste erlaubte AFK-Dauer in Stunden").defineInRange("afkMaxStunden", 12, 1, 168);
+        MODUS_AFK_ZAEHLT = b.comment("Zaehlt AFK-Zeit fuer den Aktivitaetsbericht?").define("afkZaehltAlsAktivitaet", true);
+        MODUS_TABLISTE = b.comment("Modus in der Tabliste hinter dem Namen anzeigen").define("tabliste", true);
+        b.pop();
+
+        b.comment("Blockprotokoll (/cccore admin): wer hat wann was abgebaut, gesetzt, genommen").push("protokoll");
+        LOG_AKTIV = b.comment("Protokoll einschalten").define("aktiv", true);
+        LOG_CHAT = b.comment("Chatnachrichten protokollieren").define("chat", true);
+        LOG_BEFEHLE = b.comment("Befehle von Spielern protokollieren").define("befehle", true);
+        LOG_ITEMS = b.comment("Fallengelassene und aufgehobene Items protokollieren").define("items", true);
+        LOG_KLICKS = b.comment("Tueren, Hebel, Knoepfe und Falltueren protokollieren").define("klicks", true);
+        LOG_PRO_TICK = b.comment("Bloecke, die ein Rollback pro Tick setzt (hoeher = schneller, aber mehr Last)").defineInRange("rollbackProTick", 1000, 50, 20000);
+        LOG_MAX_ERGEBNISSE = b.comment("Hoechstens so viele Treffer zeigt eine Abfrage").defineInRange("maxErgebnisse", 5000, 100, 100000);
+        b.pop();
+
+        b.comment("Rechte (/cccore perms)").push("rechte");
+        RECHTE_FORGE_HANDLER = b.comment("Rechteverwaltung dieser Mod beim Start als Forge-Permission-Handler eintragen, damit andere Mods sie nutzen")
+                .define("forgeHandlerSetzen", true);
+        RECHTE_BEFEHLE = b.comment("Alle Befehle (auch Vanilla und andere Mods) ueber Rechte freigeben oder sperren: command.<name>").define("befehlsRechte", true);
+        RECHTE_PRAEFIX = b.comment("Praefix und Suffix der Gruppen im Chat und in der Tabliste anzeigen").define("praefixAnzeigen", true);
         b.pop();
 
         SPEC = b.build();

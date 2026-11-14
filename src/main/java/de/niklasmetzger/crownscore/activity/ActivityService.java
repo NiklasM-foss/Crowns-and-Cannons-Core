@@ -53,6 +53,11 @@ public final class ActivityService {
         long now = TimeUtil.now();
         for (ServerPlayer p : server.getPlayerList().getPlayers()) {
             if (!LAST_TICK.containsKey(p.getUUID())) LAST_TICK.put(p.getUUID(), now - 60_000L);
+            if (!CrownsConfig.MODUS_AFK_ZAEHLT.get()
+                    && de.niklasmetzger.crownscore.mode.ModeService.mode(p.getUUID()) == de.niklasmetzger.crownscore.mode.PlayerMode.AFK) {
+                LAST_TICK.put(p.getUUID(), now); // AFK-Minute nicht buchen
+                continue;
+            }
             book(server, p.getUUID(), now);
         }
         checkReport(server, now);

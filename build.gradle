@@ -15,6 +15,9 @@ base {
 // Mojang ships Java 17 to end users in 1.18+, so your mod should target Java 17.
 java.toolchain.languageVersion = JavaLanguageVersion.of(17)
 
+// H2 (Datenbank fuer das Blockprotokoll) wird in die Mod-JAR eingebettet
+jarJar.enable()
+
 println "Java: ${System.getProperty 'java.version'}, JVM: ${System.getProperty 'java.vm.version'} (${System.getProperty 'java.vendor'}), Arch: ${System.getProperty 'os.arch'}"
 minecraft {
     // The mappings can be changed at any time and must be in the following format.
@@ -133,6 +136,11 @@ dependencies {
     compileOnly fg.deobf("curse.maven:balm-531761:8969708")
     compileOnly fg.deobf("curse.maven:waystones-245755:8849482")
     compileOnly fg.deobf("maven.modrinth:open-parties-and-claims:forge-1.20.1-0.33.0")
+
+    minecraftLibrary "com.h2database:h2:2.2.224"
+    jarJar(group: 'com.h2database', name: 'h2', version: '[2.2.224,2.3)') {
+        jarJar.pin(it, '2.2.224')
+    }
 }
 
 // This block of code expands all declared replace properties in the specified resource targets.
@@ -169,8 +177,19 @@ tasks.named('jar', Jar).configure {
     }
 
     // This is the preferred method to reobfuscate your jar file
+    archiveClassifier = 'slim'
     finalizedBy 'reobfJar'
 }
+
+// Die fertige Mod ist die JarJar-Variante mit eingebetteter H2
+tasks.named('jarJar') {
+    archiveClassifier = ''
+    finalizedBy 'reobfJarJar'
+}
+reobf {
+    jarJar { }
+}
+tasks.named('assemble') { dependsOn 'jarJar' }
 
 // However if you are in a multi-project build, dev time needs unobfed jar files, so you can delay the obfuscation until publishing by doing:
 // tasks.named('publish').configure {
@@ -193,4 +212,23 @@ publishing {
 
 tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8' // Use the UTF-8 charset for Java compilation
+}
+
+// Selbsttest-Mod nur fuer den Testserver (nicht Teil der Mod): ./gradlew selftestJar
+sourceSets {
+    selftest {
+        compileClasspath += sourceSets.main.output + sourceSets.main.compileClasspath
+        runtimeClasspath += sourceSets.main.output + sourceSets.main.runtimeClasspath
+    }
+}
+tasks.named('compileSelftestJava', JavaCompile) { options.encoding = 'UTF-8' }
+tasks.register('selftestJar', Jar) {
+    from sourceSets.selftest.output
+    archiveClassifier = 'selftest'
+    finalizedBy 'reobfSelftestJar'
+}
+reobf {
+    selftestJar {
+        libraries.from(sourceSets.selftest.compileClasspath)
+    }
 }

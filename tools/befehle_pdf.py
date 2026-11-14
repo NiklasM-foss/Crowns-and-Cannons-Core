@@ -114,7 +114,7 @@ section {{ page-break-inside: auto; }}
   <div><h3>Module</h3><ul class="toc">{toc}</ul></div>
 </div>
 <p class="hint"><span class="arg">&lt;Pflicht&gt;</span> muss angegeben werden, <span class="opt">[optional]</span> kann wegfallen.
-Für Land geht der Name oder das Kürzel. Im Spiel zeigt <b>/cccore list</b> dieselbe Liste, <b>/cccore list meine</b> nur deine Befehle.</p>
+Für Land geht der Name oder das Kürzel. Im Spiel zeigt <b>/cccore list</b> die Befehle, die du nutzen darfst. Was du nicht darfst, siehst du dort und in der Tab-Vervollständigung nicht.</p>
 {"".join(sections)}
 </body></html>"""
 

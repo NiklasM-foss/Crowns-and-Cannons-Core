@@ -21,11 +21,18 @@ public class Scheduler {
         MinecraftServer server = ServerLifecycleHooks.getCurrentServer();
         if (server == null) return;
         tick++;
+        try {
+            de.niklasmetzger.crownscore.log.RollbackService.tick();
+        } catch (Exception e) {
+            CrownsCore.LOGGER.error("Fehler im Rollback", e);
+        }
         if (tick % 20 == 0) {
             try {
                 PresenceTracker.everySecond(server);
                 DuelManager.everySecond(server);
                 WarService.everySecond(server);
+                de.niklasmetzger.crownscore.mode.ModeService.everySecond(server);
+                de.niklasmetzger.crownscore.perms.RoleWatcher.everySecond(server);
             } catch (Exception e) {
                 CrownsCore.LOGGER.error("Fehler in der Sekundenaufgabe", e);
             }
@@ -35,6 +42,7 @@ public class Scheduler {
                 ActivityService.everyMinute(server);
                 ElectionService.everyMinute(server);
                 LoanService.everyMinute(server);
+                de.niklasmetzger.crownscore.perms.PermissionManager.everyMinute();
             } catch (Exception e) {
                 CrownsCore.LOGGER.error("Fehler in der Minutenaufgabe", e);
             }

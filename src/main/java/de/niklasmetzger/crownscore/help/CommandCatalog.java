@@ -35,6 +35,26 @@ public final class CommandCatalog {
     public record Module(String key, String title, String intro) {}
 
     public record Entry(Module module, String syntax, Role role, String description) {
+        /** Feste Woerter des Befehls ohne Schraegstrich, z.B. [nation, beitreten]. */
+        public List<String> literals() {
+            List<String> out = new ArrayList<>();
+            for (String t : syntax.replaceFirst("^/", "").split(" +")) {
+                if (t.isEmpty() || t.startsWith("<") || t.startsWith("[")) break;
+                out.add(t.toLowerCase(Locale.ROOT));
+            }
+            return out;
+        }
+
+        /** Hat der Befehl nach den festen Woertern noch Argumente? */
+        public boolean hasArguments() {
+            return syntax.contains("<") || syntax.contains("[");
+        }
+
+        /** Rechteknoten, z.B. crownscore.nation.beitreten. */
+        public String node() {
+            return "crownscore." + String.join(".", literals());
+        }
+
         /** Befehl ohne Platzhalter, zum Vorschlagen per Klick. */
         public String suggestion() {
             int cut = syntax.length();

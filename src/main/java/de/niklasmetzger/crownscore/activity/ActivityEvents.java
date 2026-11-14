@@ -22,6 +22,7 @@ public class ActivityEvents {
         Nation n = d.nationOf(p.getUUID());
         if (n != null) n.mitglieder.put(p.getUUID(), r.name);
         ActivityService.sessionStart(p.getUUID());
+        de.niklasmetzger.crownscore.mode.ModeService.reset(p);
         d.setDirty();
     }
 
@@ -30,5 +31,8 @@ public class ActivityEvents {
         if (!(event.getEntity() instanceof ServerPlayer p)) return;
         ActivityService.sessionEnd(p.server, p.getUUID());
         PresenceTracker.forget(p.getUUID());
+        de.niklasmetzger.crownscore.mode.ModeService.forget(p.getUUID());
+        de.niklasmetzger.crownscore.log.Inspector.forget(p.getUUID());
+        de.niklasmetzger.crownscore.log.RollbackService.forget(p.getUUID());
     }
 }
