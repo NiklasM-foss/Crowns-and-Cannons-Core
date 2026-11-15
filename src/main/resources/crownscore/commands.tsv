@@ -31,7 +31,8 @@
 /nation umbenennen <Land> <Neuer Name>	ADMIN	Nation umbenennen, das Kürzel bleibt.
 /nation weltkarte info	ADMIN	Stand der Weltkarte: Länder, verknüpfte Nationen, Projektion, Grenzanzeige.
 /nation weltkarte import	ADMIN	Legt alle Länder der Erdkarte als Nationen an. Bestehende Nationen werden über Kürzel oder Namen verknüpft.
-/nation weltkarte minimap <umriss|grenze|flaeche|aus>	ADMIN	Zeigt die Ländergrenzen auf Xaero's Minimap, über Server-Claims von Open Parties and Claims ohne Bauschutz.
+/nation weltkarte minimap <flaeche|umriss|grenze|aus>	ADMIN	Zeigt die Länder auf Xaero's Minimap und Weltkarte: jedes Land gehört seinem Staatskonto und ist eine eigene Party in Open Parties and Claims, ohne Bauschutz.
+/nation annektieren <Land> <Nation>	ADMIN	Gibt ein ganzes Land an eine Nation, zum Beispiel nach einer Eroberung. Die Grenze dazwischen verschwindet auf der Karte.
 @krieg	Kriege	Kriegserklärung mit Kriegsart und Grund, Frieden und Wechsel der Kriegsart (Regel 4.1 und 4.2).
 /krieg liste	ALLE	Laufende Konflikte mit Kriegsart, Grund und Friedensangeboten.
 /krieg arten	ALLE	Alle Kriegsarten und ob dabei PvP erlaubt ist.
@@ -117,6 +118,8 @@
 /gebiet claim [Radius]	BEAMTER	Chunks für die eigene Nation beanspruchen, Radius bis 8.
 /gebiet freigeben [Radius]	BEAMTER	Chunks wieder freigeben.
 /gebiet anzahl	ALLE	Anzahl der Chunks pro Nation.
+/gebiet zuweisen <Nation> [Radius]	ADMIN	Chunks um dich einer Nation geben, etwa bei einer Teileroberung. Auf der Karte sofort sichtbar.
+/gebiet zuruecksetzen [Radius]	ADMIN	Chunks um dich wieder dem Land auf der Weltkarte zurückgeben.
 @admin	Protokoll	Blockprotokoll wie CoreProtect: wer hat wann was abgebaut, gesetzt, aus Kisten genommen, getötet, geschrieben. Mit Rollback.
 /cccore admin status	ADMIN	Größe des Protokolls und Kurzhilfe.
 /cccore admin inspect	ADMIN	Inspektor an oder aus. Linksklick zeigt die Geschichte eines Blocks, Rechtsklick Behälter und den Platz davor.

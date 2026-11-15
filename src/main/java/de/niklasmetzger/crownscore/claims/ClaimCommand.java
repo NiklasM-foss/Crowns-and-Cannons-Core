@@ -86,10 +86,19 @@ public final class ClaimCommand {
             }
         }
         d.setDirty();
+        if (added > 0) karte(p, center, radius);
         Msg.ok(ctx.getSource(), added + " Chunks fuer " + n.name + " beansprucht"
                 + (fremd > 0 ? ", " + fremd + " gehoeren schon einer anderen Nation" : "")
                 + ". Gesamt: " + (have + added) + "/" + max);
         return added;
+    }
+
+    /** Neue oder freigegebene Chunks sofort auf der Karte (Open Parties and Claims) zeigen. */
+    private static void karte(ServerPlayer p, ChunkPos center, int radius) {
+        if (p.level().dimension() != net.minecraft.world.level.Level.OVERWORLD || !net.minecraftforge.fml.ModList.get().isLoaded("openpartiesandclaims")) return;
+        java.util.List<ChunkPos> list = new java.util.ArrayList<>();
+        for (int dx = -radius; dx <= radius; dx++) for (int dz = -radius; dz <= radius; dz++) list.add(new ChunkPos(center.x + dx, center.z + dz));
+        OpacTerritory.syncChunks(p.server, list);
     }
 
     private static int unclaim(CommandContext<CommandSourceStack> ctx, int radius) throws CommandSyntaxException {
@@ -116,6 +125,7 @@ public final class ClaimCommand {
             }
         }
         d.setDirty();
+        if (removed > 0) karte(p, center, radius);
         Msg.ok(ctx.getSource(), removed + " Chunks freigegeben.");
         return removed;
     }

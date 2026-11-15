@@ -20,7 +20,10 @@
 - **Nation im Chat** vor dem Spielernamen, als Name oder Kürzel, Farbe einstellbar.
 - **Weltkarte**: 238 Länder der Erdkarte mit Grenzen aus Natural Earth,
   `/nation weltkarte import` legt sie als Nationen an, Gebiet aus der Karte für
-  gespielte Nationen, Grenzen auf Xaero's Minimap über Open Parties and Claims.
+  gespielte Nationen. Auf Xaero's Minimap ist jedes Land eine eigene Fläche mit
+  eigener Party in Open Parties and Claims, Besitzer ist der Staatschef.
+  `/nation annektieren` und `/gebiet zuweisen` für Eroberungen, die Grenze
+  verschwindet dann.
 - Selbsttest-Mod für den Testserver (`./gradlew selftestJar`, `/cctest`).
 
 ## 1.0.0

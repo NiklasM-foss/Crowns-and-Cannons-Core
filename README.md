@@ -87,12 +87,25 @@ der Vatikan sind dafür zu klein, die Antarktis ist ausgelassen.
   aber nur, wenn diese Nation gespielt wird (Staatschef oder Mitglieder).
   Unbespielte Länder sind freies Land: keine Visum- oder Camping-Meldungen, Kolonien
   zählen dort als unbesetztes Land.
-- `/nation weltkarte minimap umriss` zeigt die Grenzen auf Xaero's Minimap und
-  Weltkarte, über Server-Claims von Open Parties and Claims in der Farbe und mit dem
-  Namen des Landes, ohne Bauschutz. `umriss` markiert Landgrenzen und Küsten
-  (rund 76.000 Chunks, Aufbau etwa 40 Sekunden), `grenze` nur Landgrenzen,
-  `flaeche` ganze Länder, `aus` entfernt alles wieder. Claims von Spielern bleiben
-  unangetastet, das Innere der Länder bleibt bei `umriss` frei zum Claimen.
+- `/nation weltkarte minimap flaeche` zeigt die Länder auf Xaero's Minimap und
+  Weltkarte über Open Parties and Claims. Jede Nation hat ein **Staatskonto**, dem
+  ihre Chunks gehören (Name und Farbe des Landes, ohne Bauschutz), und eine eigene
+  **Party**. Besitzer der Party ist der Staatschef, solange es keinen gibt das
+  Staatskonto; die Bürger sind Mitglieder, Beamte haben den Rang Admin. Neuer
+  Staatschef, neue Bürger oder eine Umbenennung werden alle 30 Sekunden nachgezogen.
+  Aufbau für die ganze Erde etwa 40 Sekunden (rund 1,14 Millionen Chunks, etwa 17 MB
+  OPAC-Daten, beim Serverstart in unter 2 Sekunden geladen). Weil alles Land
+  vergeben ist, setzen Spieler dort keine eigenen OPAC-Claims; bestehende Claims von
+  Spielern bleiben unangetastet. Andere Modi: `umriss` (nur Landgrenzen und
+  Küsten), `grenze` (nur Landgrenzen), `aus` (alles entfernen).
+- **Eroberung:** `/nation annektieren <Land> <Nation>` gibt ein ganzes Land an eine
+  Nation. Seine Chunks gehen an deren Staatskonto, die Grenze dazwischen verschwindet
+  auf der Karte, der Staatschef des Eroberers hat das Land in seiner Party. Mit dem
+  Stammland als Ziel bekommt eine Nation ihr Land zurück. Für Teileroberungen gibt
+  `/gebiet zuweisen <Nation> [Radius]` einzelne Chunks ab, `/gebiet zuruecksetzen`
+  gibt sie dem Land auf der Karte zurück.
+- Open Parties and Claims muss auch im Modpack der Spieler sein, sonst zeigt Xaero
+  nichts an.
 - **Kalibrieren:** `/gebiet hier` zeigt Land und Grad. Passt das an einer bekannten
   Stadt nicht, in der Config `[weltkarte]` `mitteX`, `mitteZ` und `bloeckeProGrad`
   nachstellen und die Minimap-Anzeige neu aufbauen.

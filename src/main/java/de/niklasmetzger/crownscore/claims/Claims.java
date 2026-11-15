@@ -51,7 +51,7 @@ public final class Claims {
         if (level.dimension() == net.minecraft.world.level.Level.OVERWORLD && de.niklasmetzger.crownscore.world.WorldMap.active()) {
             String key = de.niklasmetzger.crownscore.world.WorldMap.nationFor(data, de.niklasmetzger.crownscore.world.WorldMap.atChunk(chunk.x, chunk.z));
             de.niklasmetzger.crownscore.data.Nation n = key == null ? null : data.nations.get(key);
-            if (n != null && (n.chef != null || !n.mitglieder.isEmpty())) return key;
+            if (n != null && n.gespielt()) return key;
         }
         return null;
     }

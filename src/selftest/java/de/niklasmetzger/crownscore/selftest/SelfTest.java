@@ -82,7 +82,22 @@ public class SelfTest {
         e.getDispatcher().register(Commands.literal("cctest").requires(s -> s.hasPermission(4)).executes(ctx -> {
             start(ctx.getSource().getServer());
             return 1;
-        }).then(Commands.literal("karte").executes(ctx -> {
+        }).then(Commands.literal("welt").executes(ctx -> {
+            // Testwelt: einige Laender bekommen einen Testbuerger, damit ihr Gebiet als gespielt gilt
+            CrownsData d = CrownsData.get(ctx.getSource().getServer());
+            int n = 0;
+            for (String code : new String[]{"DEU", "FRA", "SAU", "USA"}) {
+                for (Nation x : d.nations.values()) {
+                    if (code.equals(x.land)) {
+                        x.mitglieder.put(UUID.nameUUIDFromBytes(("testbuerger-" + code).getBytes()), "Testbuerger_" + code);
+                        n++;
+                    }
+                }
+            }
+            d.setDirty();
+            LOG.info("[CCTEST] Testwelt: {} Laender mit Testbuerger", n);
+            return n;
+        })).then(Commands.literal("karte").executes(ctx -> {
             karte(ctx.getSource().getServer());
             return 1;
         })));
@@ -175,52 +190,125 @@ public class SelfTest {
         return lvl.getEntitiesOfClass(Cow.class, new AABB(at(-8, -2, -8), at(8, 6, 8))).size();
     }
 
-    /** Weltkarte: bekannte Staedte und die Grenzanzeige fuer die Minimap. */
+    /** Schritt, der wartet, bis die Bedingung erfuellt ist (hoechstens timeout Ticks). */
+    private void stepUntil(String name, java.util.function.BooleanSupplier cond, int timeout) {
+        final int[] left = {timeout};
+        steps.add(new Step(0, name, new Runnable() {
+            @Override
+            public void run() {
+                if (!cond.getAsBoolean() && left[0]-- > 0) {
+                    steps.addFirst(new Step(0, name, this));
+                    wait = 1;
+                } else if (!cond.getAsBoolean()) {
+                    check(name, false, "Zeitueberschreitung");
+                }
+            }
+        }));
+    }
+
+    private UUID ownerAt(double lon, double lat) {
+        double bpg = de.niklasmetzger.crownscore.world.WorldMap.blocksPerDegree();
+        var c = xaero.pac.common.server.api.OpenPACServerAPI.get(server).getServerClaimsManager()
+                .get(net.minecraft.world.level.Level.OVERWORLD.location(), (int) Math.floor(lon * bpg / 16), (int) Math.floor(-lat * bpg / 16));
+        return c == null ? null : c.getPlayerId();
+    }
+
+    private Nation nat(String code) {
+        for (Nation x : CrownsData.get(server).nations.values()) if (code.equals(x.land)) return x;
+        return null;
+    }
+
+    /** Weltkarte: Staedte, Laender als Staatskonten und Parties, Annexion, Teileroberung. */
     private void karte(MinecraftServer srv) {
         server = srv;
         lvl = srv.overworld();
         pass = fail = 0;
+        steps.clear();
         LOG.info("[CCTEST] START Karte");
         double bpg = de.niklasmetzger.crownscore.world.WorldMap.blocksPerDegree();
-        Object[][] staedte = {
-                {"Berlin", 13.405, 52.52, "Deutschland"}, {"Riad", 46.72, 24.69, "Saudi-Arabien"},
-                {"New York", -74.0, 40.71, "Vereinigte Staaten"}, {"Paris", 2.35, 48.86, "Frankreich"},
-                {"Sydney", 151.21, -33.87, "Australien"}, {"Kairo", 31.24, 30.04, "Ägypten"}, {"Tokio", 139.69, 35.69, "Japan"}};
-        CrownsData d = CrownsData.get(server);
-        for (Object[] st : staedte) {
-            int x = (int) Math.floor((double) st[1] * bpg);
-            int z = (int) Math.floor(-(double) st[2] * bpg);
-            var land = de.niklasmetzger.crownscore.world.WorldMap.atChunk(x >> 4, z >> 4);
-            String name = land == null ? "Meer" : land.name();
-            check("Karte: " + st[0] + " (" + x + " " + z + ") liegt in " + st[3], st[3].equals(name), name);
-        }
-        // Gebiet: nur gespielte Nationen besitzen ihr Land
-        BlockPos berlin = new BlockPos((int) (13.405 * bpg), 64, (int) (-52.52 * bpg));
-        Nation deu = d.nation("Deutschland");
-        check("Karte: Deutschland ist angelegt und verknuepft", deu != null && "DEU".equals(deu.land), deu == null ? "fehlt" : deu.land);
-        if (deu != null) {
-            boolean leer = deu.chef == null && deu.mitglieder.isEmpty();
-            check("Karte: unbespieltes Deutschland ist freies Land", !leer || de.niklasmetzger.crownscore.claims.Claims.nationAt(lvl, berlin) == null, "");
+        step("Staedte", () -> {
+            Object[][] staedte = {
+                    {"Berlin", 13.405, 52.52, "Deutschland"}, {"Riad", 46.72, 24.69, "Saudi-Arabien"},
+                    {"New York", -74.0, 40.71, "Vereinigte Staaten"}, {"Paris", 2.35, 48.86, "Frankreich"},
+                    {"Sydney", 151.21, -33.87, "Australien"}, {"Kairo", 31.24, 30.04, "Ägypten"}, {"Tokio", 139.69, 35.69, "Japan"}};
+            for (Object[] st : staedte) {
+                int x = (int) Math.floor((double) st[1] * bpg);
+                int z = (int) Math.floor(-(double) st[2] * bpg);
+                var land = de.niklasmetzger.crownscore.world.WorldMap.atChunk(x >> 4, z >> 4);
+                String name = land == null ? "Meer" : land.name();
+                check("Karte: " + st[0] + " liegt in " + st[3], st[3].equals(name), name);
+            }
+            check("Karte: mitten im Atlantik niemand", de.niklasmetzger.crownscore.claims.Claims.nationAt(lvl, new BlockPos((int) (-30 * bpg), 64, (int) (-30 * bpg))) == null, "");
+        });
+        step("Gebiet nur fuer gespielte Nationen", () -> {
+            CrownsData d = CrownsData.get(server);
+            BlockPos berlin = new BlockPos((int) (13.405 * bpg), 64, (int) (-52.52 * bpg));
+            Nation deu = nat("DEU");
+            check("Karte: Deutschland ist angelegt und haelt DEU", deu != null && deu.laender.contains("DEU"), deu == null ? "fehlt" : String.valueOf(deu.laender));
+            if (deu == null) return;
             UUID dummy = UUID.fromString("00000000-0000-0000-0000-0000000000de");
-            deu.mitglieder.put(dummy, "Testbuerger");
-            String owner = de.niklasmetzger.crownscore.claims.Claims.nationAt(lvl, berlin);
-            check("Karte: mit Buerger gehoert Berlin zu Deutschland", deu.key().equals(owner), String.valueOf(owner));
+            boolean hatte = deu.mitglieder.containsKey(dummy);
             deu.mitglieder.remove(dummy);
-        }
-        check("Karte: mitten im Atlantik niemand", de.niklasmetzger.crownscore.claims.Claims.nationAt(lvl, new BlockPos((int) (-30 * bpg), 64, (int) (-30 * bpg))) == null, "");
-        // Grenzanzeige: auf der deutsch-franzoesischen Grenze bei Strassburg muss ein Server-Claim mit Laendername liegen
-        var api = xaero.pac.common.server.api.OpenPACServerAPI.get(server);
-        var claims = api.getServerClaimsManager();
-        int cz = (int) Math.floor(-48.58 * bpg / 16);
-        String found = null;
-        for (int cx = (int) (7.0 * bpg / 16); cx <= (int) (8.5 * bpg / 16) && found == null; cx++) {
-            var c = claims.get(net.minecraft.world.level.Level.OVERWORLD.location(), cx, cz);
-            if (c != null && new UUID(0, 0).equals(c.getPlayerId())) found = claims.getFullName(c).getString() + " bei Chunk " + cx + "/" + cz;
-        }
-        check("Minimap: Grenz-Claim bei Strassburg", found != null && (found.contains("Deutschland") || found.contains("Frankreich")), String.valueOf(found));
-        var inner = claims.get(net.minecraft.world.level.Level.OVERWORLD.location(), (int) (10.5 * bpg / 16), (int) (-51.0 * bpg / 16));
-        check("Minimap: Inneres von Deutschland bleibt frei (Umriss)", inner == null, inner == null ? "" : claims.getFullName(inner).getString());
-        LOG.info("[CCTEST] FERTIG: {} bestanden, {} fehlgeschlagen", pass, fail);
+            boolean leer = !deu.gespielt();
+            check("Karte: unbespieltes Deutschland ist freies Land", !leer || de.niklasmetzger.crownscore.claims.Claims.nationAt(lvl, berlin) == null, "");
+            deu.mitglieder.put(dummy, "Testbuerger");
+            check("Karte: mit Buerger gehoert Berlin zu Deutschland", deu.key().equals(de.niklasmetzger.crownscore.claims.Claims.nationAt(lvl, berlin)), "");
+            if (!hatte) deu.mitglieder.remove(dummy);
+        });
+        step("Flaeche aufbauen", () -> cmd("nation weltkarte minimap flaeche"));
+        stepUntil("Flaeche fertig", () -> !de.niklasmetzger.crownscore.claims.OpacTerritory.running(), 4000);
+        step("Laender als Staatskonten", () -> {
+            Nation deu = nat("DEU"), fra = nat("FRA");
+            UUID b = ownerAt(13.405, 52.52), pa = ownerAt(2.35, 48.86);
+            check("Minimap: Berlin gehoert dem Staatskonto von Deutschland", deu != null && deu.staat().equals(b), String.valueOf(b));
+            check("Minimap: Paris gehoert dem Staatskonto von Frankreich", fra != null && fra.staat().equals(pa), String.valueOf(pa));
+            var info = xaero.pac.common.server.api.OpenPACServerAPI.get(server).getServerClaimsManager().getPlayerInfo(deu.staat());
+            check("Minimap: Besitzername ist Deutschland", info != null && "Deutschland".equals(info.getPlayerUsername()), info == null ? "null" : info.getPlayerUsername());
+            var party = xaero.pac.common.server.api.OpenPACServerAPI.get(server).getPartyManager().getPartyById(deu.partei);
+            check("Party: Deutschland hat eine eigene Party", party != null, "");
+        });
+        step("Staatschef wird Party-Besitzer", () -> {
+            Nation deu = nat("DEU");
+            UUID chef = UUID.fromString("00000000-0000-0000-0000-0000000c4ef0");
+            deu.mitglieder.put(chef, "Kanzlerin");
+            deu.chef = chef;
+            de.niklasmetzger.crownscore.claims.OpacTerritory.syncNation(server, deu);
+            var party = xaero.pac.common.server.api.OpenPACServerAPI.get(server).getPartyManager().getPartyById(deu.partei);
+            check("Party: Staatschef ist Besitzer", party != null && chef.equals(party.getOwner().getUUID()), party == null ? "keine Party" : String.valueOf(party.getOwner().getUUID()));
+            check("Party: Buerger ist Mitglied", party != null && party.getMemberInfo(UUID.fromString("00000000-0000-0000-0000-0000000000de")) != null || !deu.mitglieder.containsKey(UUID.fromString("00000000-0000-0000-0000-0000000000de")), "");
+            deu.chef = null;
+            deu.mitglieder.remove(chef);
+            de.niklasmetzger.crownscore.claims.OpacTerritory.syncNation(server, deu);
+            check("Party: ohne Staatschef wieder das Staatskonto", party != null && deu.staat().equals(party.getOwner().getUUID()), party == null ? "" : String.valueOf(party.getOwner().getUUID()));
+        });
+        step("Frankreich annektieren", () -> cmd("nation annektieren FRA Deutschland"));
+        stepUntil("Annexion fertig", () -> !de.niklasmetzger.crownscore.claims.OpacTerritory.running(), 4000);
+        step("Grenze weg", () -> {
+            Nation deu = nat("DEU"), fra = nat("FRA");
+            check("Annexion: Deutschland haelt FRA", deu.laender.contains("FRA") && !fra.laender.contains("FRA"), deu.laender + " / " + fra.laender);
+            check("Annexion: Paris gehoert jetzt dem Staatskonto von Deutschland", deu.staat().equals(ownerAt(2.35, 48.86)), String.valueOf(ownerAt(2.35, 48.86)));
+            UUID west = ownerAt(7.2, 48.58), ost = ownerAt(8.3, 48.58);
+            check("Annexion: bei Strassburg beide Seiten gleicher Besitzer, keine Grenze", deu.staat().equals(west) && deu.staat().equals(ost), west + " / " + ost);
+        });
+        step("Frankreich zurueckgeben", () -> cmd("nation annektieren FRA Frankreich"));
+        stepUntil("Rueckgabe fertig", () -> !de.niklasmetzger.crownscore.claims.OpacTerritory.running(), 4000);
+        step("Grenze wieder da", () -> {
+            Nation fra = nat("FRA");
+            check("Rueckgabe: Paris gehoert wieder Frankreich", fra.staat().equals(ownerAt(2.35, 48.86)), String.valueOf(ownerAt(2.35, 48.86)));
+        });
+        step("Teileroberung", () -> {
+            CrownsData d = CrownsData.get(server);
+            Nation deu = nat("DEU"), fra = nat("FRA");
+            int cx = (int) Math.floor(2.35 * bpg / 16), cz = (int) Math.floor(-48.86 * bpg / 16);
+            var map = d.claims.computeIfAbsent(net.minecraft.world.level.Level.OVERWORLD.location().toString(), k -> new java.util.HashMap<>());
+            map.put(net.minecraft.world.level.ChunkPos.asLong(cx, cz), deu.key());
+            de.niklasmetzger.crownscore.claims.OpacTerritory.syncChunks(server, List.of(new net.minecraft.world.level.ChunkPos(cx, cz)));
+            check("Teileroberung: ein Chunk in Paris gehoert Deutschland", deu.staat().equals(ownerAt(2.35, 48.86)), "");
+            check("Teileroberung: Nachbarchunk bleibt Frankreich", fra.staat().equals(ownerAt(2.35 + 0.2, 48.86)), "");
+            map.remove(net.minecraft.world.level.ChunkPos.asLong(cx, cz));
+            de.niklasmetzger.crownscore.claims.OpacTerritory.syncChunks(server, List.of(new net.minecraft.world.level.ChunkPos(cx, cz)));
+            check("Teileroberung: zurueckgesetzt", fra.staat().equals(ownerAt(2.35, 48.86)), "");
+        });
     }
 
     private void start(MinecraftServer srv) {

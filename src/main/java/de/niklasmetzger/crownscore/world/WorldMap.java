@@ -27,6 +27,8 @@ public final class WorldMap {
     private static byte[] cells;
     private static List<Country> countries;
     private static Country[] byIndex;
+    /** Feldgrenzen je Land: minI, maxI, minJ, maxJ. */
+    private static int[][] bounds;
     private static boolean failed;
 
     private WorldMap() {}
@@ -56,6 +58,21 @@ public final class WorldMap {
                 idx[co.index()] = co;
                 if (co.fields() > 0) list.add(co);
             }
+            int[][] b = new int[256][];
+            for (int j = 0; j < h; j++) {
+                for (int i = 0; i < w; i++) {
+                    int v = c[j * w + i] & 0xFF;
+                    if (v == 0) continue;
+                    if (b[v] == null) b[v] = new int[]{i, i, j, j};
+                    else {
+                        if (i < b[v][0]) b[v][0] = i;
+                        if (i > b[v][1]) b[v][1] = i;
+                        if (j < b[v][2]) b[v][2] = j;
+                        if (j > b[v][3]) b[v][3] = j;
+                    }
+                }
+            }
+            bounds = b;
             width = w;
             height = h;
             cells = c;
@@ -111,9 +128,36 @@ public final class WorldMap {
     public static String nationFor(CrownsData data, Country c) {
         if (c == null) return null;
         for (Nation n : data.nations.values()) {
-            if (c.code().equalsIgnoreCase(n.land)) return n.key();
+            for (String l : n.laender) if (c.code().equalsIgnoreCase(l)) return n.key();
         }
         return null;
+    }
+
+    /** Chunkbereich {minX, maxX, minZ, maxZ}, der alle genannten Laender umschliesst, oder null. */
+    public static int[] chunkBounds(java.util.Collection<String> codes) {
+        if (!loaded()) return null;
+        double bpg = blocksPerDegree();
+        int[] r = null;
+        for (String code : codes) {
+            Country c = byCode(code);
+            if (c == null || bounds[c.index()] == null) continue;
+            int[] b = bounds[c.index()];
+            double lonMin = -180.0 + b[0] * 360.0 / width, lonMax = -180.0 + (b[1] + 1) * 360.0 / width;
+            double latMax = 90.0 - b[2] * 180.0 / height, latMin = 90.0 - (b[3] + 1) * 180.0 / height;
+            int x0 = (int) Math.floor((CrownsConfig.KARTE_MITTE_X.get() + lonMin * bpg) / 16.0) - 1;
+            int x1 = (int) Math.floor((CrownsConfig.KARTE_MITTE_X.get() + lonMax * bpg) / 16.0) + 1;
+            int z0 = (int) Math.floor((CrownsConfig.KARTE_MITTE_Z.get() - latMax * bpg) / 16.0) - 1;
+            int z1 = (int) Math.floor((CrownsConfig.KARTE_MITTE_Z.get() - latMin * bpg) / 16.0) + 1;
+            r = r == null ? new int[]{x0, x1, z0, z1} : new int[]{Math.min(r[0], x0), Math.max(r[1], x1), Math.min(r[2], z0), Math.max(r[3], z1)};
+        }
+        return r;
+    }
+
+    /** Farbe einer Nation auf der Karte: die ihres Stammlands, sonst aus dem Namen abgeleitet. */
+    public static int colorOf(Nation n) {
+        Country c = n.land == null || n.land.isEmpty() ? null : byCode(n.land);
+        if (c != null) return c.color();
+        return 0x404040 | (n.key().hashCode() & 0xBFBFBF);
     }
 
     /** Blockbereich der Karte, abhaengig von der Kalibrierung. */

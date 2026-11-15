@@ -29,6 +29,8 @@ public class CrownsData extends SavedData {
     public final Deque<EvidenceEntry> evidence = new ArrayDeque<>();
     public final Map<UUID, ActivityRecord> activity = new HashMap<>();
     public String lastActivityReportWeek = "";
+    /** Anzeige der Laender auf der Minimap: FLAECHE, UMRISS, GRENZE oder AUS (leer = noch nie aufgebaut). */
+    public String karteModus = "";
     public final List<Election> elections = new ArrayList<>();
     public int nextElectionId = 1;
     public final List<Mail> mails = new ArrayList<>();
@@ -137,6 +139,7 @@ public class CrownsData extends SavedData {
         for (Map.Entry<UUID, ActivityRecord> e : activity.entrySet()) ac.put(e.getKey().toString(), e.getValue().toNbt());
         t.put("activity", ac);
         t.putString("lastActivityReportWeek", lastActivityReportWeek);
+        t.putString("karteModus", karteModus);
         t.put("elections", list(elections, Election::toNbt));
         t.putInt("nextElectionId", nextElectionId);
         t.put("mails", list(mails, Mail::toNbt));
@@ -182,6 +185,7 @@ public class CrownsData extends SavedData {
             }
         }
         d.lastActivityReportWeek = t.getString("lastActivityReportWeek");
+        d.karteModus = t.getString("karteModus");
         for (CompoundTag c : compounds(t, "elections")) d.elections.add(Election.fromNbt(c));
         d.nextElectionId = Math.max(1, t.getInt("nextElectionId"));
         for (CompoundTag c : compounds(t, "mails")) d.mails.add(Mail.fromNbt(c));

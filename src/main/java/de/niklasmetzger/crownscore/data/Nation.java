@@ -29,8 +29,14 @@ public class Nation {
     /** Nationen (Schluessel), die die Wegsteine dieser Nation nutzen duerfen. */
     public final Set<String> wegsteinFreigaben = new LinkedHashSet<>();
     public long gegruendet;
-    /** Land auf der Weltkarte (Natural-Earth-Code wie DEU), leer = keins. */
+    /** Stammland auf der Weltkarte (Natural-Earth-Code wie DEU), leer = keins. */
     public String land = "";
+    /** Alle Laender der Weltkarte, die diese Nation haelt: das Stammland plus Eroberungen. */
+    public final Set<String> laender = new LinkedHashSet<>();
+    /** Staatskonto: gehoert die Claims in Open Parties and Claims, bleibt bei Umbenennung gleich. */
+    public UUID staat;
+    /** Party der Nation in Open Parties and Claims. */
+    public UUID partei;
 
     public Nation() {}
 
@@ -46,6 +52,20 @@ public class Nation {
 
     public static String key(String name) {
         return name == null ? "" : name.toLowerCase(Locale.ROOT);
+    }
+
+    /** Staatskonto, beim ersten Aufruf aus Stammland oder Name abgeleitet und dann fest gespeichert. */
+    public UUID staat() {
+        if (staat == null) {
+            String basis = land != null && !land.isEmpty() ? land : key();
+            staat = UUID.nameUUIDFromBytes(("crownscore-staat:" + basis).getBytes(java.nio.charset.StandardCharsets.UTF_8));
+        }
+        return staat;
+    }
+
+    /** Wird die Nation gespielt (Staatschef oder Mitglieder)? */
+    public boolean gespielt() {
+        return chef != null || !mitglieder.isEmpty();
     }
 
     public boolean isMember(UUID id) {
@@ -77,6 +97,9 @@ public class Nation {
         t.put("wegsteinFreigaben", NbtUtil.strings(wegsteinFreigaben));
         t.putLong("gegruendet", gegruendet);
         t.putString("land", land == null ? "" : land);
+        t.put("laender", NbtUtil.strings(laender));
+        NbtUtil.putUuid(t, "staat", staat);
+        NbtUtil.putUuid(t, "partei", partei);
         return t;
     }
 
@@ -93,6 +116,10 @@ public class Nation {
         n.wegsteinFreigaben.addAll(NbtUtil.stringSet(t, "wegsteinFreigaben"));
         n.gegruendet = t.getLong("gegruendet");
         n.land = t.getString("land");
+        n.laender.addAll(NbtUtil.stringSet(t, "laender"));
+        if (n.laender.isEmpty() && !n.land.isEmpty()) n.laender.add(n.land); // Daten vor den Eroberungen
+        n.staat = NbtUtil.uuid(t, "staat");
+        n.partei = NbtUtil.uuid(t, "partei");
         return n;
     }
 
