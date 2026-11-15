@@ -14,6 +14,9 @@ public final class CrownsConfig {
     public static final ForgeConfigSpec.ConfigValue<String> WEBHOOK_NEWS;
     public static final ForgeConfigSpec.ConfigValue<List<? extends String>> ADMINS;
     public static final ForgeConfigSpec.ConfigValue<String> ZEITZONE;
+    public static final ForgeConfigSpec.BooleanValue CHAT_NATION;
+    public static final ForgeConfigSpec.ConfigValue<String> CHAT_NATION_ANZEIGE;
+    public static final ForgeConfigSpec.ConfigValue<String> CHAT_NATION_FARBE;
 
     public static final ForgeConfigSpec.BooleanValue SPAWN_WELTSPAWN;
     public static final ForgeConfigSpec.IntValue SPAWN_X;
@@ -85,6 +88,12 @@ public final class CrownsConfig {
         ADMINS = b.comment("Spielernamen mit Admin-Rechten in dieser Mod, zusaetzlich zu OPs")
                 .defineListAllowEmpty(List.of("admins"), List::of, o -> o instanceof String);
         ZEITZONE = b.comment("Zeitzone fuer Berichte und Zeitangaben").define("zeitzone", "Europe/Berlin");
+        b.pop();
+
+        b.comment("Chat").push("chat");
+        CHAT_NATION = b.comment("Nation vor dem Spielernamen im Chat (gilt auch fuer Namensschild und Todesmeldungen)").define("nationVorName", true);
+        CHAT_NATION_ANZEIGE = b.comment("NAME = ganzer Landesname, KUERZEL = Kuerzel wie SAU").define("nationAnzeige", "NAME");
+        CHAT_NATION_FARBE = b.comment("Farbe der Nation mit &, z.B. &6 fuer Gold").define("nationFarbe", "&6");
         b.pop();
 
         b.comment("Kriege und PvP").push("krieg");

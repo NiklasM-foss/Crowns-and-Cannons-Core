@@ -1,22 +1,34 @@
 package de.niklasmetzger.crownscore.perms;
 
 import de.niklasmetzger.crownscore.config.CrownsConfig;
+import de.niklasmetzger.crownscore.data.CrownsData;
+import de.niklasmetzger.crownscore.data.Nation;
 import de.niklasmetzger.crownscore.mode.ModeService;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 
-/** Praefix und Suffix aus den Rechtegruppen vor dem Namen, Spielermodus in der Tabliste. */
+/** Nation und Praefix der Rechtegruppe vor dem Namen im Chat, Spielermodus in der Tabliste. */
 public class DisplayEvents {
 
     @SubscribeEvent
     public void onName(PlayerEvent.NameFormat event) {
-        if (!(event.getEntity() instanceof ServerPlayer p) || !CrownsConfig.RECHTE_PRAEFIX.get()) return;
-        String pre = PermissionManager.prefix(p.getUUID());
-        String suf = PermissionManager.suffix(p.getUUID());
-        if (pre.isEmpty() && suf.isEmpty()) return;
-        event.setDisplayname(Component.literal(spacedPre(pre)).append(event.getUsername().copy()).append(Component.literal(spacedSuf(suf))));
+        if (!(event.getEntity() instanceof ServerPlayer p)) return;
+        String nation = nationTag(p);
+        String pre = CrownsConfig.RECHTE_PRAEFIX.get() ? PermissionManager.prefix(p.getUUID()) : "";
+        String suf = CrownsConfig.RECHTE_PRAEFIX.get() ? PermissionManager.suffix(p.getUUID()) : "";
+        if (nation.isEmpty() && pre.isEmpty() && suf.isEmpty()) return;
+        event.setDisplayname(Component.literal(nation + spacedPre(pre)).append(event.getUsername().copy()).append(Component.literal(spacedSuf(suf))));
+    }
+
+    /** z.B. "§6[Saudi-Arabien]§r " oder leer, wenn der Spieler keiner Nation angehoert. */
+    static String nationTag(ServerPlayer p) {
+        if (!CrownsConfig.CHAT_NATION.get()) return "";
+        Nation n = CrownsData.get(p.server).nationOf(p.getUUID());
+        if (n == null) return "";
+        String text = "KUERZEL".equalsIgnoreCase(CrownsConfig.CHAT_NATION_ANZEIGE.get().trim()) ? n.kuerzel : n.name;
+        return PermissionManager.color(CrownsConfig.CHAT_NATION_FARBE.get()) + "[" + text + "]§r ";
     }
 
     @SubscribeEvent

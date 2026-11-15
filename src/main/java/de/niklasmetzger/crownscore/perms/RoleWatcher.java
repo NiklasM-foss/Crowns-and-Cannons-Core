@@ -24,9 +24,12 @@ public final class RoleWatcher {
         for (ServerPlayer p : server.getPlayerList().getPlayers()) {
             Nation n = d.nationOf(p.getUUID());
             String sig = (Perms.isAdmin(p) ? "A" : "-")
-                    + (n == null ? "" : n.key() + (n.isChef(p.getUUID()) ? ":C" : n.isBeamter(p.getUUID()) ? ":B" : ":M"));
+                    + (n == null ? "" : n.key() + "|" + n.name + "|" + n.kuerzel + (n.isChef(p.getUUID()) ? ":C" : n.isBeamter(p.getUUID()) ? ":B" : ":M"));
             String old = LAST.put(p.getUUID(), sig);
-            if (old != null && !old.equals(sig)) server.getCommands().sendCommands(p);
+            if (old != null && !old.equals(sig)) {
+                server.getCommands().sendCommands(p);
+                de.niklasmetzger.crownscore.mode.ModeService.refresh(p); // Nation vor dem Namen im Chat
+            }
         }
         LAST.keySet().removeIf(id -> server.getPlayerList().getPlayer(id) == null);
     }

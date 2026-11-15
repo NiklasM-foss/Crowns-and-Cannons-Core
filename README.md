@@ -61,6 +61,9 @@ Adminrechte auch einem OP.
 - **Darlehen** buchen wöchentlich eine Rate aus der Staatskasse ab, Verzug wird
   öffentlich gemacht.
 - **Wahlen** enden automatisch, bei Amtswahlen wird der Sieger Staatschef.
+- **Nation im Chat**: Vor dem Spielernamen steht die Nation, z.B.
+  `[Saudi-Arabien] [Gamemaster] Niklas`. Das gilt auch für das Namensschild und
+  Todesmeldungen. Ganzer Name oder Kürzel und die Farbe stehen in der Config.
 - **Spielermodus**: Nach jedem Einloggen ist man im RP-Modus. Im Farm- oder
   AFK-Modus darf nur angreifen, wer vorher `/modus grund <Spieler> <Grund>`
   einträgt (gilt 30 Minuten, steht in der Akte). Wer angreift, landet selbst im RP
@@ -163,6 +166,8 @@ Besitzer eines OPAC-Claims wird über seine Nation zugeordnet.
 Liegt pro Welt unter `world/serverconfig/crownscore-server.toml` und wird beim
 ersten Start mit Kommentaren erzeugt. Wichtig:
 
+- `chat.nationVorName`, `chat.nationAnzeige` (`NAME` oder `KUERZEL`),
+  `chat.nationFarbe` (z.B. `&6`).
 - `discord.kriegsnews`, `discord.gericht`, `discord.aktivitaet`, `discord.news`:
   Webhook-URLs der Discord-Kanäle.
 - `krieg.spawnRadius`, `krieg.kampfErlaubt`, `krieg.blitzkriegMinuten`.

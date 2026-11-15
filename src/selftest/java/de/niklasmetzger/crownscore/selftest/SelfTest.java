@@ -214,6 +214,14 @@ public class SelfTest {
             check("Aufbau", true, "");
         });
 
+        step("Nation vor dem Namen im Chat", () -> {
+            ModeService.refresh(a);
+            ModeService.refresh(b);
+            String na = a.getDisplayName().getString().replaceAll("§.", "");
+            String nbn = b.getDisplayName().getString().replaceAll("§.", "");
+            check("Nation vor dem Namen im Chat", na.startsWith("[Testland Alpha]") && nbn.startsWith("[Testland Beta]"), "\"" + na + "\", \"" + nbn + "\"");
+        });
+
         // ---- PvP und Modi ------------------------------------------------
         step("Ohne Krieg kein PvP", () -> check("Ohne Krieg kein PvP", blocked(a, b), ""));
         step("Krieg erklaeren", () -> {
@@ -372,7 +380,7 @@ public class SelfTest {
             CommandSourceStack sa = a.createCommandSourceStack();
             ModeService.refresh(a);
             check("Platzhalter crownscore.cccore.admin.* gibt Zugriff", canUse(sa, "cccore", "admin", "lookup"), "");
-            check("Praefix im Anzeigenamen", a.getDisplayName().getString().contains("[Test]"), "\"" + a.getDisplayName().getString() + "\"");
+            check("Nation und Praefix im Anzeigenamen", a.getDisplayName().getString().replaceAll("§.", "").equals("[Testland Alpha] [Test] TestAlpha"), "\"" + a.getDisplayName().getString() + "\"");
             check("Forge-PermissionAPI nutzt crownscore:permissions",
                     "crownscore:permissions".equals(String.valueOf(PermissionAPI.getActivePermissionHandler())), String.valueOf(PermissionAPI.getActivePermissionHandler()));
         });
