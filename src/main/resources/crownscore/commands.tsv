@@ -29,6 +29,9 @@
 /nation staatschef <Land> <Spieler>	ADMIN	Staatschef einsetzen.
 /nation setzen <Spieler> <Land>	ADMIN	Spieler direkt einer Nation zuordnen.
 /nation umbenennen <Land> <Neuer Name>	ADMIN	Nation umbenennen, das Kürzel bleibt.
+/nation weltkarte info	ADMIN	Stand der Weltkarte: Länder, verknüpfte Nationen, Projektion, Grenzanzeige.
+/nation weltkarte import	ADMIN	Legt alle Länder der Erdkarte als Nationen an. Bestehende Nationen werden über Kürzel oder Namen verknüpft.
+/nation weltkarte minimap <umriss|grenze|flaeche|aus>	ADMIN	Zeigt die Ländergrenzen auf Xaero's Minimap, über Server-Claims von Open Parties and Claims ohne Bauschutz.
 @krieg	Kriege	Kriegserklärung mit Kriegsart und Grund, Frieden und Wechsel der Kriegsart (Regel 4.1 und 4.2).
 /krieg liste	ALLE	Laufende Konflikte mit Kriegsart, Grund und Friedensangeboten.
 /krieg arten	ALLE	Alle Kriegsarten und ob dabei PvP erlaubt ist.

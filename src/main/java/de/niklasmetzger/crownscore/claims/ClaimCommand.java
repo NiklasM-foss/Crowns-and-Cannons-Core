@@ -46,6 +46,14 @@ public final class ClaimCommand {
         ChunkPos c = new ChunkPos(p.blockPosition());
         if (n == null) Msg.info(ctx.getSource(), "Chunk " + c.x + "/" + c.z + " gehoert niemandem (Natur).");
         else Msg.info(ctx.getSource(), "Chunk " + c.x + "/" + c.z + " gehoert " + d.anzeige(n) + ".");
+        if (p.level().dimension() == net.minecraft.world.level.Level.OVERWORLD && de.niklasmetzger.crownscore.world.WorldMap.loaded()) {
+            var land = de.niklasmetzger.crownscore.world.WorldMap.atChunk(c.x, c.z);
+            double lon = de.niklasmetzger.crownscore.world.WorldMap.lon(p.getX());
+            double lat = de.niklasmetzger.crownscore.world.WorldMap.lat(p.getZ());
+            Msg.line(ctx.getSource(), String.format(java.util.Locale.GERMANY, " §7Weltkarte: %s §8(%.2f° %s, %.2f° %s)",
+                    land == null ? "Meer" : land.name() + " (" + land.code() + ")",
+                    Math.abs(lat), lat >= 0 ? "N" : "S", Math.abs(lon), lon >= 0 ? "O" : "W"));
+        }
         return 1;
     }
 

@@ -46,6 +46,13 @@ public final class Claims {
                 // OPAC-API nicht verfuegbar, dann nur interne Gebiete
             }
         }
+        // Zuletzt die Weltkarte: Land an dieser Stelle und die damit verknuepfte Nation. Nur Nationen, die
+        // gespielt werden (Staatschef oder Mitglieder), besitzen ihr Land; unbespielte Laender sind freies Land.
+        if (level.dimension() == net.minecraft.world.level.Level.OVERWORLD && de.niklasmetzger.crownscore.world.WorldMap.active()) {
+            String key = de.niklasmetzger.crownscore.world.WorldMap.nationFor(data, de.niklasmetzger.crownscore.world.WorldMap.atChunk(chunk.x, chunk.z));
+            de.niklasmetzger.crownscore.data.Nation n = key == null ? null : data.nations.get(key);
+            if (n != null && (n.chef != null || !n.mitglieder.isEmpty())) return key;
+        }
         return null;
     }
 

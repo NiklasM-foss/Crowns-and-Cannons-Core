@@ -94,6 +94,7 @@ public class CrownsCore {
         ClaimCommand.register(d);
         CcCoreCommand.register(d);
         ModeCommand.register(d);
+        de.niklasmetzger.crownscore.world.WeltkarteCommand.register(d);
     }
 
     /** Nach allen Mods: eigene Befehle nach Rolle ausblenden, alle Befehle ueber command.<name> steuerbar machen. */

@@ -29,6 +29,8 @@ public class Nation {
     /** Nationen (Schluessel), die die Wegsteine dieser Nation nutzen duerfen. */
     public final Set<String> wegsteinFreigaben = new LinkedHashSet<>();
     public long gegruendet;
+    /** Land auf der Weltkarte (Natural-Earth-Code wie DEU), leer = keins. */
+    public String land = "";
 
     public Nation() {}
 
@@ -74,6 +76,7 @@ public class Nation {
         t.putInt("amtszeitTage", amtszeitTage);
         t.put("wegsteinFreigaben", NbtUtil.strings(wegsteinFreigaben));
         t.putLong("gegruendet", gegruendet);
+        t.putString("land", land == null ? "" : land);
         return t;
     }
 
@@ -89,6 +92,7 @@ public class Nation {
         n.amtszeitTage = t.getInt("amtszeitTage");
         n.wegsteinFreigaben.addAll(NbtUtil.stringSet(t, "wegsteinFreigaben"));
         n.gegruendet = t.getLong("gegruendet");
+        n.land = t.getString("land");
         return n;
     }
 

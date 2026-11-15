@@ -20,6 +20,7 @@ Crowns Core was written for the **Crowns and Cannons** project and enforces its 
 - **Player modes:** RP, Farm and AFK. Players in Farm or AFK mode may only be attacked with a stated reason, which goes into the evidence log. AFK runs until a set time like a parking disc.
 - **Block log and rollback** (similar to CoreProtect): inspector, lookups by player, time, radius, action and block, rollback and restore of blocks, chest contents and killed animals, preview and undo. Stored in an embedded database, no setup needed.
 - **Permissions** (similar to LuckPerms): groups with weight and inheritance, player permissions, wildcards, temporary and per-dimension permissions, prefixes and suffixes in chat and tab list, tracks for ranks, Forge permission handler, `command.<name>` for every command including vanilla. Editable in the browser with a self-hosted version of the LuckPerms web editor (Docker setup included).
+- **World map:** borders of 238 countries for Earth maps in equirectangular projection, one command creates all countries as nations, borders shown on Xaero's Minimap through Open Parties and Claims.
 - **Hidden commands:** players only see the commands they are allowed to use, also in tab completion.
 
 `/cccore list` shows all commands in game. The full command reference is in the [source code repository](https://github.com/NiklasM-foss/Crowns-and-Cannons-Core).
@@ -62,6 +63,7 @@ Crowns Core wurde für das Projekt **Crowns and Cannons** geschrieben und bildet
 - **Spielermodus:** RP, Farm und AFK. Wer im Farm- oder AFK-Modus ist, darf nur mit eingetragenem Grund angegriffen werden, der Grund landet in der Akte. AFK läuft bis zu einer Uhrzeit wie eine Parkscheibe.
 - **Blockprotokoll und Rollback** (ähnlich CoreProtect): Inspektor, Abfragen nach Spieler, Zeit, Radius, Aktion und Block, Rollback und Restore von Blöcken, Kisteninhalten und getöteten Tieren, Vorschau und Undo. Eingebettete Datenbank, keine Einrichtung nötig.
 - **Rechte** (ähnlich LuckPerms): Gruppen mit Gewicht und Vererbung, Spielerrechte, Platzhalter, befristete und dimensionsgebundene Rechte, Präfix und Suffix in Chat und Tabliste, Laufbahnen für Ränge, Forge-Permission-Handler, `command.<name>` für jeden Befehl, auch Vanilla. Einstellbar im Browser mit einer selbst gehosteten Fassung des LuckPerms-Web-Editors (Docker-Aufbau liegt bei).
+- **Weltkarte:** Grenzen von 238 Ländern für Erdkarten in Plattkarten-Projektion, ein Befehl legt alle Länder als Nationen an, Grenzen auf Xaero's Minimap über Open Parties and Claims.
 - **Unsichtbare Befehle:** Spieler sehen nur die Befehle, die sie nutzen dürfen, auch in der Tab-Vervollständigung.
 
 Alle Befehle zeigt `/cccore list` im Spiel. Die vollständige Befehlsübersicht steht im [Quellcode-Repo](https://github.com/NiklasM-foss/Crowns-and-Cannons-Core).

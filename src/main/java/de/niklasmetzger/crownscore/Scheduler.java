@@ -23,6 +23,7 @@ public class Scheduler {
         tick++;
         try {
             de.niklasmetzger.crownscore.log.RollbackService.tick();
+            de.niklasmetzger.crownscore.world.WeltkarteCommand.tick(server);
         } catch (Exception e) {
             CrownsCore.LOGGER.error("Fehler im Rollback", e);
         }

@@ -73,6 +73,32 @@ Adminrechte auch einem OP.
   Kisteninhalt, Tötungen, Chat, Befehle, Ein- und Ausloggen, fallengelassene und
   aufgehobene Items sowie Türen, Hebel und Knöpfe.
 
+## Weltkarte und Ländergrenzen
+
+Die Server-Map ist eine Erdkarte (49152 × 24576 Blöcke, Plattkarte: Länge und Breite
+gleichmäßig auf x und z, 0/0 am Schnittpunkt von Äquator und Nullmeridian, Norden ist
+−z). Die Mod kennt die Grenzen von 238 Ländern aus Natural Earth (gemeinfrei),
+mit deutschen Namen. Ein Chunk entspricht etwa 13 km; Liechtenstein, San Marino und
+der Vatikan sind dafür zu klein, die Antarktis ist ausgelassen.
+
+- `/nation weltkarte import` legt alle Länder als Nationen an (Kürzel wie `DEU`).
+  Bestehende Nationen werden über Kürzel oder Namen verknüpft statt doppelt angelegt.
+- **Gebiet:** Wo kein eigener Claim gilt, gehört ein Chunk dem Land auf der Karte,
+  aber nur, wenn diese Nation gespielt wird (Staatschef oder Mitglieder).
+  Unbespielte Länder sind freies Land: keine Visum- oder Camping-Meldungen, Kolonien
+  zählen dort als unbesetztes Land.
+- `/nation weltkarte minimap umriss` zeigt die Grenzen auf Xaero's Minimap und
+  Weltkarte, über Server-Claims von Open Parties and Claims in der Farbe und mit dem
+  Namen des Landes, ohne Bauschutz. `umriss` markiert Landgrenzen und Küsten
+  (rund 76.000 Chunks, Aufbau etwa 40 Sekunden), `grenze` nur Landgrenzen,
+  `flaeche` ganze Länder, `aus` entfernt alles wieder. Claims von Spielern bleiben
+  unangetastet, das Innere der Länder bleibt bei `umriss` frei zum Claimen.
+- **Kalibrieren:** `/gebiet hier` zeigt Land und Grad. Passt das an einer bekannten
+  Stadt nicht, in der Config `[weltkarte]` `mitteX`, `mitteZ` und `bloeckeProGrad`
+  nachstellen und die Minimap-Anzeige neu aufbauen.
+- Die Kartendaten erzeugt `tools/weltkarte/make_weltkarte.py`, die Vorschau liegt in
+  `docs/weltkarte.png`.
+
 ## Spielermodus
 
 | Modus | Bedeutung | Angriff |
@@ -166,6 +192,7 @@ Besitzer eines OPAC-Claims wird über seine Nation zugeordnet.
 Liegt pro Welt unter `world/serverconfig/crownscore-server.toml` und wird beim
 ersten Start mit Kommentaren erzeugt. Wichtig:
 
+- `weltkarte.aktiv`, `mitteX`, `mitteZ`, `bloeckeProGrad`, `chunksProTick`.
 - `chat.nationVorName`, `chat.nationAnzeige` (`NAME` oder `KUERZEL`),
   `chat.nationFarbe` (z.B. `&6`).
 - `discord.kriegsnews`, `discord.gericht`, `discord.aktivitaet`, `discord.news`:

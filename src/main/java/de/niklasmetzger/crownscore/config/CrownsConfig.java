@@ -54,6 +54,12 @@ public final class CrownsConfig {
     public static final ForgeConfigSpec.IntValue POST_ABFANG_PROZENT;
     public static final ForgeConfigSpec.IntValue GEBIET_MAX_CHUNKS;
 
+    public static final ForgeConfigSpec.BooleanValue KARTE_AKTIV;
+    public static final ForgeConfigSpec.IntValue KARTE_MITTE_X;
+    public static final ForgeConfigSpec.IntValue KARTE_MITTE_Z;
+    public static final ForgeConfigSpec.DoubleValue KARTE_BLOECKE_PRO_GRAD;
+    public static final ForgeConfigSpec.IntValue KARTE_CHUNKS_PRO_TICK;
+
     public static final ForgeConfigSpec.IntValue MODUS_GRUND_MINUTEN;
     public static final ForgeConfigSpec.IntValue MODUS_KAMPFSPERRE_SEKUNDEN;
     public static final ForgeConfigSpec.IntValue MODUS_AFK_MAX_STUNDEN;
@@ -153,6 +159,15 @@ public final class CrownsConfig {
 
         b.comment("Interne Gebiete (nur wenn Open Parties and Claims fehlt oder zusaetzlich)").push("gebiet");
         GEBIET_MAX_CHUNKS = b.comment("Maximale Chunks pro Nation").defineInRange("maxChunks", 2000, 1, 1000000);
+        b.pop();
+
+        b.comment("Weltkarte: Laendergrenzen der Erdkarte (Plattkarte, 0/0 = Aequator und Nullmeridian, Norden = -z)").push("weltkarte");
+        KARTE_AKTIV = b.comment("Gebiete der Nationen aus der Weltkarte ableiten, wo kein Claim gilt").define("aktiv", true);
+        KARTE_MITTE_X = b.comment("Blockkoordinate x von Laenge 0 (Nullmeridian)").defineInRange("mitteX", 0, -30000000, 30000000);
+        KARTE_MITTE_Z = b.comment("Blockkoordinate z von Breite 0 (Aequator)").defineInRange("mitteZ", 0, -30000000, 30000000);
+        KARTE_BLOECKE_PRO_GRAD = b.comment("Bloecke pro Laengengrad. 49152 Bloecke Kartenbreite / 360 = 136.5333")
+                .defineInRange("bloeckeProGrad", 49152.0 / 360.0, 1.0, 100000.0);
+        KARTE_CHUNKS_PRO_TICK = b.comment("So viele Chunks prueft die Grenzanzeige fuer die Minimap pro Tick").defineInRange("chunksProTick", 6144, 256, 200000);
         b.pop();
 
         b.comment("Spielermodus: RP, Farm, AFK").push("modus");

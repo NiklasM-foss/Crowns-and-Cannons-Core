@@ -18,6 +18,9 @@
   Rechte-Editor (LuckPerms-Web-Editor mit Crowns-Core-Logo, Ordner `editor/`,
   Docker), Demo mit den Befehlen von Crowns Core und dem Modpack.
 - **Nation im Chat** vor dem Spielernamen, als Name oder Kürzel, Farbe einstellbar.
+- **Weltkarte**: 238 Länder der Erdkarte mit Grenzen aus Natural Earth,
+  `/nation weltkarte import` legt sie als Nationen an, Gebiet aus der Karte für
+  gespielte Nationen, Grenzen auf Xaero's Minimap über Open Parties and Claims.
 - Selbsttest-Mod für den Testserver (`./gradlew selftestJar`, `/cctest`).
 
 ## 1.0.0

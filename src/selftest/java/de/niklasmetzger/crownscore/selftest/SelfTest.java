@@ -82,7 +82,10 @@ public class SelfTest {
         e.getDispatcher().register(Commands.literal("cctest").requires(s -> s.hasPermission(4)).executes(ctx -> {
             start(ctx.getSource().getServer());
             return 1;
-        }));
+        }).then(Commands.literal("karte").executes(ctx -> {
+            karte(ctx.getSource().getServer());
+            return 1;
+        })));
     }
 
     @SubscribeEvent
@@ -170,6 +173,54 @@ public class SelfTest {
 
     private int cows() {
         return lvl.getEntitiesOfClass(Cow.class, new AABB(at(-8, -2, -8), at(8, 6, 8))).size();
+    }
+
+    /** Weltkarte: bekannte Staedte und die Grenzanzeige fuer die Minimap. */
+    private void karte(MinecraftServer srv) {
+        server = srv;
+        lvl = srv.overworld();
+        pass = fail = 0;
+        LOG.info("[CCTEST] START Karte");
+        double bpg = de.niklasmetzger.crownscore.world.WorldMap.blocksPerDegree();
+        Object[][] staedte = {
+                {"Berlin", 13.405, 52.52, "Deutschland"}, {"Riad", 46.72, 24.69, "Saudi-Arabien"},
+                {"New York", -74.0, 40.71, "Vereinigte Staaten"}, {"Paris", 2.35, 48.86, "Frankreich"},
+                {"Sydney", 151.21, -33.87, "Australien"}, {"Kairo", 31.24, 30.04, "Ägypten"}, {"Tokio", 139.69, 35.69, "Japan"}};
+        CrownsData d = CrownsData.get(server);
+        for (Object[] st : staedte) {
+            int x = (int) Math.floor((double) st[1] * bpg);
+            int z = (int) Math.floor(-(double) st[2] * bpg);
+            var land = de.niklasmetzger.crownscore.world.WorldMap.atChunk(x >> 4, z >> 4);
+            String name = land == null ? "Meer" : land.name();
+            check("Karte: " + st[0] + " (" + x + " " + z + ") liegt in " + st[3], st[3].equals(name), name);
+        }
+        // Gebiet: nur gespielte Nationen besitzen ihr Land
+        BlockPos berlin = new BlockPos((int) (13.405 * bpg), 64, (int) (-52.52 * bpg));
+        Nation deu = d.nation("Deutschland");
+        check("Karte: Deutschland ist angelegt und verknuepft", deu != null && "DEU".equals(deu.land), deu == null ? "fehlt" : deu.land);
+        if (deu != null) {
+            boolean leer = deu.chef == null && deu.mitglieder.isEmpty();
+            check("Karte: unbespieltes Deutschland ist freies Land", !leer || de.niklasmetzger.crownscore.claims.Claims.nationAt(lvl, berlin) == null, "");
+            UUID dummy = UUID.fromString("00000000-0000-0000-0000-0000000000de");
+            deu.mitglieder.put(dummy, "Testbuerger");
+            String owner = de.niklasmetzger.crownscore.claims.Claims.nationAt(lvl, berlin);
+            check("Karte: mit Buerger gehoert Berlin zu Deutschland", deu.key().equals(owner), String.valueOf(owner));
+            deu.mitglieder.remove(dummy);
+        }
+        check("Karte: mitten im Atlantik niemand", de.niklasmetzger.crownscore.claims.Claims.nationAt(lvl, new BlockPos((int) (-30 * bpg), 64, (int) (-30 * bpg))) == null, "");
+        // Grenzanzeige: auf der deutsch-franzoesischen Grenze bei Strassburg muss ein Server-Claim mit Laendername liegen
+        var api = xaero.pac.common.server.api.OpenPACServerAPI.get(server);
+        var claims = api.getServerClaimsManager();
+        int cz = (int) Math.floor(-48.58 * bpg / 16);
+        String found = null;
+        for (int cx = (int) (7.0 * bpg / 16); cx <= (int) (8.5 * bpg / 16) && found == null; cx++) {
+            var c = claims.get(net.minecraft.world.level.Level.OVERWORLD.location(), cx, cz);
+            if (c != null && new UUID(0, 0).equals(c.getPlayerId())) found = claims.getFullName(c).getString() + " bei Chunk " + cx + "/" + cz;
+        }
+        check("Minimap: Grenz-Claim bei Strassburg", found != null && (found.contains("Deutschland") || found.contains("Frankreich")), String.valueOf(found));
+        var inner = claims.get(net.minecraft.world.level.Level.OVERWORLD.location(), (int) (10.5 * bpg / 16), (int) (-51.0 * bpg / 16));
+        check("Minimap: Inneres von Deutschland bleibt frei (Umriss)", inner == null, inner == null ? "" : claims.getFullName(inner).getString());
+        LOG.info("[CCTEST] FERTIG: {} bestanden, {} fehlgeschlagen", pass, fail);
     }
 
     private void start(MinecraftServer srv) {
