@@ -1,0 +1,710 @@
+{
+  "metadata": {
+    "commandAlias": "cccore perms",
+    "uploader": {
+      "name": "Konsole",
+      "uuid": "00000000-0000-0000-0000-000000000000"
+    },
+    "time": 1763200000000,
+    "pluginVersion": "5.5.0",
+    "platform": "Crowns Core (Forge)"
+  },
+  "permissionHolders": [
+    {
+      "type": "group",
+      "id": "admin",
+      "displayName": "Admin",
+      "nodes": [
+        {
+          "type": "display_name",
+          "key": "displayname.Admin",
+          "value": true
+        },
+        {
+          "type": "weight",
+          "key": "weight.100",
+          "value": true
+        },
+        {
+          "type": "prefix",
+          "key": "prefix.100.&c[Admin]",
+          "value": true
+        },
+        {
+          "type": "inheritance",
+          "key": "group.gamemaster",
+          "value": true
+        },
+        {
+          "type": "permission",
+          "key": "crownscore.*",
+          "value": true
+        },
+        {
+          "type": "permission",
+          "key": "crownscore.admin",
+          "value": true
+        },
+        {
+          "type": "permission",
+          "key": "command.op",
+          "value": true
+        },
+        {
+          "type": "permission",
+          "key": "command.stop",
+          "value": true
+        },
+        {
+          "type": "permission",
+          "key": "command.whitelist",
+          "value": true
+        },
+        {
+          "type": "permission",
+          "key": "command.ban",
+          "value": true
+        },
+        {
+          "type": "permission",
+          "key": "command.pardon",
+          "value": true
+        }
+      ]
+    },
+    {
+      "type": "group",
+      "id": "gamemaster",
+      "displayName": "Gamemaster",
+      "nodes": [
+        {
+          "type": "display_name",
+          "key": "displayname.Gamemaster",
+          "value": true
+        },
+        {
+          "type": "weight",
+          "key": "weight.80",
+          "value": true
+        },
+        {
+          "type": "prefix",
+          "key": "prefix.80.&6[Gamemaster]",
+          "value": true
+        },
+        {
+          "type": "inheritance",
+          "key": "group.moderator",
+          "value": true
+        },
+        {
+          "type": "permission",
+          "key": "crownscore.nation.anlegen",
+          "value": true
+        },
+        {
+          "type": "permission",
+          "key": "crownscore.nation.staatschef",
+          "value": true
+        },
+        {
+          "type": "permission",
+          "key": "crownscore.nation.setzen",
+          "value": true
+        },
+        {
+          "type": "permission",
+          "key": "crownscore.krieg.beenden",
+          "value": true
+        },
+        {
+          "type": "permission",
+          "key": "crownscore.kolonie.genehmigen",
+          "value": true
+        },
+        {
+          "type": "permission",
+          "key": "crownscore.kolonie.ablehnen",
+          "value": true
+        },
+        {
+          "type": "permission",
+          "key": "crownscore.staatskasse.setzen",
+          "value": true
+        },
+        {
+          "type": "permission",
+          "key": "crownscore.staatskasse.geldgeben",
+          "value": true
+        },
+        {
+          "type": "permission",
+          "key": "crownscore.cccore.admin.*",
+          "value": true
+        },
+        {
+          "type": "permission",
+          "key": "crownscore.cccore.perms.*",
+          "value": true
+        },
+        {
+          "type": "permission",
+          "key": "command.gamemode",
+          "value": true
+        },
+        {
+          "type": "permission",
+          "key": "command.time",
+          "value": true
+        },
+        {
+          "type": "permission",
+          "key": "command.weather",
+          "value": true
+        },
+        {
+          "type": "permission",
+          "key": "command.give",
+          "value": true
+        },
+        {
+          "type": "permission",
+          "key": "command.season",
+          "value": true
+        },
+        {
+          "type": "permission",
+          "key": "command.resetmoney",
+          "value": true
+        },
+        {
+          "type": "permission",
+          "key": "command.recruits",
+          "value": true
+        },
+        {
+          "type": "permission",
+          "key": "command.smallships",
+          "value": true
+        },
+        {
+          "type": "permission",
+          "key": "command.waystones",
+          "value": true
+        }
+      ]
+    },
+    {
+      "type": "group",
+      "id": "moderator",
+      "displayName": "Moderator",
+      "nodes": [
+        {
+          "type": "display_name",
+          "key": "displayname.Moderator",
+          "value": true
+        },
+        {
+          "type": "weight",
+          "key": "weight.50",
+          "value": true
+        },
+        {
+          "type": "prefix",
+          "key": "prefix.50.&9[Mod]",
+          "value": true
+        },
+        {
+          "type": "inheritance",
+          "key": "group.default",
+          "value": true
+        },
+        {
+          "type": "permission",
+          "key": "crownscore.cccore.admin.lookup",
+          "value": true
+        },
+        {
+          "type": "permission",
+          "key": "crownscore.cccore.admin.inspect",
+          "value": true
+        },
+        {
+          "type": "permission",
+          "key": "crownscore.cccore.admin.near",
+          "value": true
+        },
+        {
+          "type": "permission",
+          "key": "crownscore.cccore.admin.seite",
+          "value": true
+        },
+        {
+          "type": "permission",
+          "key": "crownscore.akte.spieler",
+          "value": true
+        },
+        {
+          "type": "permission",
+          "key": "crownscore.akte.gebiet",
+          "value": true
+        },
+        {
+          "type": "permission",
+          "key": "crownscore.akte.neueste",
+          "value": true
+        },
+        {
+          "type": "permission",
+          "key": "crownscore.aktivitaet.bericht",
+          "value": true
+        },
+        {
+          "type": "permission",
+          "key": "command.kick",
+          "value": true
+        },
+        {
+          "type": "permission",
+          "key": "command.tp",
+          "value": true
+        },
+        {
+          "type": "permission",
+          "key": "command.spectate",
+          "value": true,
+          "context": {
+            "world": "minecraft:overworld"
+          }
+        },
+        {
+          "type": "permission",
+          "key": "command.restoreinventory",
+          "value": true
+        },
+        {
+          "type": "permission",
+          "key": "command.view",
+          "value": true
+        }
+      ]
+    },
+    {
+      "type": "group",
+      "id": "default",
+      "displayName": "default",
+      "nodes": [
+        {
+          "type": "permission",
+          "key": "crownscore.modus",
+          "value": true
+        },
+        {
+          "type": "permission",
+          "key": "crownscore.nation.beitreten",
+          "value": true
+        },
+        {
+          "type": "permission",
+          "key": "crownscore.krieg.liste",
+          "value": true
+        },
+        {
+          "type": "permission",
+          "key": "crownscore.post.senden",
+          "value": true
+        },
+        {
+          "type": "permission",
+          "key": "crownscore.vertrag.hinterlegen",
+          "value": true
+        },
+        {
+          "type": "permission",
+          "key": "command.msg",
+          "value": true
+        },
+        {
+          "type": "permission",
+          "key": "command.tell",
+          "value": true
+        },
+        {
+          "type": "permission",
+          "key": "command.me",
+          "value": true
+        },
+        {
+          "type": "permission",
+          "key": "command.list",
+          "value": true
+        },
+        {
+          "type": "permission",
+          "key": "command.seed",
+          "value": false
+        }
+      ]
+    },
+    {
+      "type": "user",
+      "id": "88732f22-1d18-58cd-92db-af1a47233bee",
+      "displayName": "Koenig_Arthur",
+      "nodes": [
+        {
+          "type": "inheritance",
+          "key": "group.admin",
+          "value": true
+        }
+      ]
+    },
+    {
+      "type": "user",
+      "id": "6485c1e5-39ec-51ea-95af-aea8d4554d96",
+      "displayName": "Spielleiterin_Mia",
+      "nodes": [
+        {
+          "type": "inheritance",
+          "key": "group.gamemaster",
+          "value": true
+        },
+        {
+          "type": "prefix",
+          "key": "prefix.200.&5[Spielleitung]",
+          "value": true
+        }
+      ]
+    },
+    {
+      "type": "user",
+      "id": "721a2e52-41fc-50be-9aa8-4b6fedc595c5",
+      "displayName": "Wache_Konrad",
+      "nodes": [
+        {
+          "type": "inheritance",
+          "key": "group.moderator",
+          "value": true
+        },
+        {
+          "type": "permission",
+          "key": "crownscore.cccore.admin.rollback",
+          "value": true,
+          "expiry": 1924988400
+        }
+      ]
+    },
+    {
+      "type": "user",
+      "id": "43c6cc47-5657-580a-8b15-c5c916c90340",
+      "displayName": "Haendlerin_Lene",
+      "nodes": [
+        {
+          "type": "inheritance",
+          "key": "group.default",
+          "value": true
+        },
+        {
+          "type": "permission",
+          "key": "command.atm",
+          "value": true
+        }
+      ]
+    },
+    {
+      "type": "user",
+      "id": "c7c5c5e9-c6cc-5c27-9d8b-3db7b397b322",
+      "displayName": "Seefahrer_Jonas",
+      "nodes": [
+        {
+          "type": "inheritance",
+          "key": "group.default",
+          "value": true
+        },
+        {
+          "type": "permission",
+          "key": "crownscore.krieg.erklaeren",
+          "value": false
+        }
+      ]
+    }
+  ],
+  "tracks": [
+    {
+      "type": "track",
+      "id": "team",
+      "groups": [
+        "default",
+        "moderator",
+        "gamemaster",
+        "admin"
+      ]
+    }
+  ],
+  "knownPermissions": [
+    "*",
+    "command.abstimmung",
+    "command.adastra",
+    "command.advancement",
+    "command.akte",
+    "command.aktivitaet",
+    "command.atm",
+    "command.attribute",
+    "command.balm",
+    "command.ban",
+    "command.ban-ip",
+    "command.banlist",
+    "command.biggerstacks",
+    "command.bossbar",
+    "command.carryon",
+    "command.cccore",
+    "command.clear",
+    "command.clone",
+    "command.computercraft",
+    "command.config",
+    "command.curios",
+    "command.damage",
+    "command.darlehen",
+    "command.data",
+    "command.datapack",
+    "command.debug",
+    "command.defaultgamemode",
+    "command.deop",
+    "command.difficulty",
+    "command.duell",
+    "command.effect",
+    "command.enchant",
+    "command.execute",
+    "command.experience",
+    "command.exposure",
+    "command.fallingtree",
+    "command.fill",
+    "command.fillbiome",
+    "command.forceload",
+    "command.forge",
+    "command.function",
+    "command.gamemode",
+    "command.gamerule",
+    "command.gebiet",
+    "command.ghast",
+    "command.ghastride",
+    "command.ghastspeed",
+    "command.giselle_addon",
+    "command.give",
+    "command.happyghast",
+    "command.help",
+    "command.ie",
+    "command.item",
+    "command.jade",
+    "command.jfr",
+    "command.kick",
+    "command.kill",
+    "command.kolonie",
+    "command.krieg",
+    "command.list",
+    "command.locate",
+    "command.loot",
+    "command.me",
+    "command.mek",
+    "command.midnightconfig",
+    "command.modus",
+    "command.msg",
+    "command.nation",
+    "command.op",
+    "command.open-patchouli-book",
+    "command.pardon",
+    "command.pardon-ip",
+    "command.particle",
+    "command.pause",
+    "command.perf",
+    "command.place",
+    "command.playsound",
+    "command.polymorph",
+    "command.post",
+    "command.recipe",
+    "command.recruits",
+    "command.reload",
+    "command.resetmoney",
+    "command.restore",
+    "command.restoreinventory",
+    "command.return",
+    "command.ride",
+    "command.save-all",
+    "command.save-off",
+    "command.save-on",
+    "command.say",
+    "command.sc",
+    "command.scale",
+    "command.schedule",
+    "command.scoreboard",
+    "command.season",
+    "command.securitycraft",
+    "command.seed",
+    "command.setblock",
+    "command.setidletimeout",
+    "command.setworldspawn",
+    "command.shader",
+    "command.smallships",
+    "command.spawnpoint",
+    "command.spectate",
+    "command.spreadplayers",
+    "command.sspdebug",
+    "command.staatskasse",
+    "command.stop",
+    "command.stopsound",
+    "command.summon",
+    "command.tag",
+    "command.team",
+    "command.teammsg",
+    "command.teleport",
+    "command.tell",
+    "command.tellraw",
+    "command.test",
+    "command.time",
+    "command.titanium-rewards",
+    "command.titanium-rewards-grant",
+    "command.title",
+    "command.tm",
+    "command.tobacconist",
+    "command.tp",
+    "command.trigger",
+    "command.vertrag",
+    "command.view",
+    "command.visum",
+    "command.w",
+    "command.wahl",
+    "command.waystones",
+    "command.weather",
+    "command.wegstein",
+    "command.whitelist",
+    "command.wine",
+    "command.worldborder",
+    "command.xp",
+    "crownscore.*",
+    "crownscore.abstimmung.abbrechen",
+    "crownscore.abstimmung.enthaltung",
+    "crownscore.abstimmung.ja",
+    "crownscore.abstimmung.nein",
+    "crownscore.abstimmung.starten",
+    "crownscore.abstimmung.status",
+    "crownscore.admin",
+    "crownscore.akte.export",
+    "crownscore.akte.gebiet",
+    "crownscore.akte.loeschen",
+    "crownscore.akte.neueste",
+    "crownscore.akte.spieler",
+    "crownscore.akte.typ",
+    "crownscore.aktivitaet",
+    "crownscore.aktivitaet.bericht",
+    "crownscore.cccore",
+    "crownscore.cccore.admin.abbrechen",
+    "crownscore.cccore.admin.anwenden",
+    "crownscore.cccore.admin.inspect",
+    "crownscore.cccore.admin.lookup",
+    "crownscore.cccore.admin.near",
+    "crownscore.cccore.admin.purge",
+    "crownscore.cccore.admin.restore",
+    "crownscore.cccore.admin.rollback",
+    "crownscore.cccore.admin.seite",
+    "crownscore.cccore.admin.status",
+    "crownscore.cccore.admin.undo",
+    "crownscore.cccore.list",
+    "crownscore.cccore.perms.applyedits",
+    "crownscore.cccore.perms.creategroup",
+    "crownscore.cccore.perms.createtrack",
+    "crownscore.cccore.perms.deletegroup",
+    "crownscore.cccore.perms.deletetrack",
+    "crownscore.cccore.perms.editor",
+    "crownscore.cccore.perms.group",
+    "crownscore.cccore.perms.info",
+    "crownscore.cccore.perms.listgroups",
+    "crownscore.cccore.perms.listtracks",
+    "crownscore.cccore.perms.reload",
+    "crownscore.cccore.perms.search",
+    "crownscore.cccore.perms.track",
+    "crownscore.cccore.perms.user",
+    "crownscore.darlehen",
+    "crownscore.darlehen.aufnehmen",
+    "crownscore.darlehen.bedingungen",
+    "crownscore.darlehen.stand",
+    "crownscore.darlehen.tilgen",
+    "crownscore.duell",
+    "crownscore.duell.abbrechen",
+    "crownscore.duell.annehmen",
+    "crownscore.gebiet.anzahl",
+    "crownscore.gebiet.claim",
+    "crownscore.gebiet.freigeben",
+    "crownscore.gebiet.hier",
+    "crownscore.kolonie.ablehnen",
+    "crownscore.kolonie.aufgeben",
+    "crownscore.kolonie.expedition",
+    "crownscore.kolonie.gebuehr",
+    "crownscore.kolonie.genehmigen",
+    "crownscore.kolonie.info",
+    "crownscore.kolonie.kosten",
+    "crownscore.kolonie.liste",
+    "crownscore.kolonie.radius",
+    "crownscore.kolonie.weiter",
+    "crownscore.krieg.arten",
+    "crownscore.krieg.beenden",
+    "crownscore.krieg.erklaeren",
+    "crownscore.krieg.frieden",
+    "crownscore.krieg.liste",
+    "crownscore.krieg.wechseln",
+    "crownscore.modus",
+    "crownscore.modus.afk",
+    "crownscore.modus.farm",
+    "crownscore.modus.grund",
+    "crownscore.modus.liste",
+    "crownscore.modus.rp",
+    "crownscore.nation.ablehnen",
+    "crownscore.nation.anlegen",
+    "crownscore.nation.beamter",
+    "crownscore.nation.beitreten",
+    "crownscore.nation.bestaetigen",
+    "crownscore.nation.info",
+    "crownscore.nation.liste",
+    "crownscore.nation.loeschen",
+    "crownscore.nation.rauswerfen",
+    "crownscore.nation.setzen",
+    "crownscore.nation.staatschef",
+    "crownscore.nation.umbenennen",
+    "crownscore.nation.verlassen",
+    "crownscore.nation.wahlmodus",
+    "crownscore.pause",
+    "crownscore.post.abgefangen",
+    "crownscore.post.gesendet",
+    "crownscore.post.lesen",
+    "crownscore.post.senden",
+    "crownscore.staatskasse",
+    "crownscore.staatskasse.auszahlen",
+    "crownscore.staatskasse.einzahlen",
+    "crownscore.staatskasse.geldgeben",
+    "crownscore.staatskasse.konto",
+    "crownscore.staatskasse.setzen",
+    "crownscore.staatskasse.stand",
+    "crownscore.staatskasse.ueberweisen",
+    "crownscore.vertrag.export",
+    "crownscore.vertrag.hinterlegen",
+    "crownscore.vertrag.lesen",
+    "crownscore.vertrag.liste",
+    "crownscore.vertrag.pruefen",
+    "crownscore.visum.entziehen",
+    "crownscore.visum.erteilen",
+    "crownscore.visum.liste",
+    "crownscore.visum.meine",
+    "crownscore.wahl.abbrechen",
+    "crownscore.wahl.starten",
+    "crownscore.wahl.status",
+    "crownscore.wahl.stimme",
+    "crownscore.wegstein.entziehen",
+    "crownscore.wegstein.freigeben",
+    "crownscore.wegstein.liste"
+  ],
+  "potentialContexts": {
+    "world": [
+      "minecraft:overworld",
+      "minecraft:the_nether",
+      "minecraft:the_end"
+    ]
+  }
+}

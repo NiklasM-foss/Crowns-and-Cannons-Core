@@ -68,6 +68,8 @@ public final class CrownsConfig {
     public static final ForgeConfigSpec.BooleanValue RECHTE_FORGE_HANDLER;
     public static final ForgeConfigSpec.BooleanValue RECHTE_BEFEHLE;
     public static final ForgeConfigSpec.BooleanValue RECHTE_PRAEFIX;
+    public static final ForgeConfigSpec.ConfigValue<String> RECHTE_EDITOR_URL;
+    public static final ForgeConfigSpec.ConfigValue<String> RECHTE_BYTEBIN_URL;
 
     static {
         ForgeConfigSpec.Builder b = new ForgeConfigSpec.Builder();
@@ -167,6 +169,12 @@ public final class CrownsConfig {
                 .define("forgeHandlerSetzen", true);
         RECHTE_BEFEHLE = b.comment("Alle Befehle (auch Vanilla und andere Mods) ueber Rechte freigeben oder sperren: command.<name>").define("befehlsRechte", true);
         RECHTE_PRAEFIX = b.comment("Praefix und Suffix der Gruppen im Chat und in der Tabliste anzeigen").define("praefixAnzeigen", true);
+        RECHTE_EDITOR_URL = b.comment("Adresse des eigenen Rechte-Editors (Ordner editor/ im Repo), wie ihn die Admins im Browser oeffnen,",
+                        "z.B. https://rechte.example.de/editor/ . Leer = /cccore perms editor ist aus.")
+                .define("editorUrl", "");
+        RECHTE_BYTEBIN_URL = b.comment("Datenaustausch des Editors, vom Minecraft-Server aus erreichbar, z.B. http://192.168.1.10:8095/data/ .",
+                        "Leer = editorUrl mit /data/ statt /editor/.")
+                .define("bytebinUrl", "");
         b.pop();
 
         SPEC = b.build();

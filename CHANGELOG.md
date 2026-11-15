@@ -14,6 +14,9 @@
   `command.<name>` für jeden Befehl.
 - **Befehle ohne Berechtigung sind unsichtbar**, auch in der Tab-Vervollständigung.
   `/cccore list` zeigt nur noch nutzbare Befehle.
+- **Rechte im Browser**: `/cccore perms editor` und `applyedits` mit dem eigenen
+  Rechte-Editor (LuckPerms-Web-Editor mit Crowns-Core-Logo, Ordner `editor/`,
+  Docker), Demo mit den Befehlen von Crowns Core und dem Modpack.
 - Selbsttest-Mod für den Testserver (`./gradlew selftestJar`, `/cctest`).
 
 ## 1.0.0

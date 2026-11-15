@@ -134,6 +134,14 @@ Staatschef, Admin) beziehungsweise die normale OP-Prüfung. `true` gibt frei,
 Tab-Vervollständigung. Der Server schickt den Befehlsbaum bei jeder Rechte- oder
 Rollenänderung neu.
 
+**Im Browser einstellen:** `/cccore perms editor` lädt die Rechte in den eigenen
+Rechte-Editor (der LuckPerms-Web-Editor mit Crowns-Core-Logo, Ordner
+[`editor/`](editor/README.md), läuft per Docker auf dem eigenen Server). Dort
+bearbeiten, speichern und `/cccore perms applyedits <Code>` eingeben. Übernommen
+wird nur, was im Editor geändert wurde; was inzwischen im Spiel geändert wurde,
+bleibt erhalten. Gruppen, Laufbahnen, Präfixe, Gewicht, Ablaufzeiten und die
+Dimension als Kontext `world` gehen in beide Richtungen.
+
 Damit andere Mods die Rechte nutzen, trägt sich die Mod beim Start als
 Forge-Permission-Handler ein (`permissionHandler` in `forge-server.toml`), sofern
 dort noch der Standard steht. Ein anderer Handler wie LuckPerms wird nicht
@@ -165,7 +173,8 @@ ersten Start mit Kommentaren erzeugt. Wichtig:
   `afkZaehltAlsAktivitaet`, `tabliste`.
 - `protokoll.aktiv`, `chat`, `befehle`, `items`, `klicks`, `rollbackProTick`,
   `maxErgebnisse`.
-- `rechte.forgeHandlerSetzen`, `befehlsRechte`, `praefixAnzeigen`.
+- `rechte.forgeHandlerSetzen`, `befehlsRechte`, `praefixAnzeigen`, `editorUrl`,
+  `bytebinUrl`.
 
 Spielstand in `world/data/crownscore.dat`, Blockprotokoll in
 `world/crownscore/protokoll.mv.db`, Rechte in `world/crownscore/permissions.json`.

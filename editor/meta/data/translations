@@ -1,0 +1,11 @@
+{
+  "languages": {
+    "de": {
+      "name": "Deutsch",
+      "localeTag": "de_DE",
+      "progress": 100,
+      "progressWeb": 100,
+      "contributors": []
+    }
+  }
+}

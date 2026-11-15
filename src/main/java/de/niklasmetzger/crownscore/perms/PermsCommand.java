@@ -84,6 +84,11 @@ public final class PermsCommand {
                         .executes(guard("deletetrack", PermsCommand::deleteTrack))))
                 .then(Commands.literal("search").then(Commands.argument("knoten", StringArgumentType.word()).suggests(NODES)
                         .executes(guard("search", PermsCommand::search))))
+                .then(Commands.literal("editor").executes(guard("editor", ctx -> WebEditor.open(ctx.getSource()))))
+                .then(Commands.literal("applyedits").then(Commands.argument("code", StringArgumentType.word())
+                        .executes(guard("applyedits", ctx -> WebEditor.apply(ctx.getSource(), StringArgumentType.getString(ctx, "code"), false)))
+                        .then(Commands.literal("--force")
+                                .executes(guard("applyedits", ctx -> WebEditor.apply(ctx.getSource(), StringArgumentType.getString(ctx, "code"), true))))))
                 .then(Commands.literal("reload").executes(guard("reload", ctx -> {
                     PermissionManager.load(ctx.getSource().getServer());
                     PermissionManager.changed();

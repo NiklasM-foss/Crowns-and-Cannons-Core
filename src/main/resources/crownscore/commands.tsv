@@ -135,6 +135,8 @@
 /cccore perms createtrack <Laufbahn>	ADMIN	Neue Laufbahn anlegen, zum Beispiel für Ränge.
 /cccore perms deletetrack <Laufbahn>	ADMIN	Laufbahn löschen.
 /cccore perms search <Knoten>	ADMIN	Wer ein Recht direkt eingetragen hat.
+/cccore perms editor	ADMIN	Öffnet den Rechte-Editor im Browser, wie bei LuckPerms. Läuft auf dem eigenen Server.
+/cccore perms applyedits <Code> [--force]	ADMIN	Übernimmt die im Editor gespeicherten Änderungen. Den Befehl zeigt der Editor nach dem Speichern an.
 /cccore perms reload	ADMIN	Rechte neu aus world/crownscore/permissions.json laden.
 /cccore perms user <Spieler> info	ADMIN	Gruppen, Rechte und Präfix eines Spielers.
 /cccore perms user <Spieler> permission set <Knoten> [true|false] [Dauer] [Dimension]	ADMIN	Recht setzen, optional befristet wie 7d oder nur in einer Dimension.

@@ -1,0 +1,78 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="40%" r="70%">
+      <stop offset="0" stop-color="#7a1f22"/>
+      <stop offset="1" stop-color="#3a0d10"/>
+    </radialGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffe08a"/>
+      <stop offset="0.55" stop-color="#e0a83a"/>
+      <stop offset="1" stop-color="#a8701c"/>
+    </linearGradient>
+    <linearGradient id="iron" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#2a2a2e"/>
+      <stop offset="0.45" stop-color="#6b6e76"/>
+      <stop offset="1" stop-color="#1c1c20"/>
+    </linearGradient>
+    <linearGradient id="wood" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#8a5a2b"/>
+      <stop offset="1" stop-color="#4e3015"/>
+    </linearGradient>
+
+    <!-- Kanone, Muendung oben, Rad unten. Mittelpunkt bei (0,0) -->
+    <g id="cannon">
+      <!-- Rohr -->
+      <path d="M -46 230 L -30 -300 Q -30 -318 -12 -318 L 12 -318 Q 30 -318 30 -300 L 46 230 Q 46 262 0 262 Q -46 262 -46 230 Z"
+            fill="url(#iron)" stroke="#111" stroke-width="8"/>
+      <!-- Muendung -->
+      <rect x="-42" y="-340" width="84" height="40" rx="10" fill="url(#iron)" stroke="#111" stroke-width="8"/>
+      <!-- Ringe -->
+      <rect x="-40" y="-190" width="80" height="22" rx="6" fill="url(#gold)" stroke="#5a3a10" stroke-width="5"/>
+      <rect x="-48" y="60" width="96" height="24" rx="6" fill="url(#gold)" stroke="#5a3a10" stroke-width="5"/>
+      <!-- Verschlussknauf -->
+      <circle cx="0" cy="282" r="26" fill="url(#iron)" stroke="#111" stroke-width="8"/>
+      <!-- Rad -->
+      <circle cx="0" cy="170" r="96" fill="none" stroke="url(#wood)" stroke-width="26"/>
+      <circle cx="0" cy="170" r="96" fill="none" stroke="#2a1808" stroke-width="4"/>
+      <g stroke="url(#wood)" stroke-width="16" stroke-linecap="round">
+        <line x1="0" y1="80" x2="0" y2="260"/>
+        <line x1="-90" y1="170" x2="90" y2="170"/>
+        <line x1="-64" y1="106" x2="64" y2="234"/>
+        <line x1="64" y1="106" x2="-64" y2="234"/>
+      </g>
+      <circle cx="0" cy="170" r="24" fill="url(#gold)" stroke="#5a3a10" stroke-width="6"/>
+    </g>
+  </defs>
+
+  <!-- Hintergrund -->
+  <rect x="0" y="0" width="1024" height="1024" rx="180" fill="url(#bg)"/>
+  <rect x="36" y="36" width="952" height="952" rx="150" fill="none" stroke="url(#gold)" stroke-width="18"/>
+  <rect x="64" y="64" width="896" height="896" rx="128" fill="none" stroke="#e0a83a" stroke-opacity="0.35" stroke-width="4"/>
+
+  <!-- Gekreuzte Kanonen -->
+  <g transform="translate(512 655) rotate(-45) scale(0.95) translate(0 80)"><use href="#cannon"/></g>
+  <g transform="translate(512 655) rotate(45) scale(0.95) translate(0 80)"><use href="#cannon"/></g>
+
+  <!-- Krone -->
+  <g transform="translate(512 330) scale(0.85)">
+    <!-- Schatten -->
+    <path d="M -230 120 L -260 -110 L -130 10 L 0 -170 L 130 10 L 260 -110 L 230 120 Z"
+          fill="#000" opacity="0.35" transform="translate(10 14)"/>
+    <!-- Zacken -->
+    <path d="M -230 120 L -260 -110 L -130 10 L 0 -170 L 130 10 L 260 -110 L 230 120 Z"
+          fill="url(#gold)" stroke="#5a3a10" stroke-width="10" stroke-linejoin="round"/>
+    <!-- Kugeln auf den Spitzen -->
+    <circle cx="-260" cy="-118" r="26" fill="url(#gold)" stroke="#5a3a10" stroke-width="8"/>
+    <circle cx="0" cy="-182" r="30" fill="url(#gold)" stroke="#5a3a10" stroke-width="8"/>
+    <circle cx="260" cy="-118" r="26" fill="url(#gold)" stroke="#5a3a10" stroke-width="8"/>
+    <!-- Band -->
+    <rect x="-246" y="100" width="492" height="76" rx="14" fill="url(#gold)" stroke="#5a3a10" stroke-width="10"/>
+    <!-- Edelsteine -->
+    <circle cx="0" cy="138" r="24" fill="#c62828" stroke="#5a1010" stroke-width="6"/>
+    <circle cx="-140" cy="138" r="18" fill="#1565c0" stroke="#0d2f5a" stroke-width="6"/>
+    <circle cx="140" cy="138" r="18" fill="#1565c0" stroke="#0d2f5a" stroke-width="6"/>
+    <circle cx="0" cy="-30" r="20" fill="#2e7d32" stroke="#123814" stroke-width="6"/>
+    <!-- Glanz -->
+    <path d="M -200 112 L -222 -60" stroke="#fff6cc" stroke-width="8" stroke-linecap="round" opacity="0.6"/>
+  </g>
+</svg>

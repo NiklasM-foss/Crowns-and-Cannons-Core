@@ -1,0 +1,295 @@
+{
+  "description": "Ein Plugin zum Verwalten von Berechtigungen in Minecraft-Servern.",
+  "close": "Schließen",
+  "copy": "Kopieren",
+  "wiki": "Wiki",
+  "avatar": "{name}'s Avatar",
+  "sponsor": "Gesponsert von <strong>BisectHosting</strong><br/><span class=\"new\">NEU:</span> Spezielles Angebot für LuckPerms Nutzer!",
+  "links": {
+    "home": "Startseite",
+    "download": "Herunterladen",
+    "editor": "Web-Editor",
+    "verbose": "Ausführliche Ansicht",
+    "tree": "Baum Ansicht",
+    "wiki": "Wiki",
+    "tools": {
+      "name": "Werkzeuge",
+      "editor": "Editor",
+      "verbose": "Ausführlich",
+      "tree": "Baum"
+    }
+  },
+  "home": {
+    "name": "Startseite",
+    "supported": "Unterstützt Bukkit/Spigot/Paper, BungeeCord, Sponge, Fabric, Nukkit und Velocity Server",
+    "why": {
+      "title": "Warum LuckPerms?",
+      "description": "LuckPerms ist ein Berechtigungs-Plugin für Minecraft-Server. Es erlaubt Administratoren zu kontrollieren, welche Funktionen Spieler nutzen können, indem sie Gruppen erstellen und Berechtigungen zuweisen.",
+      "its": "Es ist:",
+      "fast": "<b>schnell</b> - geschrieben mit Fokus auf Leistung und Skalierbarkeit.",
+      "reliable": "<b>zuverlässig</b> - Tausende von Serveradministratoren und die größten Servernetzwerke vertrauen darauf.",
+      "easy": "<b>Einfach zu bedienen</b> - Berechtigungen über Befehle, direkt in Konfigurationsdateien oder mit dem Webeditor einrichten.",
+      "flexible": "<b>flexibel</b> - unterstützt eine Vielzahl von Optionen zur Datenspeicherung und funktioniert für verschiedene Servertypen.",
+      "extensive": "<b>umfangreich</b> - eine Fülle von Anpassungsoptionen und Einstellungen, die an deinen Server angepasst werden können.",
+      "free": "<b>kostenlos</b> - zum Download und zur Nutzung ohne Kosten verfügbar, mit einer Lizenz, welche es erlaubt, für immer kostenlos zu bleiben.",
+      "more": "Für weitere Informationen siehe den Wiki-Artikel {wiki}",
+      "why": "Warum LuckPerms?"
+    },
+    "apps": {
+      "title": "Webanwendungen",
+      "description1": "Diese Seite beherbergt eine Reihe zusätzlicher Webanwendungen, die mit dem Plugin funktionieren.",
+      "description2": "Diese Anwendungen sind so konzipiert, dass sie für alle Benutzer funktionieren, auch für diejenigen, die keine Möglichkeit haben, eine Anwendung auf ihrem eigenen Webserver/Host zu installieren."
+    },
+    "wiki": "Lerne, wie du LuckPerms installieren, einrichten, konfigurieren und effektiv nutzen kannst",
+    "github": "Durchsuche den Quellcode, melde Fehler und trage zum Projekt bei",
+    "discord": "Tritt {count} anderen bei, um über das Projekt zu reden und Fragen zu stellen/beantworten",
+    "patreon": "Tritt {count} anderen bei, welche das Projekt auf Patreon unterstützen",
+    "partner": {
+      "title": "Hosting Partner",
+      "description": "Finde heraus, wie du eine gutes Angebot für dein Serverhosting erhalten und uns im selben Moment unterstützen kannst"
+    }
+  },
+  "download": {
+    "title": "LuckPerms herunterladen",
+    "build": "Neuste Version {time}",
+    "typeHelp": "Unsicher welche Platform?",
+    "typeChoose": "Wähle deinen Servertyp",
+    "bukkit": "Spigot, Paper etc. ({version})",
+    "bungee": "BungeeCord, Waterfall usw. (nur aktuellste Versionen)",
+    "sponge": "Sponge (API 8)",
+    "fabric": "Fabric ({version})",
+    "nukkit": "NukkitX (b93 oder neuer)",
+    "velocity": "Velocity (3.x)",
+    "bukkitLegacy": "Spigot, Paper usw. (nur 1.7.10)",
+    "changelog": "Letzte Änderungen",
+    "install": {
+      "title": "Installation",
+      "add": "Füge die heruntergeladene Plugin <code>.jar</code> Datei zu deinem <code>plugins</code> oder <code>mods</code> Ordner hinzu.",
+      "restart": "Starte oder Neustarte deinen Server - <strong>nicht reloaden!</strong>",
+      "config": "Finde und öffne die Konfigurationsdatei des Plugins (normalerweise unter <code>/plugins/LuckPerms/</code>) und passe die Einstellungen deinen Wünschen an.",
+      "setup": "Richte deine Berechtigungen ein! Sieh dir den Artikel {wiki} für weitere Informationen an.",
+      "wiki": "Erste Schritte"
+    },
+    "trouble": {
+      "title": "Probleme bei der Installation?",
+      "console": "Überprüfe deine Konsole auf Fehlermeldungen - besonders während des Starts",
+      "read": "Schaue im {wiki}-Artikel nach extra Schritten, die du ausführen musst.",
+      "wiki": "Installation",
+      "support": "Wenn du nicht weiter kommst, kontaktiere uns auf {discord} und wir werden dir gerne weiterhelfen."
+    },
+    "extensions": {
+      "title": "Erweiterungen",
+      "description": "Erweiterungen können das Verhalten von LuckPerms ändern. Lerne mehr darüber auf {wiki}.",
+      "descriptionWiki": "das Wiki",
+      "legacy": "Legacy API Erweiterung",
+      "legacyInfo": "Ermöglicht es Plugins, welche noch nicht auf die v5-API aktualisiert haben, einige gängige API-Methoden zu verwenden.",
+      "more": "Mehr Informationen auf dem {wiki}!",
+      "wiki": "Wiki Abschnitt",
+      "defaultAssignments": "Erweiterung für eine Standard Auswahl",
+      "defaultAssignmentsInfo": "Bietet einen alternativen Ansatz für die Zuweisung von {wiki}, wenn der empfohlene Weg nicht praktikabel ist.",
+      "groups": "voreingestellten Gruppen",
+      "version": "LuckPerms 5.0 und höher"
+    }
+  },
+  "editor": {
+    "description": "Web-Berechtigungseditor",
+    "start": "Um eine neue Editor-Sitzung zu starten, verwende einen der folgenden Befehle:",
+    "loading": "Daten werden geladen...",
+    "permissions": "Berechtigungen",
+    "key": "Schlüssel",
+    "value": "Wert",
+    "expiry": "Läuft ab",
+    "contexts": "Kontexte",
+    "search": "Suchen",
+    "add": "Hinzufügen",
+    "copy": "Kopieren",
+    "move": "Verschieben",
+    "replace": "Ersetzen",
+    "delete": "Löschen",
+    "cancel": "Abbrechen",
+    "update": "Aktualisieren",
+    "save": "Speichern",
+    "apply": "Anwenden",
+    "saveAndGenerate": "Speichern und Code generieren",
+    "saving": "Wird gespeichert...",
+    "saved": "Daten gespeichert!",
+    "command": "Führe diesen Befehl auf deinem Server aus, um die Änderungen anzuwenden:",
+    "copied": "Befehl in die Zwischenablage kopiert",
+    "clipboardCopy": "In die Zwischenablage kopieren",
+    "clearFilters": "Filter löschen",
+    "noResults": "Keine Ergebnisse gefunden",
+    "applyNote": "<strong>Hinweis:</strong> Nach dem Ausführen des <code>applyedits</code> Befehls solltest du eine anderen Editor-URL generieren um weiter an Berechtigungen des Servers zu arbeiten.",
+    "nav": {
+      "tracks": "Laufbahnen",
+      "groups": "Gruppen",
+      "users": "Benutzer"
+    },
+    "reusedsession": {
+      "title": "Wiederverwendete Sitzung",
+      "desc": "Diese Sitzung wurde bereits verwendet! (geöffnet & gespeichert)",
+      "desc2": "Daher kann es veraltete Daten enthalten, die den aktuellen Stand des Plugins nicht mehr widerspiegeln. Die empfohlene Vorgehensweise ist es, eine neue Editorsitzung zu erstellen und mit aktuellen Daten zu beginnen."
+    },
+    "trust": {
+      "title": "Editor Verbindung",
+      "prompt": "Um diesem Web-Browser zu vertrauen und ihm die Möglichkeit zu geben, Änderungen direkt auf dem Server anzuwenden, führe bitte folgenden Befehl im Spiel aus:",
+      "note": "<strong>Hinweis:</strong> Dies muss nur einmal erledigt werden! Der Server speichert diesen Browser für zukünftige Sitzungen."
+    },
+    "groups": {
+      "create": "Erstelle eine Gruppe",
+      "name": "Name der Gruppe",
+      "choose": "Wähle eine Gruppe oder einen Benutzer aus der Seitenleiste",
+      "toggle": "Gruppen ein-/ausblenden",
+      "delete": "Bist du sicher, dass du die Gruppe <code>{group}</code> löschen willst?",
+      "deleteConfirm": "Alle {count} seiner Berechtigungen werden gelöscht. Dies kann derzeit nicht rückgängig gemacht werden.",
+      "displayName": "Anzeigename",
+      "parent": "Übergeordneter Eintrag",
+      "weight": "Gewicht",
+      "prefix": "Präfix",
+      "suffix": "Suffix",
+      "add": "Neue Gruppe",
+      "edit": "Gruppe bearbeiten",
+      "none": "Keine"
+    },
+    "users": {
+      "delete": "Bist du sicher das du Benutzer {user} löschen willst?",
+      "deleteConfirm": "Alle {count} seiner Berechtigungen werden gelöscht. Dies kann derzeit nicht rückgängig gemacht werden.",
+      "edit": "Benutzer Bearbeiten",
+      "toggleUsers": "Benutzer ein-/ausblenden"
+    },
+    "nodes": {
+      "add": "Knoten hinzufügen",
+      "update": "Knoten aktualisieren",
+      "permissionsCount": "Berechtigungsknoten <span>({count})</span>",
+      "addPermissions": "Berechtigungen hinzufügen",
+      "addContext": "Kontext hinzufügen",
+      "addContexts": "Kontexte hinzufügen",
+      "deselect": "Alle Knoten abwählen",
+      "select": "Knoten für Massenoperationen auswählen",
+      "selectAll": "Knoten für Massenoperationen auswählen",
+      "replace": "Kontexte ersetzen statt hinzufügen?",
+      "edit": "Klicke, um die Berechtigung zu bearbeiten",
+      "toggle": "Klicke, um true/false umzuschalten",
+      "expiry": "Klicken, um ein Ablaufdatum zu wählen",
+      "never": "nie",
+      "deleteExpiry": "Ablaufdatum löschen",
+      "contexts": "Klicken, um Kontexte für diesen Knoten zu bearbeiten",
+      "enter": "Berechtigungen eingeben oder mehrere einfügen",
+      "enterToSelect": "Eingabetaste betätigen, um auszuwählen",
+      "contextsCount": "Kontexte <span>({count})</span>",
+      "selected": "<span>{count}</span> Ausgewählter Knoten | <span>{count}</span> Ausgewählte Knoten",
+      "copy": "Kopiere {count} Knoten nach... | Kopiere {count} Knoten nach...",
+      "move": "Kopiere {count} Knoten nach... | Kopiere {count} Knoten nach...",
+      "delete": "{count} Knoten löschen? | {count} Knoten löschen?",
+      "deleteConfirm": "Bist du sicher, das du {count} Berechtigungsknoten löschen willst? | Bist du sicher, das du {count} Berechtigungsknoten löschen willst?",
+      "selection": {
+        "true": "Alle Werte auf TRUE ändern",
+        "false": "Alle Werte auf FALSE ändern",
+        "keep": "Werte unverändert lassen"
+      },
+      "sort": {
+        "permission": "Knoten nach Berechtigung sortieren",
+        "value": "Knoten nach true/false sortieren",
+        "expiry": "Knoten nach Ablaufdatum sortieren",
+        "contexts": "Knoten nach Kontexten sortieren"
+      }
+    },
+    "tracks": {
+      "create": "Erstelle einen Pfad",
+      "groups": "Gruppen",
+      "tip": "Tipp: Klicke und ziehe um den Pfad neu zu ordnen",
+      "addGroups": "Gruppe(n) hinzufügen",
+      "edit": "Pfad bearbeiten",
+      "name": "Pfad Name",
+      "add": "Pfad hinzufügen",
+      "save": "Pfad speichern",
+      "delete": "Pfad löschen",
+      "filter": "Pfade, Gruppen und Benutzer filtern",
+      "toggle": "Pfade ein-/ausblenden",
+      "toggleGroups": "Pfadgruppen ein-/ausblenden"
+    },
+    "meta": {
+      "add": "Gruppe zu {id} hinzufügen",
+      "parents": "Untergeordnete Gruppen",
+      "weight": "Gewicht: ",
+      "gotoParent": "Gehe zur Gruppe {parent}",
+      "removeParent": "Entferne {parent} als untergeordnete Gruppe"
+    },
+    "error": {
+      "title": "Fehler beim Laden",
+      "info": "Entweder wurde die URL falsch kopiert oder die Sitzung ist abgelaufen.",
+      "new": "Bitte erstelle eine andere Editor-Sitzung mit {command}."
+    },
+    "unsupported": {
+      "title": "Nicht unterstützte Version",
+      "info": "Bitte lade die neuste Version von LuckPerms herunter um den Web-Editor zu verwenden. ({download})",
+      "download": "Herunterladen"
+    }
+  },
+  "tree": {
+    "title": "Berechtigungsbaum-Ansicht",
+    "generate": "Um einen Berechtigungsbaum zu generieren, führe Folgendes im Spiel oder von der Konsole aus:",
+    "uploaded": "Hochgeladen von",
+    "user": "Referenznutzer",
+    "time": "Zeit",
+    "started": "Wann die Aufnahme gestartet wurde",
+    "expand": "Erweitern",
+    "collapse": "Minimieren",
+    "home": {
+      "generate": "Um einen Berechtigungsbaum zu generieren, führe Folgendes im Spiel oder von der Konsole aus:",
+      "scope": "Bereich",
+      "player": "Spieler",
+      "url": "Öffne die generierte URL"
+    }
+  },
+  "verbose": {
+    "title": "Ausführliche Anzeige",
+    "uploaded": "Hochgeladen von",
+    "start": "Startzeit",
+    "started": "Wann die Aufnahme gestartet wurde",
+    "end": "Endzeit",
+    "ended": "Wann die Aufnahme beendet wurde",
+    "duration": "Dauer",
+    "recording": "Wie lange das Plugin aufgezeichnet hat",
+    "count": "Anzahl",
+    "values": "Wie viele Werte übereinstimmen und wie viele Prüfungen insgesamt durchgeführt wurden",
+    "filter": "Filter",
+    "filterLabel": "Knoten nach Benutzername oder Berechtigung filtern:",
+    "filterDesc": "Die Zeichenkette zum Filtern der Ausgabe",
+    "truncated": "Verkleinert",
+    "truncatedDesc": "Wenn die Daten beim Hochladen komprimiert wurden (verkleinert in der Größe)",
+    "filterPlaceholder": "Filter hier eingeben",
+    "context": "Kontext",
+    "origin": "Ursprung",
+    "processor": "Prozessor",
+    "cause": "Grund",
+    "thread": "Thread",
+    "trace": "Aufzeichnung",
+    "home": {
+      "generate": "Um einen ausführlichen Bericht zu erstellen, führe Folgendes im Spiel oder von der Konsole aus:",
+      "performActions": "Führe eine Reihe von Aktionen aus, die Berechtigungen benötigen",
+      "filter": "Filter",
+      "url": "Öffne die generierte URL"
+    }
+  },
+  "tools": {
+    "demo": "Demo anzeigen"
+  },
+  "quiz": {
+    "choose": "Hostest du einen einzelnen Server oder ein Netzwerk?",
+    "single": "Einzelner Server",
+    "network": "Netzwerk von Servern",
+    "type": "Welche Art von Server(n) betreibst du?",
+    "note": "Hinweis: LuckPerms ist immer noch auf allen Backend-Servern erforderlich.",
+    "version": "Welche Version von {serverType} benutzt du?",
+    "older": "{version} oder älter",
+    "newer": "{version} oder neuer",
+    "result": "Du brauchst LuckPerms für {serverType}",
+    "resultLegacy": "Du brauchst LuckPerms Legacy für {serverType}",
+    "travertine": "Deine Version von BungeeCord wird nicht unterstützt. Überlege dir auf Travertine zu wechseln, solltest du LuckPerms verwenden wollen.",
+    "outdated": "Deine Version von {serverType} wird nicht unterstützt. Du musst Upgraden wenn du LuckPerms verwenden willst."
+  },
+  "notFound": {
+    "title": "Nicht gefunden!",
+    "message": "Die Seite {path} existiert nicht"
+  }
+}
