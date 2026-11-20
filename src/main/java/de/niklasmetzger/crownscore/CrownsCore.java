@@ -51,8 +51,8 @@ import net.minecraftforge.network.NetworkConstants;
 import org.slf4j.Logger;
 
 /**
- * Crowns Core: Server-Mod fuer das Nationen-Rollenspiel Crowns and Cannons.
- * Reine Server-Mod, Clients brauchen sie nicht.
+ * Crowns Core: Mod fuer das Nationen-Rollenspiel Crowns and Cannons.
+ * Laeuft auf dem Server. Im Client zeigt sie die Flaggen als Umhang, Pflicht ist sie dort nicht.
  */
 @Mod(CrownsCore.MODID)
 public class CrownsCore {
@@ -73,6 +73,8 @@ public class CrownsCore {
         MinecraftForge.EVENT_BUS.register(new LogEvents());
         MinecraftForge.EVENT_BUS.register(new Inspector());
         MinecraftForge.EVENT_BUS.register(new DisplayEvents());
+        MinecraftForge.EVENT_BUS.register(new de.niklasmetzger.crownscore.flag.CapeService.Events());
+        de.niklasmetzger.crownscore.net.CcNetwork.init();
     }
 
     @SubscribeEvent
@@ -95,6 +97,7 @@ public class CrownsCore {
         CcCoreCommand.register(d);
         ModeCommand.register(d);
         de.niklasmetzger.crownscore.world.WeltkarteCommand.register(d);
+        de.niklasmetzger.crownscore.flag.FlagCommand.register(d);
     }
 
     /** Nach allen Mods: eigene Befehle nach Rolle ausblenden, alle Befehle ueber command.<name> steuerbar machen. */
@@ -125,6 +128,8 @@ public class CrownsCore {
         Economy.init();
         DiscordWebhook.start();
         LogDatabase.open(event.getServer());
+        de.niklasmetzger.crownscore.flag.CapeService.reset();
+        de.niklasmetzger.crownscore.flag.FlagStore.load(event.getServer());
         if (ModList.get().isLoaded("waystones")) {
             WaystoneModule.init();
         }

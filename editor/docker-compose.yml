@@ -1,5 +1,6 @@
 # Rechte-Editor fuer Crowns Core. Start: docker compose up -d --build
-# Danach erreichbar unter http://<server>:8095, Port links bei Bedarf aendern.
+# Danach erreichbar unter http://<server>:8095 (Rechte-Editor) und http://<server>:8095/flagge/
+# (Flaggen-Upload), Port links bei Bedarf aendern.
 services:
   frontend:
     build: .
@@ -21,6 +22,7 @@ services:
       - "8095:80"
     volumes:
       - ./proxy.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./flagge:/usr/share/nginx/flagge:ro
 
 volumes:
   bytebin: {}

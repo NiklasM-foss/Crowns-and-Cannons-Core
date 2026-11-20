@@ -80,7 +80,8 @@ public final class WebEditor {
 
     private WebEditor() {}
 
-    private static String bytebin() {
+    /** Basisadresse des Datenaustauschs (bytebin), endet mit /. */
+    public static String bytebin() {
         String u = CrownsConfig.RECHTE_BYTEBIN_URL.get().trim();
         if (u.isEmpty()) {
             // Standardaufbau aus editor/: Editor unter /editor/, Daten unter /data/
@@ -98,12 +99,12 @@ public final class WebEditor {
         return false;
     }
 
-    private static String editorUrl() {
+    public static String editorUrl() {
         String u = CrownsConfig.RECHTE_EDITOR_URL.get().trim();
         return u.endsWith("/") ? u : u + "/";
     }
 
-    private static String userAgent() {
+    public static String userAgent() {
         String v = ModList.get().getModContainerById(CrownsCore.MODID).map(c -> c.getModInfo().getVersion().toString()).orElse("?");
         return "crownscore/" + v;
     }

@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Flagge hochladen</title>
+<link rel="icon" href="logo.png">
+<link rel="stylesheet" href="flagge.css">
+</head>
+<body>
+<header>
+  <img src="logo.png" alt="" class="logo">
+  <div>
+    <h1>Flagge hochladen</h1>
+    <p class="sub">Crowns Core: die Flagge deiner Nation als Umhang für alle Bürger</p>
+  </div>
+</header>
+
+<main>
+  <section class="card" id="schritt1">
+    <h2><span class="nr">1</span> Bild wählen</h2>
+    <label class="drop" id="drop">
+      <input type="file" id="datei" accept="image/png,image/jpeg,image/gif,image/webp">
+      <span id="dropText">Bild hierher ziehen oder <u>auswählen</u><br><small>PNG oder JPG, am besten quer wie eine echte Flagge</small></span>
+    </label>
+    <p class="fehler" id="fehler" hidden></p>
+  </section>
+
+  <section class="card" id="schritt2" hidden>
+    <h2><span class="nr">2</span> Vorschau</h2>
+    <p class="hinweis">Ein Umhang ist hochkant. Die Flagge wird deshalb gedreht wie ein Banner am Mast:
+      <span id="drehText">die Mastseite kommt nach oben</span>. Ränder, die nicht passen, werden mittig abgeschnitten.</p>
+    <div class="vorschau">
+      <div class="dreid">
+        <canvas id="skin3d"></canvas>
+        <div class="knoepfe">
+          <button type="button" id="dreh">Drehen an/aus</button>
+          <button type="button" id="hinten">Von hinten</button>
+        </div>
+      </div>
+      <div class="flach">
+        <canvas id="flaeche" width="80" height="128"></canvas>
+        <small>Umhang von hinten</small>
+      </div>
+    </div>
+    <button type="button" class="haupt" id="hochladen">Hochladen</button>
+  </section>
+
+  <section class="card" id="schritt3" hidden>
+    <h2><span class="nr">3</span> Im Spiel übernehmen</h2>
+    <p>Als Staatschef im Spiel eingeben:</p>
+    <div class="befehl">
+      <code id="befehl"></code>
+      <button type="button" id="kopieren">Kopieren</button>
+    </div>
+    <p class="hinweis">Der Code gilt eine Weile. Danach muss ein Admin die Flagge freigeben, dann tragen alle Bürger deiner Nation sie als Umhang.
+      Sehen kann ihn jeder, der das Modpack mit Crowns Core spielt.</p>
+    <button type="button" id="nochmal">Anderes Bild</button>
+  </section>
+</main>
+
+<footer>3D-Vorschau mit <a href="vendor/LICENSE-skinview3d.txt">skinview3d</a> (MIT)</footer>
+
+<script src="vendor/skinview3d-3.1.0.bundle.js"></script>
+<script src="flagge.js"></script>
+</body>
+</html>

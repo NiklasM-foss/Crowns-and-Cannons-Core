@@ -79,6 +79,11 @@ public final class CrownsConfig {
     public static final ForgeConfigSpec.BooleanValue RECHTE_PRAEFIX;
     public static final ForgeConfigSpec.ConfigValue<String> RECHTE_EDITOR_URL;
     public static final ForgeConfigSpec.ConfigValue<String> RECHTE_BYTEBIN_URL;
+    public static final ForgeConfigSpec.BooleanValue UMHANG_AKTIV;
+    public static final ForgeConfigSpec.BooleanValue UMHANG_LANDESFLAGGEN;
+    public static final ForgeConfigSpec.BooleanValue UMHANG_FREIGABE;
+    public static final ForgeConfigSpec.ConfigValue<String> UMHANG_DREHUNG;
+    public static final ForgeConfigSpec.ConfigValue<String> UMHANG_SEITE;
 
     static {
         ForgeConfigSpec.Builder b = new ForgeConfigSpec.Builder();
@@ -199,6 +204,16 @@ public final class CrownsConfig {
         RECHTE_BYTEBIN_URL = b.comment("Datenaustausch des Editors, vom Minecraft-Server aus erreichbar, z.B. http://192.168.1.10:8095/data/ .",
                         "Leer = editorUrl mit /data/ statt /editor/.")
                 .define("bytebinUrl", "");
+        b.pop();
+
+        b.comment("Umhaenge mit der Flagge der Nation (/nation flagge). Sichtbar fuer alle, die Crowns Core im Client haben.").push("umhang");
+        UMHANG_AKTIV = b.comment("Buerger tragen die Flagge ihrer Nation als Umhang").define("aktiv", true);
+        UMHANG_LANDESFLAGGEN = b.comment("Nationen ohne eigene Flagge tragen die echte Flagge ihres Landes auf der Weltkarte").define("landesflaggen", true);
+        UMHANG_FREIGABE = b.comment("Hochgeladene Flaggen muss ein Admin erst freigeben (/cccore flaggen)").define("freigabe", true);
+        UMHANG_DREHUNG = b.comment("RECHTS = Flagge im Uhrzeigersinn gedreht, Mastseite oben (wie ein Banner am Mast). LINKS = andersherum.")
+                .define("drehung", "RECHTS");
+        UMHANG_SEITE = b.comment("Adresse der Upload-Seite fuer Flaggen (Ordner editor/flagge/). Leer = rechte.editorUrl mit flagge/ statt editor/.")
+                .define("seiteUrl", "");
         b.pop();
 
         SPEC = b.build();

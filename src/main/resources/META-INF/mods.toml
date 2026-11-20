@@ -10,7 +10,7 @@ displayName="${mod_name}"
 displayURL="https://github.com/NiklasM-foss/Crowns-and-Cannons-Core"
 authors="${mod_authors}"
 description='''${mod_description}'''
-# Reine Server-Mod: Clients ohne diese Mod duerfen sich verbinden.
+# Laeuft auf dem Server. Clients ohne diese Mod duerfen sich verbinden, sie sehen dann nur keine Flaggen-Umhaenge.
 displayTest="IGNORE_SERVER_VERSION"
 
 [[dependencies.${mod_id}]]

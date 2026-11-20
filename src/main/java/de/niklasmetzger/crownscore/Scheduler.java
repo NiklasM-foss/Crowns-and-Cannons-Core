@@ -34,6 +34,7 @@ public class Scheduler {
                 WarService.everySecond(server);
                 de.niklasmetzger.crownscore.mode.ModeService.everySecond(server);
                 de.niklasmetzger.crownscore.perms.RoleWatcher.everySecond(server);
+                de.niklasmetzger.crownscore.flag.CapeService.everySecond(server);
             } catch (Exception e) {
                 CrownsCore.LOGGER.error("Fehler in der Sekundenaufgabe", e);
             }

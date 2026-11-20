@@ -100,6 +100,9 @@ public class SelfTest {
         })).then(Commands.literal("karte").executes(ctx -> {
             karte(ctx.getSource().getServer());
             return 1;
+        })).then(Commands.literal("flagge").executes(ctx -> {
+            flagge(ctx.getSource().getServer());
+            return 1;
         })));
     }
 
@@ -308,6 +311,109 @@ public class SelfTest {
             map.remove(net.minecraft.world.level.ChunkPos.asLong(cx, cz));
             de.niklasmetzger.crownscore.claims.OpacTerritory.syncChunks(server, List.of(new net.minecraft.world.level.ChunkPos(cx, cz)));
             check("Teileroberung: zurueckgesetzt", fra.staat().equals(ownerAt(2.35, 48.86)), "");
+        });
+    }
+
+    private static int[] rgb(java.awt.image.BufferedImage img, int x, int y) {
+        int c = img.getRGB(x, y);
+        return new int[]{(c >> 16) & 0xff, (c >> 8) & 0xff, c & 0xff};
+    }
+
+    /** Flaggen und Umhaenge: Landesflaggen, Umhang-Bild, Zuordnung, Upload ueber den Datenaustausch, Freigabe. */
+    private void flagge(MinecraftServer srv) {
+        server = srv;
+        lvl = srv.overworld();
+        pass = fail = 0;
+        steps.clear();
+        LOG.info("[CCTEST] START Flagge");
+        if (a == null) a = FakePlayerFactory.get(lvl, new GameProfile(A_ID, "TestAlpha"));
+        final String[] code = {null};
+        final String[] alt = {null, null, null};
+        final UUID buerger = UUID.fromString("00000000-0000-0000-0000-00000000f1a6");
+        step("Landesflaggen", () -> {
+            int n = de.niklasmetzger.crownscore.flag.FlagStore.landesflaggen();
+            check("Flagge: mindestens 235 Landesflaggen (alle Laender mit Flaeche ausser Siachen, Somaliland, Nordzypern)", n >= 235, String.valueOf(n));
+            check("Flagge: Saudi-Arabien hat eine Landesflagge", de.niklasmetzger.crownscore.flag.FlagStore.land("SAU") != null, "");
+        });
+        step("Umhang-Bild", () -> {
+            String h = de.niklasmetzger.crownscore.flag.CapeService.texture(de.niklasmetzger.crownscore.flag.FlagStore.land("DEU"));
+            byte[] png = de.niklasmetzger.crownscore.flag.CapeService.texturePng(h);
+            check("Umhang: Textur fuer Deutschland erzeugt", png != null, h);
+            if (png == null) return;
+            try {
+                var img = javax.imageio.ImageIO.read(new java.io.ByteArrayInputStream(png));
+                int s = de.niklasmetzger.crownscore.flag.FlagImages.SCALE, fw = de.niklasmetzger.crownscore.flag.FlagImages.FACE_W;
+                check("Umhang: Textur ist 512 x 256", img.getWidth() == 64 * s && img.getHeight() == 32 * s, img.getWidth() + "x" + img.getHeight());
+                int[] links = rgb(img, s + 4, s + 64), mitte = rgb(img, s + fw / 2, s + 64), rechts = rgb(img, s + fw - 5, s + 64);
+                check("Umhang: gedreht, links Gold", links[0] > 200 && links[1] > 150 && links[2] < 80, java.util.Arrays.toString(links));
+                check("Umhang: Mitte Rot", mitte[0] > 180 && mitte[1] < 60, java.util.Arrays.toString(mitte));
+                check("Umhang: rechts Schwarz (Mastseite oben)", rechts[0] < 40 && rechts[1] < 40 && rechts[2] < 40, java.util.Arrays.toString(rechts));
+            } catch (Exception e) {
+                check("Umhang: Textur lesbar", false, e.toString());
+            }
+        });
+        step("Zuordnung", () -> {
+            CrownsData d = CrownsData.get(server);
+            Nation deu = nat("DEU");
+            deu.mitglieder.put(buerger, "Flaggenbuerger");
+            String erwartet = de.niklasmetzger.crownscore.flag.CapeService.texture(de.niklasmetzger.crownscore.flag.FlagStore.land("DEU"));
+            check("Umhang: Buerger traegt die Landesflagge", erwartet.equals(de.niklasmetzger.crownscore.flag.CapeService.hashFor(d, buerger)), "");
+            check("Umhang: Staatenlose tragen keinen", de.niklasmetzger.crownscore.flag.CapeService.hashFor(d, UUID.randomUUID()).isEmpty(), "");
+            de.niklasmetzger.crownscore.flag.FlagStore.setAus(buerger, true);
+            check("Umhang: /umhang aus schaltet ihn ab", de.niklasmetzger.crownscore.flag.CapeService.hashFor(d, buerger).isEmpty(), "");
+            de.niklasmetzger.crownscore.flag.FlagStore.setAus(buerger, false);
+        });
+        step("Upload", () -> {
+            alt[0] = de.niklasmetzger.crownscore.config.CrownsConfig.RECHTE_EDITOR_URL.get();
+            alt[1] = de.niklasmetzger.crownscore.config.CrownsConfig.UMHANG_FREIGABE.get().toString();
+            de.niklasmetzger.crownscore.config.CrownsConfig.RECHTE_EDITOR_URL.set("http://127.0.0.1:8096/editor/");
+            de.niklasmetzger.crownscore.config.CrownsConfig.UMHANG_FREIGABE.set(true);
+            try {
+                // eigene Flagge: blau mit weissem Kreuz, wie sie die Upload-Seite schicken wuerde
+                var img = new java.awt.image.BufferedImage(300, 200, java.awt.image.BufferedImage.TYPE_INT_RGB);
+                var g = img.createGraphics();
+                g.setColor(new java.awt.Color(20, 60, 200));
+                g.fillRect(0, 0, 300, 200);
+                g.setColor(java.awt.Color.WHITE);
+                g.fillRect(130, 0, 40, 200);
+                g.fillRect(0, 80, 300, 40);
+                g.dispose();
+                byte[] body = de.niklasmetzger.crownscore.flag.FlagImages.png(img);
+                var res = java.net.http.HttpClient.newHttpClient().send(java.net.http.HttpRequest.newBuilder(
+                                java.net.URI.create("http://127.0.0.1:8096/data/post")).header("Content-Type", "image/png")
+                        .POST(java.net.http.HttpRequest.BodyPublishers.ofByteArray(body)).build(), java.net.http.HttpResponse.BodyHandlers.ofString());
+                code[0] = com.google.gson.JsonParser.parseString(res.body()).getAsJsonObject().get("key").getAsString();
+                check("Upload: Datenaustausch gibt einen Code", code[0] != null && !code[0].isEmpty(), code[0]);
+                check("Upload: Server kann das Bild abholen", de.niklasmetzger.crownscore.flag.FlagCommand.download(code[0]).length == body.length, "");
+            } catch (Exception e) {
+                check("Upload: Datenaustausch erreichbar (Testserver auf 8096)", false, e.toString());
+                return;
+            }
+            Nation deu = nat("DEU");
+            alt[2] = deu.chef == null ? "" : deu.chef.toString();
+            deu.chef = a.getUUID();
+            deu.mitglieder.put(a.getUUID(), "TestAlpha");
+            server.getCommands().performPrefixedCommand(a.createCommandSourceStack(), "nation flagge anwenden " + code[0]);
+        });
+        stepUntil("Eingereicht", () -> de.niklasmetzger.crownscore.flag.FlagStore.wartend(nat("DEU")) != null, 200);
+        step("Freigabe", () -> {
+            CrownsData d = CrownsData.get(server);
+            Nation deu = nat("DEU");
+            String land = de.niklasmetzger.crownscore.flag.CapeService.texture(de.niklasmetzger.crownscore.flag.FlagStore.land("DEU"));
+            check("Freigabe: Flagge wartet, Buerger tragen noch die Landesflagge", de.niklasmetzger.crownscore.flag.FlagStore.wartend(deu) != null
+                    && land.equals(de.niklasmetzger.crownscore.flag.CapeService.hashFor(d, buerger)), "");
+            cmd("cccore flaggen annehmen Deutschland");
+            String neu = de.niklasmetzger.crownscore.flag.CapeService.hashFor(d, buerger);
+            check("Freigabe: nach /cccore flaggen annehmen traegt der Buerger die neue Flagge", !neu.isEmpty() && !neu.equals(land)
+                    && de.niklasmetzger.crownscore.flag.FlagStore.eigene(deu) != null, neu);
+            server.getCommands().performPrefixedCommand(a.createCommandSourceStack(), "nation flagge entfernen");
+            check("Entfernen: wieder die Landesflagge", land.equals(de.niklasmetzger.crownscore.flag.CapeService.hashFor(d, buerger)), "");
+            // aufraeumen
+            deu.chef = alt[2] == null || alt[2].isEmpty() ? null : UUID.fromString(alt[2]);
+            deu.mitglieder.remove(a.getUUID());
+            deu.mitglieder.remove(buerger);
+            de.niklasmetzger.crownscore.config.CrownsConfig.RECHTE_EDITOR_URL.set(alt[0]);
+            de.niklasmetzger.crownscore.config.CrownsConfig.UMHANG_FREIGABE.set(Boolean.parseBoolean(alt[1]));
         });
     }
 

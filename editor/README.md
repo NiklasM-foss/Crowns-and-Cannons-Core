@@ -22,6 +22,7 @@ Der erste Bau dauert ein paar Minuten. Danach läuft alles unter Port 8095:
 | `/` | Startseite |
 | `/editor/<Code>` | Editor-Sitzung |
 | `/editor/demo` | Demo mit Crowns-Core- und Modpack-Befehlen |
+| `/flagge/` | Upload-Seite für Flaggen (Umhänge), Ordner `flagge/` |
 | `/data/` | Datenaustausch (bytebin), nur für Server und Editor |
 
 Damit Admins von außen arbeiten können, braucht die Seite eine öffentliche Adresse,
@@ -40,6 +41,10 @@ In `world/serverconfig/crownscore-server.toml`:
 
 Dann im Spiel `/cccore perms editor`, Link öffnen, bearbeiten, speichern und den
 angezeigten Befehl `/cccore perms applyedits <Code>` eingeben.
+
+Flaggen laufen über denselben Container: `/nation flagge` zeigt dem Staatschef den
+Link auf `/flagge/` (aus `editorUrl` abgeleitet, sonst `umhang.seiteUrl`). Die Seite
+lädt das Bild über `/data/` hoch, `/nation flagge anwenden <Code>` holt es ab.
 
 ## Was angepasst ist
 
@@ -62,3 +67,5 @@ Version prüft der Bau, ob alle Anpassungen noch greifen.
 
 LuckPermsWeb steht unter der MIT-Lizenz, Copyright LuckPerms contributors. Der
 Hinweis bleibt in der Fußzeile, die Lizenz liegt unter `/LICENSE-LuckPermsWeb.txt`.
+Die 3D-Vorschau der Flaggen-Seite nutzt skinview3d 3.1.0 (MIT-Lizenz), die Datei
+liegt unverändert in `flagge/vendor/` mit ihrer Lizenz.

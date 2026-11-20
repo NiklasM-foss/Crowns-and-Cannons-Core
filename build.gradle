@@ -18,6 +18,13 @@ java.toolchain.languageVersion = JavaLanguageVersion.of(17)
 // H2 (Datenbank fuer das Blockprotokoll) wird in die Mod-JAR eingebettet
 jarJar.enable()
 
+// Selbsttest-Mod nur fuer den Testserver (nicht Teil der Mod): ./gradlew selftestJar
+sourceSets {
+    selftest {
+        compileClasspath += sourceSets.main.output + sourceSets.main.compileClasspath
+        runtimeClasspath += sourceSets.main.output + sourceSets.main.runtimeClasspath
+    }
+}
 println "Java: ${System.getProperty 'java.version'}, JVM: ${System.getProperty 'java.vm.version'} (${System.getProperty 'java.vendor'}), Arch: ${System.getProperty 'os.arch'}"
 minecraft {
     // The mappings can be changed at any time and must be in the following format.
@@ -87,6 +94,19 @@ minecraft {
         client {
             // Comma-separated list of namespaces to load gametests from. Empty = all namespaces.
             property 'forge.enabledGameTestNamespaces', mod_id
+            // Direkt auf einen Server verbinden: ./gradlew runClient -PquickPlay=127.0.0.1:25565
+            if (project.hasProperty('quickPlay')) {
+                args '--quickPlayMultiplayer', project.property('quickPlay')
+            }
+            // Client-Test der Umhaenge mit Screenshots: -PselftestClient
+            if (project.hasProperty('selftestClient')) {
+                property 'crownscore.shot', '1'
+                mods {
+                    crownscoretest {
+                        source sourceSets.selftest
+                    }
+                }
+            }
         }
 
         server {
@@ -214,13 +234,7 @@ tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8' // Use the UTF-8 charset for Java compilation
 }
 
-// Selbsttest-Mod nur fuer den Testserver (nicht Teil der Mod): ./gradlew selftestJar
-sourceSets {
-    selftest {
-        compileClasspath += sourceSets.main.output + sourceSets.main.compileClasspath
-        runtimeClasspath += sourceSets.main.output + sourceSets.main.runtimeClasspath
-    }
-}
+// Selbsttest-Mod: Quellen-Satz steht weiter oben (vor minecraft {}), damit der Client-Test ihn nutzen kann
 tasks.named('compileSelftestJava', JavaCompile) { options.encoding = 'UTF-8' }
 tasks.register('selftestJar', Jar) {
     from sourceSets.selftest.output

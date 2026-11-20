@@ -160,3 +160,12 @@
 /cccore perms group <Gruppe> listmembers	ADMIN	Wer in der Gruppe ist.
 /cccore perms track <Laufbahn> info	ADMIN	Reihenfolge der Gruppen.
 /cccore perms track <Laufbahn> append|insert|remove <Gruppe>	ADMIN	Gruppe hinten anhängen, an einer Stelle einfügen oder entfernen.
+@flagge	Flaggen und Umhänge	Jeder Bürger trägt die Flagge seiner Nation als Umhang: eigene Flagge aus dem Browser oder die echte Landesflagge.
+/nation flagge	BUERGER	Zeigt die Flagge deiner Nation. Der Staatschef bekommt den Link zur Upload-Seite.
+/nation flagge anwenden <Code>	CHEF	Übernimmt die im Browser hochgeladene Flagge. Den Code zeigt die Upload-Seite.
+/nation flagge entfernen	CHEF	Eigene Flagge löschen, die Nation trägt wieder die Landesflagge.
+/umhang [an|aus]	ALLE	Flaggen-Umhang für dich ein- oder ausschalten.
+/cccore flaggen	ADMIN	Eingereichte Flaggen, die auf Freigabe warten, mit Knöpfen zum Prüfen.
+/cccore flaggen annehmen <Nation>	ADMIN	Flagge freigeben, alle Bürger tragen sie sofort.
+/cccore flaggen ablehnen <Nation> [Grund]	ADMIN	Flagge ablehnen, der Staatschef bekommt den Grund.
+/cccore flaggen vorschau <Nation>	ADMIN	Die wartende Flagge 60 Sekunden auf dem eigenen Rücken tragen, mit F5 ansehen.

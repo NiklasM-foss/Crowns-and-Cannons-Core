@@ -6,11 +6,14 @@ Server-Mod für das Minecraft-Nationen-Rollenspiel **Crowns and Cannons**
 (Forge 47.4.28, Minecraft 1.20.1). Sie bildet die Regeln des Projekts direkt im
 Spiel ab: Nationen, Kriegserklärungen, Staatskasse, Beweisakte, Kolonialbehörde,
 Wahlen, Visa, Post und den Aktivitätszähler. Seit 1.2.0 kommen Spielermodi (RP,
-Farm, AFK), ein Blockprotokoll mit Rollback nach dem Vorbild von CoreProtect und
-eine Rechteverwaltung nach dem Vorbild von LuckPerms dazu.
+Farm, AFK), ein Blockprotokoll mit Rollback nach dem Vorbild von CoreProtect,
+eine Rechteverwaltung nach dem Vorbild von LuckPerms und die Erdkarte mit allen
+Ländern auf Xaero's Minimap dazu. Seit 1.3.0 trägt jeder Bürger die Flagge seiner
+Nation als Umhang.
 
-Reine Server-Mod: Clients brauchen sie nicht, der Modcode des Packs bleibt
-unverändert. Alle Anbindungen an andere Mods sind optional.
+Die Regeln laufen auf dem Server. Im Client ist die Mod nur für die Flaggen-Umhänge
+nötig; Spieler ohne sie können trotzdem mitspielen. Alle Anbindungen an andere Mods
+sind optional. Liste aller Länderkürzel mit Flagge: [docs/laender.html](docs/laender.html).
 
 **Download:** [CurseForge](https://www.curseforge.com/projects/1802743) ·
 Quellcode auf [GitHub](https://github.com/NiklasM-foss/Crowns-and-Cannons-Core)
@@ -111,6 +114,30 @@ der Vatikan sind dafür zu klein, die Antarktis ist ausgelassen.
   nachstellen und die Minimap-Anzeige neu aufbauen.
 - Die Kartendaten erzeugt `tools/weltkarte/make_weltkarte.py`, die Vorschau liegt in
   `docs/weltkarte.png`.
+
+## Flaggen als Umhang (`/nation flagge`)
+
+Jeder Bürger trägt die Flagge seiner Nation als Umhang. Ein Umhang ist hochkant,
+die Flagge wird deshalb gedreht wie ein Banner am Mast (Mastseite oben) und füllt
+die Fläche, Überstand wird mittig abgeschnitten. Die Textur hat die achtfache
+Auflösung eines normalen Umhangs (512 × 256), Wappen und Schrift bleiben scharf.
+
+- **Landesflaggen:** Ohne eigene Flagge trägt eine Nation die echte Flagge ihres
+  Landes auf der Weltkarte. Alle 238 Flaggen stecken in der Mod (flagcdn.com,
+  gemeinfrei, erzeugt mit `tools/flaggen/make_flaggen.py`).
+- **Eigene Flagge:** Der Staatschef öffnet mit `/nation flagge` die Upload-Seite im
+  Browser (Ordner `editor/flagge/`, läuft im selben Container wie der Rechte-Editor),
+  lädt ein Bild hoch, sieht den Umhang in einer 3D-Vorschau und bekommt einen Code.
+  `/nation flagge anwenden <Code>` holt das Bild auf den Server.
+- **Freigabe:** Neue Flaggen warten, bis ein Admin sie mit `/cccore flaggen`
+  prüft (Bild im Browser, Vorschau auf dem eigenen Rücken, annehmen oder ablehnen).
+  Abschaltbar mit `umhang.freigabe = false`.
+- `/umhang aus` schaltet den Flaggen-Umhang für sich selbst ab, dann ist ein
+  normaler Minecraft-Umhang wieder sichtbar. `/nation flagge entfernen` geht zurück
+  zur Landesflagge.
+- **Client:** Sehen kann die Umhänge, wer Crowns Core im Modpack hat. Der Server
+  schickt jede Textur nur einmal pro Spieler und danach nur noch Änderungen.
+  Elytren und die Skin-Einstellung „Umhang aus“ werden beachtet.
 
 ## Spielermodus
 
@@ -220,9 +247,12 @@ ersten Start mit Kommentaren erzeugt. Wichtig:
   `maxErgebnisse`.
 - `rechte.forgeHandlerSetzen`, `befehlsRechte`, `praefixAnzeigen`, `editorUrl`,
   `bytebinUrl`.
+- `umhang.aktiv`, `landesflaggen`, `freigabe`, `drehung` (`RECHTS` = Mastseite
+  oben, `LINKS`), `seiteUrl` (leer = `editorUrl` mit `flagge/` statt `editor/`).
 
 Spielstand in `world/data/crownscore.dat`, Blockprotokoll in
-`world/crownscore/protokoll.mv.db`, Rechte in `world/crownscore/permissions.json`.
+`world/crownscore/protokoll.mv.db`, Rechte in `world/crownscore/permissions.json`,
+eigene Flaggen in `world/crownscore/flaggen/`.
 
 ## Bauen
 

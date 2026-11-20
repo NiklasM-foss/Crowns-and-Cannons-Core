@@ -1,5 +1,19 @@
 # Changelog
 
+## 1.3.0
+
+- **Flaggen als Umhang**: Jeder Bürger trägt die Flagge seiner Nation, gedreht wie
+  ein Banner am Mast, in achtfacher Auflösung. Ohne eigene Flagge die echte
+  Landesflagge (alle 238 Länder der Weltkarte).
+- **Eigene Flaggen aus dem Browser**: `/nation flagge` öffnet die Upload-Seite mit
+  3D-Vorschau (`editor/flagge/`), `/nation flagge anwenden <Code>` übernimmt das Bild.
+  Admins geben neue Flaggen mit `/cccore flaggen` frei, mit Vorschau auf dem eigenen
+  Rücken.
+- `/umhang an|aus` für jeden Spieler selbst.
+- Crowns Core hat jetzt einen Client-Teil (nur für die Umhänge). Spieler ohne die
+  Mod können sich weiter verbinden.
+- Länderkürzel mit Flaggen als Seite: `docs/laender.html`.
+
 ## 1.2.0
 
 - **Spielermodus** `/modus`: RP, Farm und AFK. Im Farm- und AFK-Modus darf nur
