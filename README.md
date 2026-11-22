@@ -366,3 +366,13 @@ Nationen anlegen:
 ```
 
 Spieler treten mit `/nation beitreten FRA` bei, der Staatschef bestätigt.
+
+## Lizenz
+
+Crowns Core steht ab Version 1.5.3 unter der **GNU Lesser General Public License, Version 3** (LGPL-3.0-only),
+siehe `COPYING.LESSER` und `COPYING` (GPL-3.0, auf der die LGPL aufbaut). Frühere Versionen bis einschließlich 1.5.2
+wurden als „All Rights Reserved“ veröffentlicht.
+
+Enthaltene Fremdteile behalten ihre eigenen Lizenzen: H2 Database (MPL 2.0 / EPL 1.0, im Jar eingebettet),
+LuckPermsWeb im Ordner `editor/` (MIT), skinview3d in `editor/flagge/vendor/` (MIT), Landesflaggen von flagcdn.com und
+Ländergrenzen von Natural Earth (gemeinfrei).

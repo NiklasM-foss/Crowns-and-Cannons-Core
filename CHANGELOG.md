@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.5.3 (in Arbeit)
+
+- **Lizenz:** Crowns Core steht ab dieser Version unter der LGPL-3.0 (vorher „All Rights Reserved“).
+
 ## 1.5.2
 
 - **Transparente Flaggen**: Durchsichtige Stellen kommen jetzt auf weißen Stoff, wie in der
