@@ -118,8 +118,17 @@ public final class HandelCommand {
             return 0;
         }
         List<Stadt> l = StadtService.von(d, n.key());
-        Msg.info(src, "§fStaedte von " + n.name + ": " + StadtService.anzahl(d, n.key()) + " anerkannt, Villager " + VillagerHandel.grenzeText(d, n.key()));
-        for (Stadt s : l) Msg.line(src, " §7" + StadtService.zeile(s));
+        ServerPlayer wer = src.getEntity() instanceof ServerPlayer p ? p : null;
+        boolean eigene = wer == null || n.isMember(wer.getUUID()) || n.isChef(wer.getUUID()) || de.niklasmetzger.crownscore.util.Perms.isAdmin(src);
+        Msg.info(src, "§fStaedte von " + n.name + ": " + StadtService.anzahl(d, n.key()) + " anerkannt"
+                + (eigene ? ", Villager " + VillagerHandel.grenzeText(d, n.key()) : ""));
+        int versteckt = 0;
+        for (Stadt s : l) {
+            // Fremde Staedte nur mit Ort, wenn man schon dort war; wartende Antraege gar nicht
+            if (eigene || (s.bestaetigt && s.entdeckt.contains(wer.getUUID()))) Msg.line(src, " §7" + StadtService.zeile(s));
+            else if (s.bestaetigt) versteckt++;
+        }
+        if (versteckt > 0) Msg.line(src, " §8" + versteckt + " weitere, die du noch nicht entdeckt hast.");
         return l.size();
     }
 

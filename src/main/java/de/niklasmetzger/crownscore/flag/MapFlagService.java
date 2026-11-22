@@ -229,8 +229,11 @@ public final class MapFlagService {
                 if (!s.dim.equals(ow)) continue;
                 boolean meine = s.nation.equals(eigene);
                 boolean sichtbar = meine || admin || (s.bestaetigt && s.entdeckt.contains(viewer.getUUID()));
-                if (!sichtbar) {
-                    for (CcNetwork.Belagerung b : bl) if (b.stadt().equalsIgnoreCase(s.name) && eigene != null) sichtbar = true;
+                if (!sichtbar && eigene != null) {
+                    // Angreifer sehen die Stadt, die sie gerade belagern
+                    for (de.niklasmetzger.crownscore.data.Besatzung b : d.besatzungen) {
+                        if (b.stadt.equalsIgnoreCase(s.name) && b.angreifer.equals(eigene)) sichtbar = true;
+                    }
                 }
                 if (!sichtbar) continue;
                 String bild = bilder.computeIfAbsent(s.name, k -> {
