@@ -13,8 +13,8 @@ verschicken oder Dateien bearbeiten.
 3. Der Dienst sucht zu jeder Datei eine Quelle, in dieser Reihenfolge:
    - **Modrinth**: exakt dieselbe Datei (SHA-1). Modrinth erlaubt Downloads durch Programme immer.
    - **CurseForge**: wenn der Autor Downloads durch Programme erlaubt.
-   - **Pi**: eine hochgeladene Kopie. Hochladen nur mit Angabe, warum es erlaubt ist (eigene Datei, Lizenz erlaubt
-     Weitergabe, Erlaubnis vom Autor mit Notiz). KubeJS-Dateien gehen mit einem Klick als eigene Dateien auf den Pi.
+   - **Server**: eine hochgeladene Kopie. Hochladen nur mit Angabe, warum es erlaubt ist (eigene Datei, Lizenz erlaubt
+     Weitergabe, Erlaubnis vom Autor mit Notiz). KubeJS-Dateien gehen mit einem Klick als eigene Dateien auf den Server.
    - **keine**: Die Spieler bekommen ein Fenster mit dem Download-Link, der Helfer holt die Datei dann aus ihrem
      Downloads-Ordner.
 4. Java-Argumente eintragen, Dateien abwählen, die nicht ins Pack sollen, **Veröffentlichen**. Jede Veröffentlichung
@@ -44,6 +44,6 @@ Protokoll: Windows `%LOCALAPPDATA%\CrownsHelfer\helfer.log`, Linux `~/.local/sha
 ## Technik
 
 - Dienst: `editor/antraege/pack.py` im Antrags-Container (Python-Stdlib). Daten in `/data/pack` (Volume): `crowns.json`,
-  `verlauf/`, `dateien/` (Pi-Kopien nach SHA-512), `uploads.json` (Erlaubnis-Angaben).
-- Umgebung in `editor/.env`: `PACK_PASSWORT`, `CF_API_KEY` (CurseForge-Schnittstelle, sonst nur Modrinth und Pi).
+  `verlauf/`, `dateien/` (Server-Kopien nach SHA-512), `uploads.json` (Erlaubnis-Angaben).
+- Umgebung in `editor/.env`: `PACK_PASSWORT`, `CF_API_KEY` (CurseForge-Schnittstelle, sonst nur Modrinth und Server).
 - nginx: `/pack/crowns.json`, `/pack/datei/<sha512>`, `/pack/api/` (Admin, Passwort im Header), `/pack/admin/`.

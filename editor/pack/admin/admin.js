@@ -25,7 +25,7 @@
     passwort = $("passwort").value;
     api("anmelden", { method: "POST", body: "{}", headers: { "Content-Type": "application/json" } }).then(function (j) {
       if (j._code !== 200) { $("anmeldeStatus").textContent = j.fehler || "Fehler"; $("anmeldeStatus").className = "fehler"; return; }
-      $("anmeldeStatus").textContent = "angemeldet" + (j.curseforge ? "" : " (ohne CurseForge-Schlüssel: nur Modrinth und Pi)");
+      $("anmeldeStatus").textContent = "angemeldet" + (j.curseforge ? "" : " (ohne CurseForge-Schlüssel: nur Modrinth und Server)");
       $("anmeldeStatus").className = "leise";
       $("auswahl").hidden = false;
       fetch("../crowns.json").then(function (r) { return r.json(); }).then(function (l) {
@@ -103,7 +103,7 @@
     var tb = $("tabelle");
     tb.textContent = "";
     var z = { modrinth: 0, curseforge: 0, pi: 0, fehlt: 0 };
-    // Reihenfolge: ohne Quelle zuerst, dann Modrinth, CurseForge, Pi; innerhalb nach Pfad
+    // Reihenfolge: ohne Quelle zuerst, dann Modrinth, CurseForge, Server; innerhalb nach Pfad
     var RANG = { fehlt: 0, modrinth: 1, curseforge: 2, pi: 3 };
     var sortiert = eintraege.slice().sort(function (a, b) {
       return (RANG[a.quelle] - RANG[b.quelle]) || a.pfad.localeCompare(b.pfad, "de", { sensitivity: "base" });
@@ -122,7 +122,7 @@
       var td2 = document.createElement("td"); td2.textContent = KAT_NAME[e.kategorie] || e.kategorie;
       var td3 = document.createElement("td");
       var q = document.createElement("span"); q.className = "q " + e.quelle;
-      q.textContent = { modrinth: "Modrinth", curseforge: "CurseForge", pi: "Pi", fehlt: "keine" }[e.quelle];
+      q.textContent = { modrinth: "Modrinth", curseforge: "CurseForge", pi: "Server", fehlt: "keine" }[e.quelle];
       td3.appendChild(q);
       var td4 = document.createElement("td");
       if (e.quelle === "pi" && e.erlaubnis) td4.textContent = e.erlaubnis;
@@ -131,7 +131,7 @@
       tb.appendChild(tr);
     });
     $("zahlen").innerHTML = "";
-    [["Modrinth", z.modrinth], ["CurseForge", z.curseforge], ["Pi", z.pi], ["ohne Quelle", z.fehlt]].forEach(function (p) {
+    [["Modrinth", z.modrinth], ["CurseForge", z.curseforge], ["Server", z.pi], ["ohne Quelle", z.fehlt]].forEach(function (p) {
       var s = document.createElement("span"); s.textContent = p[0] + ": " + p[1]; $("zahlen").appendChild(s);
     });
   }
@@ -145,7 +145,7 @@
     d.appendChild(hinweis);
     var h = document.createElement("div"); h.className = "hoch";
     var sel = document.createElement("select");
-    [["", "Auf den Pi legen, weil …"], ["eigen", "eigene Datei"], ["lizenz", "Lizenz erlaubt Weitergabe"], ["autor", "Erlaubnis vom Autor"]].forEach(function (o) {
+    [["", "Auf den Server legen, weil …"], ["eigen", "eigene Datei"], ["lizenz", "Lizenz erlaubt Weitergabe"], ["autor", "Erlaubnis vom Autor"]].forEach(function (o) {
       var op = document.createElement("option"); op.value = o[0]; op.textContent = o[1]; sel.appendChild(op);
     });
     if (e.kategorie === "kubejs") sel.value = "eigen";
@@ -174,7 +174,7 @@
   $("kubejsAlle").onclick = function () {
     var offen = eintraege.filter(function (e) { return e.kategorie === "kubejs" && e.quelle === "fehlt" && e.drin; });
     if (!offen.length) { alert("Keine KubeJS-Dateien ohne Quelle."); return; }
-    if (!confirm(offen.length + " KubeJS-Dateien als eigene Dateien auf den Pi legen?")) return;
+    if (!confirm(offen.length + " KubeJS-Dateien als eigene Dateien auf den Server legen?")) return;
     var b = this; b.disabled = true;
     var k = Promise.resolve();
     offen.forEach(function (e) { k = k.then(function () { return hochladen(e, "eigen", "eigene KubeJS-Datei"); }); });
