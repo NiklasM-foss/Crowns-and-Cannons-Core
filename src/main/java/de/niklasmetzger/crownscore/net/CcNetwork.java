@@ -105,9 +105,17 @@ public final class CcNetwork {
         }
     }
 
-    /** Staedte fuer die Karten: Name, Nation, Mitte, anerkannt. gebiet = Stadtgebiet in Chunks um die Mitte. */
-    public record StadtKarte(int gebiet, java.util.List<StadtEintrag> staedte) {
+    /** Staedte fuer die Karten: Name, Nation, Mitte, anerkannt. gebiet = Stadtgebiet in Chunks um die Mitte. Dazu laufende Belagerungen. */
+    public record StadtKarte(int gebiet, java.util.List<StadtEintrag> staedte, java.util.List<Belagerung> belagerungen) {
         void write(FriendlyByteBuf b) {
+            b.writeVarInt(belagerungen.size());
+            for (Belagerung e : belagerungen) {
+                b.writeUtf(e.stadt(), 64);
+                b.writeInt(e.vonX());
+                b.writeInt(e.vonZ());
+                b.writeInt(e.zielX());
+                b.writeInt(e.zielZ());
+            }
             b.writeVarInt(gebiet);
             b.writeVarInt(staedte.size());
             for (StadtEintrag e : staedte) {
@@ -116,19 +124,27 @@ public final class CcNetwork {
                 b.writeInt(e.x());
                 b.writeInt(e.z());
                 b.writeBoolean(e.anerkannt());
+                b.writeUtf(e.bild(), 64);
             }
         }
 
         static StadtKarte read(FriendlyByteBuf b) {
+            int nb = Math.min(b.readVarInt(), 1000);
+            java.util.List<Belagerung> bl = new java.util.ArrayList<>();
+            for (int i = 0; i < nb; i++) bl.add(new Belagerung(b.readUtf(64), b.readInt(), b.readInt(), b.readInt(), b.readInt()));
             int g = b.readVarInt();
             int n = Math.min(b.readVarInt(), 10000);
             java.util.List<StadtEintrag> l = new java.util.ArrayList<>();
-            for (int i = 0; i < n; i++) l.add(new StadtEintrag(b.readUtf(64), b.readUtf(100), b.readInt(), b.readInt(), b.readBoolean()));
-            return new StadtKarte(g, l);
+            for (int i = 0; i < n; i++) l.add(new StadtEintrag(b.readUtf(64), b.readUtf(100), b.readInt(), b.readInt(), b.readBoolean(), b.readUtf(64)));
+            return new StadtKarte(g, l, bl);
         }
     }
 
-    public record StadtEintrag(String name, String nation, int x, int z, boolean anerkannt) {}
+    /** bild = Hash des Kartenbilds (Wappen, sonst Flagge der Nation), leer = keins. */
+    public record StadtEintrag(String name, String nation, int x, int z, boolean anerkannt, String bild) {}
+
+    /** Laufende Belagerung: Linie von (vonX, vonZ) zum Ziel. stadt leer = ganzes Land. */
+    public record Belagerung(String stadt, int vonX, int vonZ, int zielX, int zielZ) {}
 
     /** Client -> Server: Stadt an einer Stelle der World Map beantragen. */
     public record StadtAnfrage(String name, int x, int z) {

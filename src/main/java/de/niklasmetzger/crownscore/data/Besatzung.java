@@ -24,6 +24,8 @@ public class Besatzung {
     public long rest;
     public UUID von;
     public double gebuehr;
+    /** Startpunkt der Angriffslinie auf der Karte (naechster Punkt im Gebiet des Angreifers). */
+    public int vonX, vonZ;
 
     public CompoundTag toNbt() {
         CompoundTag t = new CompoundTag();
@@ -38,6 +40,8 @@ public class Besatzung {
         t.putLong("rest", rest);
         NbtUtil.putUuid(t, "von", von);
         t.putDouble("gebuehr", gebuehr);
+        t.putInt("vonX", vonX);
+        t.putInt("vonZ", vonZ);
         return t;
     }
 
@@ -54,6 +58,8 @@ public class Besatzung {
         b.rest = t.getLong("rest");
         b.von = NbtUtil.uuid(t, "von");
         b.gebuehr = t.getDouble("gebuehr");
+        b.vonX = t.getInt("vonX");
+        b.vonZ = t.getInt("vonZ");
         return b;
     }
 }

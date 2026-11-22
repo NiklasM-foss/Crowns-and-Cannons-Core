@@ -224,6 +224,32 @@ public final class WorldMap {
         return false;
     }
 
+    /** Naechster Punkt (Laenge, Breite) in einem der Laender zu einem Ort, oder null. */
+    public static double[] naechsterPunkt(java.util.Collection<String> codes, double lon, double lat) {
+        if (!loaded()) return null;
+        int pi = (int) Math.floor((lon + 180.0) / 360.0 * width), pj = (int) Math.floor((90.0 - lat) / 180.0 * height);
+        long best = Long.MAX_VALUE;
+        int bi = -1, bj = -1;
+        for (String code : codes) {
+            Country c = byCode(code);
+            if (c == null || bounds[c.index()] == null) continue;
+            int[] b = bounds[c.index()];
+            for (int j = b[2]; j <= b[3]; j++) {
+                for (int i = b[0]; i <= b[1]; i++) {
+                    if ((cells[j * width + i] & 0xFF) != c.index()) continue;
+                    long d = (long) (i - pi) * (i - pi) + (long) (j - pj) * (j - pj);
+                    if (d < best) {
+                        best = d;
+                        bi = i;
+                        bj = j;
+                    }
+                }
+            }
+        }
+        if (bi < 0) return null;
+        return new double[]{-180.0 + (bi + 0.5) * 360.0 / width, 90.0 - (bj + 0.5) * 180.0 / height};
+    }
+
     /** Farbe einer Nation auf der Karte: die ihres Stammlands, sonst aus dem Namen abgeleitet. */
     public static int colorOf(Nation n) {
         Country c = n.land == null || n.land.isEmpty() ? null : byCode(n.land);

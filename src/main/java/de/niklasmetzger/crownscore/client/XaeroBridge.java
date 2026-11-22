@@ -42,6 +42,13 @@ public final class XaeroBridge {
             redraw();
         }
         if (tick % 40 != 0 || Minecraft.getInstance().player == null) return;
+        if (mm()) {
+            try {
+                de.niklasmetzger.crownscore.client.xaero.MinimapHook.wegpunkte(ClientMapFlags.staedteListe(), ClientMapFlags.staedteStand());
+            } catch (Throwable t) {
+                CrownsCore.LOGGER.debug("Wegpunkte der Staedte nicht gesetzt: {}", t.toString());
+            }
+        }
         if (wm()) {
             try {
                 de.niklasmetzger.crownscore.client.xaero.WorldMapHook.install();

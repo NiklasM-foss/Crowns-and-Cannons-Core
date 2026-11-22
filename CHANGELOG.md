@@ -11,6 +11,15 @@
   Tooltip der World Map zeigt Stadt und Nation.
 - **Städte erobern**: Länder mit Städten werden Stadt für Stadt besetzt. Wer alle Städte
   eines Landes hält, bekommt das ganze Land. Länder ohne Städte wie bisher als Ganzes.
+- **Wappen, Sichtbarkeit, Wegpunkte**: Jede Stadt zeigt auf der Karte ihr Wappen (Upload
+  mit `/stadt wappen <Stadt>`, Admin-Freigabe), ohne Wappen die Flagge der Nation. Städte
+  sieht nur die eigene Nation und wer schon einmal dort war. In jeder sichtbaren Stadt
+  steht ein Xaero-Wegpunkt in der Mitte.
+- **Belagerung**: rote Linie vom Gebiet des Angreifers zur belagerten Stadt, roter
+  Stadtrahmen. Sind alle Angreifer weiter als 100 Blöcke weg, gilt die Belagerung als
+  aufgegeben; bleiben die Verteidiger fern, obwohl sie online sind, fällt die Stadt.
+  `/nation aufgeben` für beide Seiten.
+- `/cccore staedte uebertragen <Stadt> <Nation>` für Admins.
 - **Villager-Händler**: `/cccore haendler setzen` stellt einen Händler auf, der nie
   ausverkauft ist. Villager und Rekruten (Villager Recruits, gehören gleich dem Käufer)
   gegen Geld oder Rohstoffe. Wie viele eine Nation kaufen darf, hängt an ihren Städten,

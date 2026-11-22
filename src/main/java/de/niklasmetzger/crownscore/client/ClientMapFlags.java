@@ -100,13 +100,15 @@ public final class ClientMapFlags {
     // ---- Staedte --------------------------------------------------------
 
     private static volatile java.util.List<CcNetwork.StadtEintrag> staedte = java.util.List.of();
+    private static volatile java.util.List<CcNetwork.Belagerung> belagerungen = java.util.List.of();
     private static volatile int gebiet = 4, staedteHash;
     private static volatile boolean verbunden;
 
     public static void staedte(CcNetwork.StadtKarte msg) {
         staedte = java.util.List.copyOf(msg.staedte());
+        belagerungen = java.util.List.copyOf(msg.belagerungen());
         gebiet = msg.gebiet();
-        staedteHash = msg.staedte().hashCode() * 31 + gebiet;
+        staedteHash = (msg.staedte().hashCode() * 31 + msg.belagerungen().hashCode()) * 31 + gebiet;
         verbunden = true;
         changed();
     }
@@ -121,8 +123,43 @@ public final class ClientMapFlags {
         return verbunden;
     }
 
-    /** Liegt im Chunk ein Rand oder die Mitte einer Stadt? */
+    /** Abstand eines Punkts zur Strecke, im Quadrat. */
+    private static double abstand2(double px, double pz, double ax, double az, double bx, double bz) {
+        double dx = bx - ax, dz = bz - az, l = dx * dx + dz * dz;
+        double t = l == 0 ? 0 : Math.max(0, Math.min(1, ((px - ax) * dx + (pz - az) * dz) / l));
+        double qx = ax + t * dx - px, qz = az + t * dz - pz;
+        return qx * qx + qz * qz;
+    }
+
+    private static final double LINIE = 2.0;
+
+    private static boolean linieImChunk(CcNetwork.Belagerung b, int cx, int cz) {
+        return abstand2(cx * 16 + 8, cz * 16 + 8, b.vonX(), b.vonZ(), b.zielX(), b.zielZ()) <= (12 + LINIE) * (12 + LINIE);
+    }
+
+    private static boolean belagert(String stadt) {
+        for (CcNetwork.Belagerung b : belagerungen) if (b.stadt().equalsIgnoreCase(stadt)) return true;
+        return false;
+    }
+
+    /** Halbe Kantenlaenge des Wappens auf der Karte in Bloecken. */
+    private static final int WAPPEN = 24;
+
+    /** Staedte fuer die Wegpunkte. */
+    public static java.util.List<CcNetwork.StadtEintrag> staedteListe() {
+        return staedte;
+    }
+
+    public static int staedteStand() {
+        return staedteHash;
+    }
+
+    /** Liegt im Chunk ein Rand, das Wappen einer Stadt oder eine Angriffslinie? */
     public static boolean stadtImChunk(int cx, int cz) {
+        for (CcNetwork.Belagerung b : belagerungen) if (linieImChunk(b, cx, cz)) return true;
+        for (CcNetwork.StadtEintrag s : staedte) {
+            if (Math.abs(cx * 16 + 8 - s.x()) <= WAPPEN + 8 && Math.abs(cz * 16 + 8 - s.z()) <= WAPPEN + 8) return true;
+        }
         int r = gebiet;
         for (CcNetwork.StadtEintrag s : staedte) {
             int sx = s.x() >> 4, sz = s.z() >> 4;
@@ -147,12 +184,25 @@ public final class ClientMapFlags {
      */
     public static boolean staedteMalen(int cx, int cz, int[] out) {
         boolean any = false;
+        int rot = (0xE0 << 24) | (0x20 << 16) | (0x20 << 8) | 0xE6;
+        for (CcNetwork.Belagerung b : belagerungen) {
+            if (!linieImChunk(b, cx, cz)) continue;
+            for (int z = 0; z < 16; z++) {
+                for (int x = 0; x < 16; x++) {
+                    if (abstand2(cx * 16 + x + 0.5, cz * 16 + z + 0.5, b.vonX(), b.vonZ(), b.zielX(), b.zielZ()) <= LINIE * LINIE) {
+                        out[(z << 4) | x] = rot;
+                        any = true;
+                    }
+                }
+            }
+        }
         int r = gebiet;
         for (CcNetwork.StadtEintrag s : staedte) {
             int sx = s.x() >> 4, sz = s.z() >> 4;
             int dx = cx - sx, dz = cz - sz;
             if (Math.abs(dx) > r || Math.abs(dz) > r) continue;
-            int farbe = s.anerkannt() ? (0xF2 << 24) | (0xC2 << 16) | (0x30 << 8) | 0xF0 : (0xD0 << 24) | (0xD0 << 16) | (0xD0 << 8) | 0xC8;
+            int farbe = belagert(s.name()) ? (0xE0 << 24) | (0x20 << 16) | (0x20 << 8) | 0xF0
+                    : s.anerkannt() ? (0xF2 << 24) | (0xC2 << 16) | (0x30 << 8) | 0xF0 : (0xD0 << 24) | (0xD0 << 16) | (0xD0 << 8) | 0xC8;
             for (int z = 0; z < 16; z++) {
                 for (int x = 0; x < 16; x++) {
                     boolean rand = (dx == -r && x < 2) || (dx == r && x > 13) || (dz == -r && z < 2) || (dz == r && z > 13);
@@ -162,6 +212,31 @@ public final class ClientMapFlags {
                         any = true;
                     }
                 }
+            }
+            Bild w = s.bild().isEmpty() ? null : bild(s.bild());
+            if (w != null) {
+                // Wappen mittig, Seitenverhaeltnis behalten, dunkler Rand
+                double sc = Math.min(2.0 * WAPPEN / w.w(), 2.0 * WAPPEN / w.h());
+                double bw = w.w() * sc, bh = w.h() * sc;
+                double x0 = s.x() - bw / 2, z0 = s.z() - bh / 2;
+                int dunkel = (0x18 << 24) | (0x12 << 16) | (0x0C << 8) | 0xF0;
+                for (int z = 0; z < 16; z++) {
+                    double wz = cz * 16 + z + 0.5;
+                    for (int x = 0; x < 16; x++) {
+                        double wx = cx * 16 + x + 0.5;
+                        if (wx < x0 - 1 || wx > x0 + bw + 1 || wz < z0 - 1 || wz > z0 + bh + 1) continue;
+                        if (wx < x0 || wx > x0 + bw || wz < z0 || wz > z0 + bh) {
+                            out[(z << 4) | x] = dunkel;
+                        } else {
+                            int px = Math.min(w.w() - 1, (int) ((wx - x0) / sc)), pz = Math.min(w.h() - 1, (int) ((wz - z0) / sc));
+                            int c = w.argb()[pz * w.w() + px];
+                            if ((c >>> 24) < 40) continue;
+                            out[(z << 4) | x] = ((c >> 16 & 255) << 24) | ((c >> 8 & 255) << 16) | ((c & 255) << 8) | 0xF8;
+                        }
+                        any = true;
+                    }
+                }
+                continue;
             }
             if (dx == 0 && dz == 0) {
                 int lx = s.x() & 15, lz = s.z() & 15;

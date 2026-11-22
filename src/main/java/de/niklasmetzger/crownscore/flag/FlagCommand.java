@@ -80,7 +80,7 @@ public final class FlagCommand {
     }
 
     /** Adresse der Upload-Seite oder leer. */
-    static String seite() {
+    public static String seite() {
         String u = CrownsConfig.UMHANG_SEITE.get().trim();
         if (u.isEmpty()) {
             String e = CrownsConfig.RECHTE_EDITOR_URL.get().trim();
@@ -92,7 +92,7 @@ public final class FlagCommand {
     }
 
     /** Oeffentliche Adresse eines hochgeladenen Bilds (fuer Admins zum Ansehen). */
-    static String bildUrl(String code) {
+    public static String bildUrl(String code) {
         String s = seite();
         return s.isEmpty() || code == null || code.isEmpty() ? "" : s.replaceFirst("flagge/$", "") + "data/" + code;
     }

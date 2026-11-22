@@ -36,7 +36,7 @@ import java.util.List;
  * eigene Nation (fuer Staatschef und Beamte) und die eigenen Nachrichten. Klick = lesen, Shift-Klick = loeschen.
  */
 public final class PostfachMenu extends ChestMenu {
-    private enum Art { ANTRAG, BRIEF, NACHRICHT }
+    private enum Art { ANTRAG, WAPPEN, BRIEF, NACHRICHT }
 
     private record Eintrag(Art art, Object ziel) {}
 
@@ -67,6 +67,12 @@ public final class PostfachMenu extends ChestMenu {
                 add(Art.ANTRAG, s, Items.WRITABLE_BOOK, "Stadtantrag: " + s.name, ChatFormatting.GOLD, true,
                         List.of((n == null ? s.nation : n.name) + ", " + s.betten + " Betten", "bei " + s.pos.getX() + " " + s.pos.getY() + " " + s.pos.getZ(),
                                 "Klick: annehmen, ablehnen oder hinreisen"));
+            }
+        }
+        if (Perms.isAdmin(p)) {
+            for (Stadt s : d.staedte) {
+                if (WappenStore.wartend(s) == null) continue;
+                add(Art.WAPPEN, s, Items.SHIELD, "Wappen: " + s.name, ChatFormatting.GOLD, true, List.of("wartet auf Freigabe", "Klick: annehmen oder ablehnen"));
             }
         }
         Nation own = d.nationOf(p.getUUID());
@@ -125,6 +131,11 @@ public final class PostfachMenu extends ChestMenu {
                         sp.sendSystemMessage(Component.literal(" §7" + m.text));
                         m.gelesen = true;
                         d.setDirty();
+                    }
+                    case WAPPEN -> {
+                        sp.closeContainer();
+                        sp.sendSystemMessage(WappenCommand.meldung((Stadt) e.ziel(), null, null));
+                        return;
                     }
                     case ANTRAG -> {
                         sp.closeContainer();

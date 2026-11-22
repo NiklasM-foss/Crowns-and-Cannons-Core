@@ -57,6 +57,9 @@ public final class HandelCommand {
                         .executes(HandelCommand::offen)
                         .then(Commands.literal("annehmen").then(Commands.argument("stadt", StringArgumentType.string()).suggests(HandelCommand::staedte)
                                 .executes(HandelCommand::annehmen)))
+                        .then(Commands.literal("uebertragen").then(Commands.argument("stadt", StringArgumentType.string()).suggests(HandelCommand::staedte)
+                                .then(Commands.argument("nation", StringArgumentType.greedyString()).suggests(CommandUtil.NATIONS)
+                                        .executes(HandelCommand::uebertragen))))
                         .then(Commands.literal("ablehnen").then(Commands.argument("stadt", StringArgumentType.string()).suggests(HandelCommand::staedte)
                                 .executes(ctx -> ablehnen(ctx, ""))
                                 .then(Commands.argument("grund", StringArgumentType.greedyString())
@@ -138,6 +141,33 @@ public final class HandelCommand {
             Msg.err(src, err);
             return 0;
         }
+        return 1;
+    }
+
+    private static int uebertragen(CommandContext<CommandSourceStack> ctx) {
+        CommandSourceStack src = ctx.getSource();
+        if (!CommandUtil.admin(src)) return 0;
+        CrownsData d = CommandUtil.data(ctx);
+        Stadt s = StadtService.byName(d, StringArgumentType.getString(ctx, "stadt"));
+        if (s == null) {
+            Msg.err(src, "Diese Stadt gibt es nicht.");
+            return 0;
+        }
+        Nation neu = CommandUtil.nation(src, d, StringArgumentType.getString(ctx, "nation"));
+        if (neu == null) return 0;
+        Nation alt = d.nations.get(s.nation);
+        if (neu == alt) {
+            Msg.err(src, s.name + " gehoert schon " + neu.name + ".");
+            return 0;
+        }
+        if (!s.bestaetigt) {
+            s.bestaetigt = true;
+            s.bestaetigtVon = adminName(src);
+        }
+        d.besatzungen.removeIf(b -> b.stadt.equalsIgnoreCase(s.name));
+        de.niklasmetzger.crownscore.world.EroberungService.stadtUebergeben(src.getServer(), s, neu, alt == null ? neu : alt,
+                "per Admin (" + adminName(src) + ") uebertragen bekommen");
+        Msg.ok(src, s.name + " gehoert jetzt " + neu.name + ".");
         return 1;
     }
 

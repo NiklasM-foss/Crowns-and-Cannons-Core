@@ -8,6 +8,19 @@
   var STORE_SIDE = 1024;     // laengste Seite beim Hochladen
   var MAX_BYTES = 8 * 1024 * 1024;
   var rechts = !/[?&]drehung=links/i.test(location.search);
+  // ?wappen=<Stadt>: dieselbe Seite fuer das Wappen einer Stadt, ohne Umhang-Vorschau
+  var wappen = (location.search.match(/[?&]wappen=([^&]*)/) || [])[1];
+  wappen = wappen ? decodeURIComponent(wappen.replace(/\+/g, " ")) : "";
+  if (wappen) {
+    document.title = "Wappen hochladen";
+    var h = document.querySelector("h1");
+    if (h) h.textContent = "Wappen für " + wappen;
+    var sub = document.querySelector(".sub");
+    if (sub) sub.textContent = "Crowns Core: das Wappen erscheint auf der Karte über der Stadt";
+    document.addEventListener("DOMContentLoaded", function () {
+      document.querySelectorAll(".dreid, .hinweis").forEach(function (el) { el.hidden = true; el.style.display = "none"; });
+    });
+  }
 
   var $ = function (id) { return document.getElementById(id); };
   var datei = $("datei"), drop = $("drop"), fehler = $("fehler");
@@ -191,7 +204,7 @@
         return key;
       });
     }).then(function (key) {
-      $("befehl").textContent = "/nation flagge anwenden " + key;
+      $("befehl").textContent = wappen ? "/stadt wappen \"" + wappen + "\" " + key : "/nation flagge anwenden " + key;
       $("schritt3").hidden = false;
       $("schritt3").scrollIntoView({ behavior: "smooth", block: "start" });
     }).catch(function (e) {

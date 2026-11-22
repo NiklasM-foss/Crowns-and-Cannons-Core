@@ -65,6 +65,36 @@ public final class MinimapHook {
         refresh();
     }
 
+    private static final List<xaero.common.minimap.waypoints.Waypoint> UNSERE = new ArrayList<>();
+    private static Object setFuer;
+    private static int stand = Integer.MIN_VALUE;
+
+    /** Ein voruebergehender Wegpunkt (wird nicht gespeichert) in jeder anerkannten Stadt, die der Spieler sehen darf. */
+    public static void wegpunkte(List<de.niklasmetzger.crownscore.net.CcNetwork.StadtEintrag> staedte, int version) {
+        MinimapSession s = BuiltInHudModules.MINIMAP.getCurrentSession();
+        if (s == null || s.getWorldManager() == null) return;
+        var welt = s.getWorldManager().getCurrentWorld();
+        if (welt == null) return;
+        xaero.hud.minimap.waypoint.set.WaypointSet set = welt.getCurrentWaypointSet();
+        if (set == null || (set == setFuer && version == stand)) return;
+        if (setFuer instanceof xaero.hud.minimap.waypoint.set.WaypointSet alt) {
+            for (xaero.common.minimap.waypoints.Waypoint wp : UNSERE) alt.remove(wp);
+        }
+        UNSERE.clear();
+        for (de.niklasmetzger.crownscore.net.CcNetwork.StadtEintrag e : staedte) {
+            if (!e.anerkannt()) continue;
+            String kurz = e.name().replaceAll("[^A-Za-z0-9]", "");
+            kurz = kurz.isEmpty() ? "S" : kurz.substring(0, Math.min(2, kurz.length())).toUpperCase(java.util.Locale.ROOT);
+            xaero.common.minimap.waypoints.Waypoint wp = new xaero.common.minimap.waypoints.Waypoint(e.x(), 80, e.z(), e.name(), kurz, 6);
+            wp.setTemporary(true);
+            wp.setYIncluded(false);
+            set.add(wp);
+            UNSERE.add(wp);
+        }
+        setFuer = set;
+        stand = version;
+    }
+
     public static void refresh() {
         MinimapWriter w = writer();
         if (w != null && w.getDimensionHighlightHandler() != null) w.getDimensionHighlightHandler().requestRefresh();

@@ -108,6 +108,9 @@ public final class CrownsConfig {
     public static final ForgeConfigSpec.BooleanValue EROBERUNG_STAMMLAND_SCHUTZ;
     public static final ForgeConfigSpec.IntValue EROBERUNG_GLEICHZEITIG;
     public static final ForgeConfigSpec.ConfigValue<String> EROBERUNG_BLOCK;
+    public static final ForgeConfigSpec.IntValue EROBERUNG_AUFGABE_RADIUS;
+    public static final ForgeConfigSpec.IntValue EROBERUNG_ANGREIFER_KULANZ;
+    public static final ForgeConfigSpec.IntValue EROBERUNG_VERTEIDIGER_KULANZ;
 
     public static final ForgeConfigSpec.IntValue STADT_RADIUS;
     public static final ForgeConfigSpec.IntValue STADT_GEBIET;
@@ -293,6 +296,13 @@ public final class CrownsConfig {
         EROBERUNG_GLEICHZEITIG = b.comment("So viele Besetzungen darf eine Nation gleichzeitig laufen haben")
                 .defineInRange("gleichzeitigeBesetzungen", 1, 1, 100);
         EROBERUNG_BLOCK = b.comment("Block, der als Besatzungsblock gesetzt wird").define("besatzungsblock", "minecraft:red_banner");
+        EROBERUNG_AUFGABE_RADIUS = b.comment("Wer sich weiter als so viele Bloecke von der Stadtmitte (bzw. dem Besatzungsblock) entfernt, ist nicht mehr dabei.",
+                        "Sind keine Angreifer mehr in dem Umkreis, haben sie aufgegeben. Ist kein Verteidiger dort, obwohl welche online sind, haben die aufgegeben. 0 = aus")
+                .defineInRange("aufgabeRadius", 100, 0, 10000);
+        EROBERUNG_ANGREIFER_KULANZ = b.comment("So viele Sekunden duerfen alle Angreifer weg sein, bevor die Besetzung als aufgegeben gilt")
+                .defineInRange("angreiferKulanzSekunden", 30, 0, 86400);
+        EROBERUNG_VERTEIDIGER_KULANZ = b.comment("So viele Minuten duerfen die Verteidiger fernbleiben (obwohl jemand online ist), dann ist die Stadt bzw. das Land verloren")
+                .defineInRange("verteidigerKulanzMinuten", 10, 1, 10000);
         b.pop();
 
         b.comment("Antraege im Browser entscheiden (Ordner editor/antraege/ beim Rechte-Editor). Der Link geht in den Discord-Webhook antraege.",

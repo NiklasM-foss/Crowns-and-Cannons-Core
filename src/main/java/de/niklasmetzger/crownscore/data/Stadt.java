@@ -21,6 +21,8 @@ public class Stadt {
     public boolean glocke;
     /** Id beim Antrags-Dienst (Browser), leer = keiner. */
     public String antragId = "";
+    /** Spieler, die schon einmal im Stadtgebiet waren, seit die Stadt anerkannt ist (sehen sie dann auf der Karte). */
+    public final java.util.Set<UUID> entdeckt = new java.util.LinkedHashSet<>();
 
     public CompoundTag toNbt() {
         CompoundTag t = new CompoundTag();
@@ -35,6 +37,7 @@ public class Stadt {
         t.putString("bestaetigtVon", bestaetigtVon);
         t.putBoolean("glocke", glocke);
         t.putString("antragId", antragId);
+        t.put("entdeckt", NbtUtil.uuids(entdeckt));
         return t;
     }
 
@@ -51,6 +54,7 @@ public class Stadt {
         s.bestaetigtVon = t.getString("bestaetigtVon");
         s.glocke = t.getBoolean("glocke");
         s.antragId = t.getString("antragId");
+        s.entdeckt.addAll(NbtUtil.uuidSet(t, "entdeckt"));
         return s;
     }
 }

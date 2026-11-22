@@ -212,6 +212,9 @@ public final class EroberungService {
         b.rest = CrownsConfig.EROBERUNG_HALTEZEIT_MINUTEN.get() * 60L;
         b.von = p.getUUID();
         b.gebuehr = gebuehr;
+        int[] start = angriffsStart(d, wer, stadt != null ? stadt.pos : pos);
+        b.vonX = start[0];
+        b.vonZ = start[1];
         d.besatzungen.add(b);
         d.setDirty();
         String wo = pos.getX() + " " + pos.getY() + " " + pos.getZ();
@@ -229,12 +232,36 @@ public final class EroberungService {
         return null;
     }
 
+    /** Startpunkt der Angriffslinie: naechste eigene Stadt oder naechster Punkt im eigenen Land, sonst das Ziel selbst. */
+    static int[] angriffsStart(CrownsData d, Nation wer, BlockPos ziel) {
+        double best = Double.MAX_VALUE;
+        int[] r = {ziel.getX(), ziel.getZ()};
+        for (de.niklasmetzger.crownscore.data.Stadt s : d.staedte) {
+            if (!s.bestaetigt || !s.nation.equals(wer.key())) continue;
+            double dist = s.pos.distSqr(ziel);
+            if (dist < best) {
+                best = dist;
+                r = new int[]{s.pos.getX(), s.pos.getZ()};
+            }
+        }
+        double[] p = WorldMap.naechsterPunkt(wer.laender, WorldMap.lon(ziel.getX()), WorldMap.lat(ziel.getZ()));
+        if (p != null) {
+            int x = (int) Math.round(CrownsConfig.KARTE_MITTE_X.get() + p[0] * WorldMap.blocksPerDegree());
+            int z = (int) Math.round(CrownsConfig.KARTE_MITTE_Z.get() - p[1] * WorldMap.blocksPerDegree());
+            double dist = (double) (x - ziel.getX()) * (x - ziel.getX()) + (double) (z - ziel.getZ()) * (z - ziel.getZ());
+            if (dist < best) r = new int[]{x, z};
+        }
+        return r;
+    }
+
     /** Besetzung beenden, ohne dass das Land wechselt. Der Block wird entfernt, die Gebuehr bleibt weg. */
     public static void abbrechen(MinecraftServer server, Besatzung b, String grund) {
         CrownsData d = CrownsData.get(server);
         if (!d.besatzungen.remove(b)) return;
         d.setDirty();
         ZERSTOERT_VON.remove(b.id);
+        ANGREIFER_WEG.remove(b.id);
+        VERTEIDIGER_WEG.remove(b.id);
         ServerLevel level = level(server, b);
         if (level != null && level.isLoaded(b.pos) && level.getBlockState(b.pos).is(block())) {
             level.removeBlock(b.pos, false);
@@ -317,6 +344,7 @@ public final class EroberungService {
                 abbrechen(server, b, "der Besatzungsblock wurde zerstoert" + (wer == null ? "." : " (von " + wer + ")."));
                 continue;
             }
+            if (aufgabe(server, d, b)) continue;
             if (CrownsConfig.EROBERUNG_VERTEIDIGER_ONLINE.get() && !online(server, d, b.verteidiger)) continue;
             b.rest--;
             d.setDirty();
@@ -329,14 +357,112 @@ public final class EroberungService {
                 }
                 continue;
             }
-            d.besatzungen.remove(b);
-            ZERSTOERT_VON.remove(b.id);
-            if (level.isLoaded(b.pos) && level.getBlockState(b.pos).is(block())) level.removeBlock(b.pos, false);
-            sperren(d, c);
-            d.besatzungen.removeIf(o -> o.land.equalsIgnoreCase(b.land));
-            WeltkarteCommand.uebertragen(server, List.of(c.code()), angreifer, "besetzt und eingenommen", log());
-            CrownsCore.LOGGER.info("Besetzung {} erfolgreich: {} hat {} eingenommen", b.id, angreifer.name, c.code());
+            erfolg(server, b, "besetzt und eingenommen");
         }
+    }
+
+    /** Besetzung gelungen (Haltezeit vorbei oder Verteidiger haben aufgegeben): Stadt bzw. Land wechselt. */
+    public static void erfolg(MinecraftServer server, Besatzung b, String wie) {
+        CrownsData d = CrownsData.get(server);
+        if (!d.besatzungen.remove(b)) return;
+        d.setDirty();
+        ZERSTOERT_VON.remove(b.id);
+        ANGREIFER_WEG.remove(b.id);
+        VERTEIDIGER_WEG.remove(b.id);
+        ServerLevel level = level(server, b);
+        if (level != null && level.isLoaded(b.pos) && level.getBlockState(b.pos).is(block())) level.removeBlock(b.pos, false);
+        Nation angreifer = d.nations.get(b.angreifer), verteidiger = d.nations.get(b.verteidiger);
+        if (angreifer == null || verteidiger == null) return;
+        if (!b.stadt.isEmpty()) {
+            de.niklasmetzger.crownscore.data.Stadt s = de.niklasmetzger.crownscore.handel.StadtService.byName(d, b.stadt);
+            if (s != null) stadtUebergeben(server, s, angreifer, verteidiger, "erobert");
+            return;
+        }
+        Country c = WorldMap.byCode(b.land);
+        if (c == null) return;
+        sperren(d, c);
+        d.besatzungen.removeIf(o -> o.land.equalsIgnoreCase(b.land) && o.stadt.isEmpty());
+        WeltkarteCommand.uebertragen(server, List.of(c.code()), angreifer, wie, log());
+        CrownsCore.LOGGER.info("Besetzung {} erfolgreich: {} hat {} eingenommen", b.id, angreifer.name, c.code());
+    }
+
+    private static final java.util.Map<Integer, Integer> ANGREIFER_WEG = new HashMap<>();
+    private static final java.util.Map<Integer, Integer> VERTEIDIGER_WEG = new HashMap<>();
+
+    /** Mitte, um die herum die Anwesenheit zaehlt: Stadtmitte oder Besatzungsblock. */
+    static BlockPos mitte(CrownsData d, Besatzung b) {
+        if (!b.stadt.isEmpty()) {
+            de.niklasmetzger.crownscore.data.Stadt s = de.niklasmetzger.crownscore.handel.StadtService.byName(d, b.stadt);
+            if (s != null) return s.pos;
+        }
+        return b.pos;
+    }
+
+    private static int inDerNaehe(MinecraftServer server, CrownsData d, String nationKey, String dim, BlockPos mitte, int r) {
+        int n = 0;
+        for (ServerPlayer p : server.getPlayerList().getPlayers()) {
+            if (!nationKey.equals(d.nationKeyOf(p.getUUID())) || p.isSpectator()) continue;
+            if (!p.level().dimension().location().toString().equals(dim)) continue;
+            double dx = p.getX() - mitte.getX(), dz = p.getZ() - mitte.getZ();
+            if (dx * dx + dz * dz <= (double) r * r) n++;
+        }
+        return n;
+    }
+
+    /** Aufgeben pruefen. true = Besetzung ist damit erledigt (abgebrochen oder gewonnen). */
+    private static boolean aufgabe(MinecraftServer server, CrownsData d, Besatzung b) {
+        int r = CrownsConfig.EROBERUNG_AUFGABE_RADIUS.get();
+        if (r <= 0) return false;
+        BlockPos m = mitte(d, b);
+        String ziel = !b.stadt.isEmpty() ? b.stadt : b.land;
+        if (inDerNaehe(server, d, b.angreifer, b.dim, m, r) == 0) {
+            int weg = ANGREIFER_WEG.merge(b.id, 1, Integer::sum);
+            if (weg == 1) Msg.nation(server, d.nations.get(b.angreifer), "§eNiemand von euch ist mehr in " + r + " Bloecken um " + ziel
+                    + ". Kommt zurueck, sonst gilt die Besetzung in " + CrownsConfig.EROBERUNG_ANGREIFER_KULANZ.get() + " Sekunden als aufgegeben.");
+            if (weg >= CrownsConfig.EROBERUNG_ANGREIFER_KULANZ.get()) {
+                abbrechen(server, b, "die Angreifer haben aufgegeben (niemand mehr in " + r + " Bloecken).");
+                return true;
+            }
+        } else {
+            ANGREIFER_WEG.remove(b.id);
+        }
+        if (online(server, d, b.verteidiger) && inDerNaehe(server, d, b.verteidiger, b.dim, m, r) == 0) {
+            int weg = VERTEIDIGER_WEG.merge(b.id, 1, Integer::sum);
+            int kulanz = CrownsConfig.EROBERUNG_VERTEIDIGER_KULANZ.get() * 60;
+            if (weg == 1 || (kulanz - weg) % 300 == 0 && kulanz - weg > 0) {
+                Msg.nation(server, d.nations.get(b.verteidiger), "§c" + ziel + " wird belagert und niemand von euch verteidigt! Noch "
+                        + TimeUtil.duration((kulanz - weg) * 1000L) + ", dann gilt " + ziel + " als aufgegeben.");
+            }
+            if (weg >= kulanz) {
+                Msg.broadcast(server, "§c" + d.anzeige(b.verteidiger) + " hat " + ziel + " kampflos aufgegeben.");
+                erfolg(server, b, "kampflos eingenommen");
+                return true;
+            }
+        } else {
+            VERTEIDIGER_WEG.remove(b.id);
+        }
+        return false;
+    }
+
+    /** /nation aufgeben: Angreifer brechen ab, Verteidiger geben die Stadt bzw. das Land auf. */
+    public static String aufgeben(MinecraftServer server, ServerPlayer p, int nr) {
+        CrownsData d = CrownsData.get(server);
+        Nation n = d.nationOf(p.getUUID());
+        if (n == null || !n.isBeamter(p.getUUID())) return "Aufgeben duerfen nur Staatschef und Beamte.";
+        for (Besatzung b : new ArrayList<>(d.besatzungen)) {
+            if (nr > 0 && b.id != nr) continue;
+            String ziel = !b.stadt.isEmpty() ? b.stadt : b.land;
+            if (b.angreifer.equals(n.key())) {
+                abbrechen(server, b, n.name + " hat aufgegeben.");
+                return null;
+            }
+            if (b.verteidiger.equals(n.key())) {
+                Msg.broadcast(server, "§c" + n.name + " gibt " + ziel + " auf.");
+                erfolg(server, b, "nach Aufgabe eingenommen");
+                return null;
+            }
+        }
+        return nr > 0 ? "Deine Nation ist an Besetzung Nr. " + nr + " nicht beteiligt." : "Deine Nation ist an keiner Besetzung beteiligt.";
     }
 
     private static void stadtSekunde(MinecraftServer server, CrownsData d, Besatzung b) {
@@ -369,6 +495,7 @@ public final class EroberungService {
             abbrechen(server, b, "der Besatzungsblock wurde zerstoert" + (wer == null ? "." : " (von " + wer + ")."));
             return;
         }
+        if (aufgabe(server, d, b)) return;
         if (CrownsConfig.EROBERUNG_VERTEIDIGER_ONLINE.get() && !online(server, d, b.verteidiger)) return;
         b.rest--;
         d.setDirty();
@@ -381,14 +508,11 @@ public final class EroberungService {
             }
             return;
         }
-        d.besatzungen.remove(b);
-        ZERSTOERT_VON.remove(b.id);
-        if (level.isLoaded(b.pos) && level.getBlockState(b.pos).is(block())) level.removeBlock(b.pos, false);
-        stadtUebergeben(server, s, angreifer, verteidiger);
+        erfolg(server, b, "erobert");
     }
 
     /** Stadt geht an den Eroberer; haelt er danach alle Staedte des Landes, bekommt er das ganze Land. */
-    public static void stadtUebergeben(MinecraftServer server, de.niklasmetzger.crownscore.data.Stadt s, Nation neu, Nation alt) {
+    public static void stadtUebergeben(MinecraftServer server, de.niklasmetzger.crownscore.data.Stadt s, Nation neu, Nation alt, String wie) {
         CrownsData d = CrownsData.get(server);
         s.nation = neu.key();
         int tage = CrownsConfig.EROBERUNG_SPERRE_TAGE.get();
@@ -397,10 +521,10 @@ public final class EroberungService {
         List<net.minecraft.world.level.ChunkPos> chunks = de.niklasmetzger.crownscore.handel.StadtService.chunks(s);
         for (net.minecraft.world.level.ChunkPos cp : chunks) map.put(cp.toLong(), neu.key());
         d.setDirty();
-        String text = neu.name + " hat die Stadt " + s.name + " von " + alt.name + " erobert.";
+        String text = neu.name + " hat die Stadt " + s.name + " von " + alt.name + " " + wie + ".";
         Msg.broadcast(server, "§c" + text);
         DiscordWebhook.kriegsnews(":crossed_swords: " + text);
-        de.niklasmetzger.crownscore.handel.Postfach.nation(server, neu, "Stadt erobert", text, null);
+        de.niklasmetzger.crownscore.handel.Postfach.nation(server, neu, "Neue Stadt: " + s.name, text, null);
         de.niklasmetzger.crownscore.handel.Postfach.nation(server, alt, "Stadt verloren", text, null);
         boolean opac = net.minecraftforge.fml.ModList.get().isLoaded("openpartiesandclaims");
         if (opac && s.dim.equals(net.minecraft.world.level.Level.OVERWORLD.location().toString())) {

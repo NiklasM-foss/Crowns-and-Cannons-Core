@@ -44,7 +44,10 @@ public final class EroberungCommand {
                                 .executes(ctx -> abbrechen(ctx, -1))
                                 .then(Commands.argument("nr", IntegerArgumentType.integer(1))
                                         .executes(ctx -> abbrechen(ctx, IntegerArgumentType.getInteger(ctx, "nr"))))))
-                .then(Commands.literal("besetzungen").executes(EroberungCommand::liste)));
+                .then(Commands.literal("besetzungen").executes(EroberungCommand::liste))
+                .then(Commands.literal("aufgeben")
+                        .executes(ctx -> aufgeben(ctx, -1))
+                        .then(Commands.argument("nr", IntegerArgumentType.integer(1)).executes(ctx -> aufgeben(ctx, IntegerArgumentType.getInteger(ctx, "nr"))))));
     }
 
     private static java.util.concurrent.CompletableFuture<com.mojang.brigadier.suggestion.Suggestions> laender(
@@ -153,6 +156,16 @@ public final class EroberungCommand {
         }
         EroberungService.abbrechen(src.getServer(), ziel, admin && (own == null || !ziel.angreifer.equals(own.key()))
                 ? "von einem Admin beendet." : "abgebrochen.");
+        return 1;
+    }
+
+    private static int aufgeben(CommandContext<CommandSourceStack> ctx, int nr) throws CommandSyntaxException {
+        CommandSourceStack src = ctx.getSource();
+        String err = EroberungService.aufgeben(src.getServer(), CommandUtil.player(ctx), nr);
+        if (err != null) {
+            Msg.err(src, err);
+            return 0;
+        }
         return 1;
     }
 

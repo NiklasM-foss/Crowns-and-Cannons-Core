@@ -183,25 +183,82 @@ public final class MapFlagService {
         }
     }
 
-    /** Staedte fuer die Karten, an jeden Client nur bei Aenderung. */
+    /** Staedte fuer die Karten, an jeden Client nur bei Aenderung. Jeder sieht nur die Staedte seiner Nation und die, in denen er schon war. */
     private static void staedte(MinecraftServer server) {
         CrownsData d = CrownsData.get(server);
-        java.util.List<CcNetwork.StadtEintrag> l = new java.util.ArrayList<>();
         String ow = net.minecraft.world.level.Level.OVERWORLD.location().toString();
-        for (de.niklasmetzger.crownscore.data.Stadt s : d.staedte) {
-            if (!s.dim.equals(ow)) continue;
-            Nation n = d.nations.get(s.nation);
-            l.add(new CcNetwork.StadtEintrag(s.name, n == null ? s.nation : n.name, s.pos.getX(), s.pos.getZ(), s.bestaetigt));
+        // Entdecken: wer im Gebiet einer anerkannten Stadt steht, sieht sie ab jetzt
+        if (tick % 5 == 0) {
+            for (ServerPlayer p : server.getPlayerList().getPlayers()) {
+                if (p.level().dimension() != net.minecraft.world.level.Level.OVERWORLD) continue;
+                de.niklasmetzger.crownscore.data.Stadt s = de.niklasmetzger.crownscore.handel.StadtService.an(d, ow, p.blockPosition().getX() >> 4, p.blockPosition().getZ() >> 4);
+                if (s != null && s.entdeckt.add(p.getUUID())) {
+                    d.setDirty();
+                    if (!s.nation.equals(d.nationKeyOf(p.getUUID()))) {
+                        de.niklasmetzger.crownscore.util.Msg.player(p, "\u00a77Du hast die Stadt \u00a7f" + s.name + "\u00a77 entdeckt, sie steht jetzt auf deiner Karte.");
+                    }
+                }
+            }
         }
         int gebiet = CrownsConfig.STADT_GEBIET.get();
-        String sig = gebiet + "|" + l;
+        java.util.List<CcNetwork.Belagerung> bl = new java.util.ArrayList<>();
+        for (de.niklasmetzger.crownscore.data.Besatzung b : d.besatzungen) {
+            if (!b.dim.equals(ow)) continue;
+            BlockPosHolder z = ziel(d, b);
+            bl.add(new CcNetwork.Belagerung(b.stadt, b.vonX, b.vonZ, z.x, z.z));
+        }
+        java.util.Map<String, String> bilder = new java.util.HashMap<>();
         for (ServerPlayer viewer : server.getPlayerList().getPlayers()) {
             if (!CcNetwork.present(viewer)) continue;
             Viewer st = VIEWERS.computeIfAbsent(viewer.getUUID(), k -> new Viewer());
+            String eigene = d.nationKeyOf(viewer.getUUID());
+            boolean admin = de.niklasmetzger.crownscore.util.Perms.isAdmin(viewer);
+            java.util.List<CcNetwork.StadtEintrag> l = new java.util.ArrayList<>();
+            for (de.niklasmetzger.crownscore.data.Stadt s : d.staedte) {
+                if (!s.dim.equals(ow)) continue;
+                boolean meine = s.nation.equals(eigene);
+                boolean sichtbar = meine || admin || (s.bestaetigt && s.entdeckt.contains(viewer.getUUID()));
+                if (!sichtbar) {
+                    for (CcNetwork.Belagerung b : bl) if (b.stadt().equalsIgnoreCase(s.name) && eigene != null) sichtbar = true;
+                }
+                if (!sichtbar) continue;
+                String bild = bilder.computeIfAbsent(s.name, k -> {
+                    byte[] w = de.niklasmetzger.crownscore.handel.WappenStore.wappen(s);
+                    if (w == null) {
+                        Nation n = d.nations.get(s.nation);
+                        w = n == null ? null : flagge(n);
+                    }
+                    return texture(w);
+                });
+                if (!bild.isEmpty() && !st.sent.contains(bild) && TEXTURES.containsKey(bild)) {
+                    CcNetwork.send(viewer, new CcNetwork.MapFlagTexture(bild, TEXTURES.get(bild)));
+                    st.sent.add(bild);
+                }
+                Nation n = d.nations.get(s.nation);
+                l.add(new CcNetwork.StadtEintrag(s.name, n == null ? s.nation : n.name, s.pos.getX(), s.pos.getZ(), s.bestaetigt, bild));
+            }
+            java.util.List<CcNetwork.Belagerung> sichtbareBl = new java.util.ArrayList<>();
+            for (de.niklasmetzger.crownscore.data.Besatzung b : d.besatzungen) {
+                if (!b.dim.equals(ow)) continue;
+                if (admin || b.angreifer.equals(eigene) || b.verteidiger.equals(eigene) || l.stream().anyMatch(e -> e.name().equalsIgnoreCase(b.stadt))) {
+                    BlockPosHolder z = ziel(d, b);
+                    sichtbareBl.add(new CcNetwork.Belagerung(b.stadt, b.vonX, b.vonZ, z.x, z.z));
+                }
+            }
+            String sig = gebiet + "|" + l + "|" + sichtbareBl;
             if (sig.equals(st.staedte)) continue;
-            CcNetwork.send(viewer, new CcNetwork.StadtKarte(gebiet, l));
+            CcNetwork.send(viewer, new CcNetwork.StadtKarte(gebiet, l, sichtbareBl));
             st.staedte = sig;
         }
+    }
+
+    private record BlockPosHolder(int x, int z) {}
+
+    private static BlockPosHolder ziel(CrownsData d, de.niklasmetzger.crownscore.data.Besatzung b) {
+        if (!b.stadt.isEmpty()) {
+            for (de.niklasmetzger.crownscore.data.Stadt s : d.staedte) if (s.name.equalsIgnoreCase(b.stadt)) return new BlockPosHolder(s.pos.getX(), s.pos.getZ());
+        }
+        return new BlockPosHolder(b.pos.getX(), b.pos.getZ());
     }
 
     /** Wie viele Clients bekommen gerade Kartenflaggen (fuer Status und Selbsttest). */

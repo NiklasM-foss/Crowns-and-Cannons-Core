@@ -104,6 +104,7 @@ public class CrownsCore {
         de.niklasmetzger.crownscore.flag.FlagCommand.register(d);
         de.niklasmetzger.crownscore.world.EroberungCommand.register(d);
         de.niklasmetzger.crownscore.handel.HandelCommand.register(d);
+        de.niklasmetzger.crownscore.handel.WappenCommand.register(d);
     }
 
     /** Nach allen Mods: eigene Befehle nach Rolle ausblenden, alle Befehle ueber command.<name> steuerbar machen. */
@@ -136,6 +137,7 @@ public class CrownsCore {
         LogDatabase.open(event.getServer());
         de.niklasmetzger.crownscore.flag.CapeService.reset();
         de.niklasmetzger.crownscore.flag.MapFlagService.reset();
+        de.niklasmetzger.crownscore.handel.WappenStore.load(event.getServer());
         de.niklasmetzger.crownscore.flag.FlagStore.load(event.getServer());
         if (ModList.get().isLoaded("waystones")) {
             WaystoneModule.init();
