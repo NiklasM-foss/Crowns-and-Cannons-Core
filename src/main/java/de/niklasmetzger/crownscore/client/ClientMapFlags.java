@@ -39,6 +39,14 @@ public final class ClientMapFlags {
 
     private ClientMapFlags() {}
 
+    /**
+     * Farbe im Format der Xaero-Highlighter: Blau im obersten Byte, dann Gruen, Rot, Alpha
+     * (so packt Xaero auch die OPAC-Claimfarbe 0xRRGGBB).
+     */
+    static int xaero(int r, int g, int b, int a) {
+        return (b & 255) << 24 | (g & 255) << 16 | (r & 255) << 8 | (a & 255);
+    }
+
     public static void texture(String hash, byte[] png) {
         if (!hash.matches("[0-9a-f]{8,64}") || png.length > (1 << 21)) return;
         PNGS.put(hash, png);
@@ -184,7 +192,7 @@ public final class ClientMapFlags {
      */
     public static boolean staedteMalen(int cx, int cz, int[] out) {
         boolean any = false;
-        int rot = (0xE0 << 24) | (0x20 << 16) | (0x20 << 8) | 0xE6;
+        int rot = xaero(0xE0, 0x20, 0x20, 0xE6);
         for (CcNetwork.Belagerung b : belagerungen) {
             if (!linieImChunk(b, cx, cz)) continue;
             for (int z = 0; z < 16; z++) {
@@ -201,8 +209,8 @@ public final class ClientMapFlags {
             int sx = s.x() >> 4, sz = s.z() >> 4;
             int dx = cx - sx, dz = cz - sz;
             if (Math.abs(dx) > r || Math.abs(dz) > r) continue;
-            int farbe = belagert(s.name()) ? (0xE0 << 24) | (0x20 << 16) | (0x20 << 8) | 0xF0
-                    : s.anerkannt() ? (0xF2 << 24) | (0xC2 << 16) | (0x30 << 8) | 0xF0 : (0xD0 << 24) | (0xD0 << 16) | (0xD0 << 8) | 0xC8;
+            int farbe = belagert(s.name()) ? xaero(0xE0, 0x20, 0x20, 0xF0)
+                    : s.anerkannt() ? xaero(0xF2, 0xC2, 0x30, 0xF0) : xaero(0xD0, 0xD0, 0xD0, 0xC8);
             for (int z = 0; z < 16; z++) {
                 for (int x = 0; x < 16; x++) {
                     boolean rand = (dx == -r && x < 2) || (dx == r && x > 13) || (dz == -r && z < 2) || (dz == r && z > 13);
@@ -219,7 +227,7 @@ public final class ClientMapFlags {
                 double sc = Math.min(2.0 * WAPPEN / w.w(), 2.0 * WAPPEN / w.h());
                 double bw = w.w() * sc, bh = w.h() * sc;
                 double x0 = s.x() - bw / 2, z0 = s.z() - bh / 2;
-                int dunkel = (0x18 << 24) | (0x12 << 16) | (0x0C << 8) | 0xF0;
+                int dunkel = xaero(0x18, 0x12, 0x0C, 0xF0);
                 for (int z = 0; z < 16; z++) {
                     double wz = cz * 16 + z + 0.5;
                     for (int x = 0; x < 16; x++) {
@@ -231,7 +239,7 @@ public final class ClientMapFlags {
                             int px = Math.min(w.w() - 1, (int) ((wx - x0) / sc)), pz = Math.min(w.h() - 1, (int) ((wz - z0) / sc));
                             int c = w.argb()[pz * w.w() + px];
                             if ((c >>> 24) < 40) continue;
-                            out[(z << 4) | x] = ((c >> 16 & 255) << 24) | ((c >> 8 & 255) << 16) | ((c & 255) << 8) | 0xF8;
+                            out[(z << 4) | x] = xaero(c >> 16 & 255, c >> 8 & 255, c & 255, 0xF8);
                         }
                         any = true;
                     }
@@ -243,7 +251,7 @@ public final class ClientMapFlags {
                 for (int z = Math.max(0, lz - 2); z <= Math.min(15, lz + 2); z++) {
                     for (int x = Math.max(0, lx - 2); x <= Math.min(15, lx + 2); x++) {
                         boolean kern = Math.abs(x - lx) <= 1 && Math.abs(z - lz) <= 1;
-                        out[(z << 4) | x] = kern ? farbe : (0x20 << 24) | (0x18 << 16) | (0x10 << 8) | 0xF0;
+                        out[(z << 4) | x] = kern ? farbe : xaero(0x20, 0x18, 0x10, 0xF0);
                     }
                 }
                 any = true;
@@ -276,8 +284,7 @@ public final class ClientMapFlags {
     }
 
     /**
-     * Fuellt {@code out} (256 Werte, Index z*16+x) mit den Farben eines Chunks im Format von Xaero (RGBA, Alpha im
-     * untersten Byte). {@code randN/O/S/W} = Nachbarchunk gehoert jemand anderem, dort kommt eine dunkle Linie hin.
+     * Fuellt {@code out} (256 Werte, Index z*16+x) mit den Farben eines Chunks im Format von Xaero (BGRA, siehe xaero()). {@code randN/O/S/W} = Nachbarchunk gehoert jemand anderem, dort kommt eine dunkle Linie hin.
      * false = keine Flagge fuer diesen Besitzer.
      */
     public static boolean fill(UUID owner, int cx, int cz, boolean randN, boolean randO, boolean randS, boolean randW, int[] out) {
@@ -307,7 +314,7 @@ public final class ClientMapFlags {
         // Wie "cover": Flagge so skalieren, dass sie die Flaeche fuellt, mittig zuschneiden
         double s = Math.max(bw / b.w(), bh / b.h());
         double ox = x0 + (bw - b.w() * s) / 2, oz = z0 + (bh - b.h() * s) / 2;
-        int rand = (20 << 24) | (20 << 16) | (20 << 8) | Math.min(255, a + 90);
+        int rand = xaero(20, 20, 20, Math.min(255, a + 90));
         for (int z = 0; z < 16; z++) {
             double wz = cz * 16 + z + 0.5;
             int py = (int) Math.floor((wz - oz) / s);
@@ -323,7 +330,7 @@ public final class ClientMapFlags {
                 px = Math.max(0, Math.min(b.w() - 1, px));
                 int c = b.argb()[py * b.w() + px];
                 int pa = (c >>> 24) * a / 255;
-                out[idx] = ((c >> 16 & 255) << 24) | ((c >> 8 & 255) << 16) | ((c & 255) << 8) | pa;
+                out[idx] = xaero(c >> 16 & 255, c >> 8 & 255, c & 255, pa);
             }
         }
         return true;
