@@ -1,10 +1,7 @@
 # Changelog
 
-## 1.5.1
+## 1.5.2
 
-- **Kartenfarben korrigiert**: Rot und Blau waren auf World Map und Minimap vertauscht
-  (Flaggen, Stadtwappen, Stadtrahmen, Angriffslinie). Xaero erwartet die Farbkanäle in
-  der Reihenfolge Blau, Grün, Rot, Alpha.
 - **Transparente Flaggen**: Durchsichtige Stellen kommen jetzt auf weißen Stoff, wie in der
   Vorschau der Upload-Seite. Vorher waren sie auf dem Umhang schwarz und auf der Karte
   schien das Gelände durch. Stadtwappen bleiben auf der Karte freigestellt.
@@ -25,6 +22,12 @@
   - Ein Fehler in einer Sekundenaufgabe legt die anderen nicht mehr still.
   - Besatzungsblock wird auch in entladenen Chunks entfernt.
   - Antrags-Dienst: ungültige Anfragen (negative Länge, keine JSON-Objekte) werden abgewiesen.
+
+## 1.5.1
+
+- **Kartenfarben korrigiert**: Rot und Blau waren auf World Map und Minimap vertauscht
+  (Flaggen, Stadtwappen, Stadtrahmen, Angriffslinie). Xaero erwartet die Farbkanäle in
+  der Reihenfolge Blau, Grün, Rot, Alpha.
 - Nur der Client ist betroffen, Server und Spieler sollten trotzdem dieselbe Version haben.
 
 ## 1.5.0
