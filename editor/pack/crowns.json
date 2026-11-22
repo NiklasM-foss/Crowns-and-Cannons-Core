@@ -1,0 +1,17 @@
+{
+  "name": "Crowns & Cannons",
+  "stand": "2026-11-22",
+  "hinweis": "Ergaenzungen zum CurseForge-Modpack, die CurseForge selbst nicht kann. Der Crowns-Helfer (modpack/Crowns-Helfer.bat) liest diese Datei.",
+  "instanzen": ["Crowns & Cannons"],
+  "jvm": ["-Dorg.lwjgl.system.allocator=system"],
+  "mods": [
+    {
+      "name": "CC: Tweaked",
+      "grund": "Auf CurseForge nur bis 1.113.1, die crasht. 1.122.0 gibt es nur auf Modrinth.",
+      "datei": "cc-tweaked-1.20.1-forge-1.122.0.jar",
+      "url": "https://cdn.modrinth.com/data/gu7yAYhd/versions/YFHKowXT/cc-tweaked-1.20.1-forge-1.122.0.jar",
+      "sha512": "83912db6dc3041fde888757fdc6512942bef14c6afe7bcee1e5dba150552891dece466421d771c7d4d80f8ccdb592c88ce27bd0ed23f00e22eee3cc167c72706",
+      "ersetzt": "cc-tweaked-*.jar"
+    }
+  ]
+}

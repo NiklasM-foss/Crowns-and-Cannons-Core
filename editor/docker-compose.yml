@@ -36,6 +36,7 @@ services:
       - ./proxy.conf:/etc/nginx/conf.d/default.conf:ro
       - ./flagge:/usr/share/nginx/flagge:ro
       - ./antraege/web:/usr/share/nginx/antraege:ro
+      - ./pack:/usr/share/nginx/pack:ro
 
 volumes:
   bytebin: {}
