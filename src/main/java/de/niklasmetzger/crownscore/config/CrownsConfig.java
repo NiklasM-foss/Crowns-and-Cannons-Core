@@ -85,6 +85,27 @@ public final class CrownsConfig {
     public static final ForgeConfigSpec.ConfigValue<String> UMHANG_DREHUNG;
     public static final ForgeConfigSpec.ConfigValue<String> UMHANG_SEITE;
 
+    public static final ForgeConfigSpec.BooleanValue KARTENFLAGGEN_AKTIV;
+    public static final ForgeConfigSpec.IntValue KARTENFLAGGEN_DECKKRAFT;
+    public static final ForgeConfigSpec.IntValue KARTENFLAGGEN_BREITE;
+
+    public static final ForgeConfigSpec.BooleanValue EROBERUNG_KAUFEN;
+    public static final ForgeConfigSpec.DoubleValue EROBERUNG_KAUF_GRUNDPREIS;
+    public static final ForgeConfigSpec.DoubleValue EROBERUNG_KAUF_PRO_CHUNK;
+    public static final ForgeConfigSpec.IntValue EROBERUNG_NACHBAR_ABSTAND;
+    public static final ForgeConfigSpec.BooleanValue EROBERUNG_BESETZEN;
+    public static final ForgeConfigSpec.BooleanValue EROBERUNG_NUR_IM_KRIEG;
+    public static final ForgeConfigSpec.BooleanValue EROBERUNG_NUR_KAMPFKRIEG;
+    public static final ForgeConfigSpec.DoubleValue EROBERUNG_GEBUEHR_GRUND;
+    public static final ForgeConfigSpec.DoubleValue EROBERUNG_GEBUEHR_PRO_CHUNK;
+    public static final ForgeConfigSpec.IntValue EROBERUNG_HALTEZEIT_MINUTEN;
+    public static final ForgeConfigSpec.BooleanValue EROBERUNG_VERTEIDIGER_ONLINE;
+    public static final ForgeConfigSpec.IntValue EROBERUNG_SCHUTZ_TAGE;
+    public static final ForgeConfigSpec.IntValue EROBERUNG_SPERRE_TAGE;
+    public static final ForgeConfigSpec.BooleanValue EROBERUNG_STAMMLAND_SCHUTZ;
+    public static final ForgeConfigSpec.IntValue EROBERUNG_GLEICHZEITIG;
+    public static final ForgeConfigSpec.ConfigValue<String> EROBERUNG_BLOCK;
+
     static {
         ForgeConfigSpec.Builder b = new ForgeConfigSpec.Builder();
 
@@ -214,6 +235,46 @@ public final class CrownsConfig {
                 .define("drehung", "RECHTS");
         UMHANG_SEITE = b.comment("Adresse der Upload-Seite fuer Flaggen (Ordner editor/flagge/). Leer = rechte.editorUrl mit flagge/ statt editor/.")
                 .define("seiteUrl", "");
+        b.pop();
+
+        b.comment("Flaggen auf Xaero's World Map und Minimap: jedes Land zeigt die Flagge der Nation, die es haelt.",
+                "Braucht Crowns Core im Client und Open Parties and Claims mit /nation weltkarte minimap flaeche.").push("kartenflaggen");
+        KARTENFLAGGEN_AKTIV = b.comment("Flaggen statt einfarbiger Flaechen auf den Karten zeigen").define("aktiv", true);
+        KARTENFLAGGEN_DECKKRAFT = b.comment("Deckkraft der Flaggen in Prozent (0 = unsichtbar, 100 = Gelaende nicht mehr sichtbar)")
+                .defineInRange("deckkraft", 55, 0, 100);
+        KARTENFLAGGEN_BREITE = b.comment("Breite der Flaggenbilder fuer die Karte in Pixeln. Mehr = schaerfer, aber mehr Daten beim Einloggen")
+                .defineInRange("breite", 256, 32, 1024);
+        b.pop();
+
+        b.comment("Laender einnehmen: freie Laender kaufen und Laender anderer Nationen im Krieg besetzen.",
+                "Alle Betraege gehen aus der Staatskasse. Chunks = Groesse des Landes auf der Weltkarte (/nation land preis <Land>).",
+                "Die Werte hier sind Vorschlaege und noch nicht mit der Projektleitung abgestimmt.").push("eroberung");
+        EROBERUNG_KAUFEN = b.comment("Freie Laender (Nationen ohne Spieler) duerfen gekauft werden").define("kaufen", true);
+        EROBERUNG_KAUF_GRUNDPREIS = b.comment("Grundpreis eines freien Landes").defineInRange("kaufGrundpreis", 1000.0, 0.0, 1.0E12);
+        EROBERUNG_KAUF_PRO_CHUNK = b.comment("Aufschlag pro Chunk des Landes (Saudi-Arabien hat etwa 12400, Jemen 2900, Deutschland 3500, Belgien 290)")
+                .defineInRange("kaufProChunk", 1.0, 0.0, 1.0E9);
+        EROBERUNG_NACHBAR_ABSTAND = b.comment("Kaufen und Besetzen nur in der Naehe des eigenen Gebiets: hoechstens so viele Chunks Abstand.",
+                        "0 = muss direkt angrenzen, 16 = auch ueber schmale Meerengen (Aermelkanal, Rotes Meer), -1 = egal wo")
+                .defineInRange("nachbarAbstandChunks", 16, -1, 100000);
+        EROBERUNG_BESETZEN = b.comment("Laender anderer Nationen duerfen besetzt werden (Besatzungsblock halten)").define("besetzen", true);
+        EROBERUNG_NUR_IM_KRIEG = b.comment("Besetzen nur gegen Nationen, mit denen man im Krieg ist").define("nurImKrieg", true);
+        EROBERUNG_NUR_KAMPFKRIEG = b.comment("Der Krieg muss eine Kriegsart mit erlaubtem Kampf sein (krieg.kampfErlaubt), nicht nur Spannungen")
+                .define("nurKampfkrieg", true);
+        EROBERUNG_GEBUEHR_GRUND = b.comment("Grundgebuehr fuer eine Besetzung, ist bei Misserfolg weg").defineInRange("besatzungGrundgebuehr", 500.0, 0.0, 1.0E12);
+        EROBERUNG_GEBUEHR_PRO_CHUNK = b.comment("Aufschlag pro Chunk des besetzten Landes").defineInRange("besatzungProChunk", 0.5, 0.0, 1.0E9);
+        EROBERUNG_HALTEZEIT_MINUTEN = b.comment("So lange muss der Besatzungsblock stehen bleiben, dann wechselt das Land den Besitzer")
+                .defineInRange("haltezeitMinuten", 120, 1, 100000);
+        EROBERUNG_VERTEIDIGER_ONLINE = b.comment("Die Haltezeit laeuft nur, solange mindestens ein Spieler der angegriffenen Nation online ist")
+                .define("nurWennVerteidigerOnline", true);
+        EROBERUNG_SCHUTZ_TAGE = b.comment("Neue Nationen sind so viele Tage nach der Gruendung geschuetzt (0 = kein Schutz)")
+                .defineInRange("schutzNeueNationTage", 7, 0, 3650);
+        EROBERUNG_SPERRE_TAGE = b.comment("Ein gerade eingenommenes Land kann so viele Tage nicht erneut eingenommen werden")
+                .defineInRange("sperreNachEroberungTage", 3, 0, 3650);
+        EROBERUNG_STAMMLAND_SCHUTZ = b.comment("Das Stammland einer Nation ist geschuetzt, solange sie noch andere Laender hat")
+                .define("stammlandGeschuetzt", true);
+        EROBERUNG_GLEICHZEITIG = b.comment("So viele Besetzungen darf eine Nation gleichzeitig laufen haben")
+                .defineInRange("gleichzeitigeBesetzungen", 1, 1, 100);
+        EROBERUNG_BLOCK = b.comment("Block, der als Besatzungsblock gesetzt wird").define("besatzungsblock", "minecraft:red_banner");
         b.pop();
 
         SPEC = b.build();

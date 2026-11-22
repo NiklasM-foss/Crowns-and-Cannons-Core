@@ -107,6 +107,14 @@ der Vatikan sind dafür zu klein, die Antarktis ist ausgelassen.
   Stammland als Ziel bekommt eine Nation ihr Land zurück. Für Teileroberungen gibt
   `/gebiet zuweisen <Nation> [Radius]` einzelne Chunks ab, `/gebiet zuruecksetzen`
   gibt sie dem Land auf der Karte zurück.
+- **Flaggen auf der Karte:** Wer Crowns Core im Client hat, sieht auf Xaero's World
+  Map und Minimap statt der einfarbigen Fläche die Flagge der Nation, die das Land
+  hält (eigene Flagge, sonst Landesflagge). Die Flagge ist über das Land gespannt und
+  mittig zugeschnitten, an Grenzen zu anderen Besitzern liegt eine dunkle Linie, der
+  Name der Nation steht weiter im Tooltip. Technisch hängt Crowns Core einen eigenen
+  Highlighter in die Listen beider Karten und blendet dort die OPAC-Fläche der
+  Staatskonten aus (`client/xaero/`), Xaero selbst bleibt unverändert. Config
+  `[kartenflaggen]`: `aktiv`, `deckkraft` (Prozent), `breite` (Pixel pro Flagge).
 - Open Parties and Claims muss auch im Modpack der Spieler sein, sonst zeigt Xaero
   nichts an.
 - **Kalibrieren:** `/gebiet hier` zeigt Land und Grad. Passt das an einer bekannten
@@ -114,6 +122,27 @@ der Vatikan sind dafür zu klein, die Antarktis ist ausgelassen.
   nachstellen und die Minimap-Anzeige neu aufbauen.
 - Die Kartendaten erzeugt `tools/weltkarte/make_weltkarte.py`, die Vorschau liegt in
   `docs/weltkarte.png`.
+
+## Länder einnehmen (`/nation land`, `/nation besetzen`)
+
+- **Kaufen:** Freie Länder (Nation ohne Staatschef und Bürger) kauft der Staatschef
+  mit `/nation land kaufen <Land>` aus der Staatskasse, nach einer Bestätigung.
+  Preis = `kaufGrundpreis` + `kaufProChunk` × Größe in Chunks. `/nation land preis
+  <Land>` zeigt Besitzer, Preis und ob die eigene Nation es darf.
+- **Nähe:** Gekauft oder besetzt wird nur, was höchstens `nachbarAbstandChunks` vom
+  eigenen Gebiet entfernt liegt (Standard 16, damit gehen auch schmale Meerengen;
+  0 = direkt angrenzend, −1 = überall).
+- **Besetzen:** Ein Beamter stellt sich im Krieg in ein Land der gegnerischen Nation
+  und gibt `/nation besetzen` ein. Die Gebühr geht aus der Staatskasse, an seiner
+  Position steht der Besatzungsblock (Standard roter Banner). Hält er
+  `haltezeitMinuten`, wechselt das Land wie bei `/nation annektieren`. Wird er
+  abgebaut oder gesprengt, ist die Besetzung gescheitert. Die Zeit läuft nur, solange
+  jemand aus der angegriffenen Nation online ist (`nurWennVerteidigerOnline`).
+  Stand alle 15 Minuten an beide Seiten, `/nation besetzungen` listet alle.
+- **Schutz:** Besetzen nur im Krieg mit erlaubtem Kampf, neue Nationen sind
+  `schutzNeueNationTage` geschützt, das Stammland ist erst einnehmbar, wenn die
+  Nation sonst nichts mehr hat, ein eingenommenes Land ist `sperreNachEroberungTage`
+  gesperrt, eine Nation hat höchstens `gleichzeitigeBesetzungen` laufende Besetzungen.
 
 ## Flaggen als Umhang (`/nation flagge`)
 
@@ -249,6 +278,12 @@ ersten Start mit Kommentaren erzeugt. Wichtig:
   `bytebinUrl`.
 - `umhang.aktiv`, `landesflaggen`, `freigabe`, `drehung` (`RECHTS` = Mastseite
   oben, `LINKS`), `seiteUrl` (leer = `editorUrl` mit `flagge/` statt `editor/`).
+- `kartenflaggen.aktiv`, `deckkraft`, `breite`.
+- `eroberung.kaufen`, `kaufGrundpreis`, `kaufProChunk`, `nachbarAbstandChunks`,
+  `besetzen`, `nurImKrieg`, `nurKampfkrieg`, `besatzungGrundgebuehr`,
+  `besatzungProChunk`, `haltezeitMinuten`, `nurWennVerteidigerOnline`,
+  `schutzNeueNationTage`, `sperreNachEroberungTage`, `stammlandGeschuetzt`,
+  `gleichzeitigeBesetzungen`, `besatzungsblock`.
 
 Spielstand in `world/data/crownscore.dat`, Blockprotokoll in
 `world/crownscore/protokoll.mv.db`, Rechte in `world/crownscore/permissions.json`,

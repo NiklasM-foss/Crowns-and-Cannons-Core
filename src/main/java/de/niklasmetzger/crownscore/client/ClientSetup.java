@@ -16,7 +16,7 @@ import net.minecraftforge.fml.util.ObfuscationReflectionHelper;
 
 import java.util.List;
 
-/** Client-Teil von Crowns Core: Flaggen als Umhang. Wird nur auf dem Client geladen. */
+/** Client-Teil von Crowns Core: Flaggen als Umhang und auf Xaero's Karten. Wird nur auf dem Client geladen. */
 public final class ClientSetup {
     private ClientSetup() {}
 
@@ -63,6 +63,12 @@ public final class ClientSetup {
         @SubscribeEvent
         public static void onLogout(ClientPlayerNetworkEvent.LoggingOut event) {
             ClientCapes.clear();
+            ClientMapFlags.clear();
+        }
+
+        @SubscribeEvent
+        public static void onTick(net.minecraftforge.event.TickEvent.ClientTickEvent event) {
+            if (event.phase == net.minecraftforge.event.TickEvent.Phase.END) XaeroBridge.tick();
         }
     }
 }

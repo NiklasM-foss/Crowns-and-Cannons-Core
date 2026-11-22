@@ -74,6 +74,8 @@ public class CrownsCore {
         MinecraftForge.EVENT_BUS.register(new Inspector());
         MinecraftForge.EVENT_BUS.register(new DisplayEvents());
         MinecraftForge.EVENT_BUS.register(new de.niklasmetzger.crownscore.flag.CapeService.Events());
+        MinecraftForge.EVENT_BUS.register(new de.niklasmetzger.crownscore.world.EroberungService.Events());
+        MinecraftForge.EVENT_BUS.register(new de.niklasmetzger.crownscore.flag.MapFlagService.Events());
         de.niklasmetzger.crownscore.net.CcNetwork.init();
     }
 
@@ -98,6 +100,7 @@ public class CrownsCore {
         ModeCommand.register(d);
         de.niklasmetzger.crownscore.world.WeltkarteCommand.register(d);
         de.niklasmetzger.crownscore.flag.FlagCommand.register(d);
+        de.niklasmetzger.crownscore.world.EroberungCommand.register(d);
     }
 
     /** Nach allen Mods: eigene Befehle nach Rolle ausblenden, alle Befehle ueber command.<name> steuerbar machen. */
@@ -129,6 +132,7 @@ public class CrownsCore {
         DiscordWebhook.start();
         LogDatabase.open(event.getServer());
         de.niklasmetzger.crownscore.flag.CapeService.reset();
+        de.niklasmetzger.crownscore.flag.MapFlagService.reset();
         de.niklasmetzger.crownscore.flag.FlagStore.load(event.getServer());
         if (ModList.get().isLoaded("waystones")) {
             WaystoneModule.init();

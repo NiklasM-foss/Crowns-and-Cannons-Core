@@ -1,5 +1,28 @@
 # Changelog
 
+## 1.4.0
+
+- **Flaggen auf der Karte**: Auf Xaero's World Map und Minimap liegt über jedem Land
+  die Flagge der Nation, die es hält, statt einer einfarbigen Fläche. Die Flagge wird
+  über das Land gespannt, erobert eine Nation ein Land, weht dort ihre Flagge. Eigene
+  Flaggen aus dem Browser erscheinen auch auf der Karte. Deckkraft und Bildgröße in
+  der Config `[kartenflaggen]`. Xaero wird dafür nicht verändert, Crowns Core hängt
+  sich in die Liste der Kartenmarkierungen ein; passt eine Xaero-Version nicht,
+  bleibt die normale Claim-Farbe.
+- **Länder kaufen**: `/nation land kaufen <Land>` kauft ein freies Land (Nation ohne
+  Spieler) aus der Staatskasse. Preis = Grundpreis + Betrag pro Chunk, das Land muss
+  nahe am eigenen Gebiet liegen. `/nation land preis <Land>` zeigt Preis und ob es geht.
+- **Länder besetzen**: `/nation besetzen` setzt im Krieg einen Besatzungsblock in ein
+  Land der gegnerischen Nation. Steht er die Haltezeit lang (Standard 2 Stunden,
+  gezählt nur, solange ein Verteidiger online ist), gehört das Land dem Angreifer.
+  Wird er abgebaut oder gesprengt, ist die Besetzung gescheitert und die Gebühr weg.
+  Meldung im Chat, an die Verteidiger und im Kriegsnews-Kanal.
+- Schutzregeln: neue Nationen eine Zeit lang geschützt, Stammland erst als letztes
+  Land einnehmbar, Sperre nach einer Einnahme, Anzahl gleichzeitiger Besetzungen.
+  Alle Werte stehen in der Config `[eroberung]`.
+- Netzwerkversion 2: Clients brauchen Crowns Core 1.4.0, Spieler ganz ohne die Mod
+  können sich weiter verbinden.
+
 ## 1.3.0
 
 - **Flaggen als Umhang**: Jeder Bürger trägt die Flagge seiner Nation, gedreht wie

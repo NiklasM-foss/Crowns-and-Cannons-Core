@@ -156,6 +156,9 @@ dependencies {
     compileOnly fg.deobf("curse.maven:balm-531761:8969708")
     compileOnly fg.deobf("curse.maven:waystones-245755:8849482")
     compileOnly fg.deobf("maven.modrinth:open-parties-and-claims:forge-1.20.1-0.33.0")
+    // Xaero's World Map und Minimap nur zum Kompilieren der Kartenflaggen (client/xaero), werden nicht mitgeliefert
+    compileOnly fg.deobf("curse.maven:xaeros-world-map-317780:9067273")
+    compileOnly fg.deobf("curse.maven:xaeros-minimap-263420:9067172")
 
     minecraftLibrary "com.h2database:h2:2.2.224"
     jarJar(group: 'com.h2database', name: 'h2', version: '[2.2.224,2.3)') {

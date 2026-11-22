@@ -163,7 +163,7 @@ public final class WeltkarteCommand {
         return 1;
     }
 
-    private static java.util.function.Consumer<String> report(CommandSourceStack src) {
+    static java.util.function.Consumer<String> report(CommandSourceStack src) {
         return msg -> {
             Msg.info(src, msg);
             CrownsCore.LOGGER.info(msg);
@@ -171,7 +171,7 @@ public final class WeltkarteCommand {
     }
 
     /** Land oder Laender aus dem Argument: Code (DEU), Laendername oder Name einer Nation (dann alle ihre Laender). */
-    private static List<String> landCodes(CrownsData d, String arg) {
+    static List<String> landCodes(CrownsData d, String arg) {
         Country c = WorldMap.byCode(arg);
         if (c != null) return List.of(c.code());
         for (Country x : WorldMap.countries()) if (norm(x.name()).equals(norm(arg))) return List.of(x.code());
@@ -193,6 +193,17 @@ public final class WeltkarteCommand {
         }
         Nation ziel = CommandUtil.nation(src, d, StringArgumentType.getString(ctx, "nation"));
         if (ziel == null) return 0;
+        uebertragen(src.getServer(), codes, ziel, null, report(src));
+        return codes.size();
+    }
+
+    /**
+     * Gibt Laender an eine Nation: Liste, Meldung im Chat und im Kriegsnews-Kanal, Karte neu aufbauen.
+     * {@code wie} ersetzt "hat ... eingenommen" (z.B. "hat ... gekauft"), null = Standardtext.
+     * Liefert die Nationen, denen die Laender vorher gehoerten.
+     */
+    public static List<Nation> uebertragen(MinecraftServer server, List<String> codes, Nation ziel, String wie, java.util.function.Consumer<String> report) {
+        CrownsData d = CrownsData.get(server);
         List<Nation> vorher = new ArrayList<>();
         for (String code : codes) {
             for (Nation n : d.nations.values()) {
@@ -205,22 +216,23 @@ public final class WeltkarteCommand {
         for (String code : codes) namen.add(WorldMap.byCode(code) == null ? code : WorldMap.byCode(code).name());
         List<String> alt = new ArrayList<>();
         for (Nation n : vorher) alt.add(n.name);
+        String vorherText = alt.isEmpty() ? "" : " (vorher " + String.join(", ", alt) + ")";
         boolean zurueck = codes.size() == 1 && codes.get(0).equalsIgnoreCase(ziel.land);
-        String text = zurueck ? ziel.name + " bekommt " + namen.get(0) + " zurueck" + (alt.isEmpty() ? "" : " (vorher " + String.join(", ", alt) + ")") + "."
-                : ziel.name + " hat " + String.join(", ", namen) + " eingenommen" + (alt.isEmpty() ? "" : " (vorher " + String.join(", ", alt) + ")") + ".";
-        Msg.broadcast(src.getServer(), text);
+        String text = zurueck ? ziel.name + " bekommt " + namen.get(0) + " zurueck" + vorherText + "."
+                : ziel.name + " hat " + String.join(", ", namen) + " " + (wie == null ? "eingenommen" : wie) + vorherText + ".";
+        Msg.broadcast(server, text);
         de.niklasmetzger.crownscore.discord.DiscordWebhook.kriegsnews(":crossed_swords: " + text);
         for (Nation n : vorher) {
-            if (n.laender.isEmpty()) Msg.line(src, " §e" + n.name + " hat jetzt kein Land mehr. Die Nation bleibt bestehen, bis sie geloescht wird.");
+            if (n.laender.isEmpty() && n.gespielt()) Msg.nation(server, n, "§e" + n.name + " hat jetzt kein Land mehr.");
         }
         if (opac() && !d.karteModus.isEmpty() && !d.karteModus.equals("AUS")) {
-            de.niklasmetzger.crownscore.claims.OpacTerritory.syncNation(src.getServer(), ziel);
-            for (Nation n : vorher) de.niklasmetzger.crownscore.claims.OpacTerritory.syncNation(src.getServer(), n);
-            String err = de.niklasmetzger.crownscore.claims.OpacTerritory.start(src.getServer(),
-                    de.niklasmetzger.crownscore.claims.OpacTerritory.Mode.valueOf(d.karteModus), WorldMap.chunkBounds(codes), false, report(src));
-            if (err != null) Msg.err(src, "Karte nicht aktualisiert: " + err + " Danach /nation weltkarte minimap " + d.karteModus.toLowerCase());
+            de.niklasmetzger.crownscore.claims.OpacTerritory.syncNation(server, ziel);
+            for (Nation n : vorher) de.niklasmetzger.crownscore.claims.OpacTerritory.syncNation(server, n);
+            String err = de.niklasmetzger.crownscore.claims.OpacTerritory.start(server,
+                    de.niklasmetzger.crownscore.claims.OpacTerritory.Mode.valueOf(d.karteModus), WorldMap.chunkBounds(codes), false, report);
+            if (err != null) report.accept("Karte nicht aktualisiert: " + err + " Danach /nation weltkarte minimap " + d.karteModus.toLowerCase());
         }
-        return codes.size();
+        return vorher;
     }
 
     /** /gebiet zuweisen <Nation> [Radius] und /gebiet zuruecksetzen [Radius]: einzelne Chunks, z.B. nach einer Teileroberung. */

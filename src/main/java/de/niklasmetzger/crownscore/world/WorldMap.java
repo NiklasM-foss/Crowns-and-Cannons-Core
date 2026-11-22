@@ -153,6 +153,77 @@ public final class WorldMap {
         return r;
     }
 
+    /** Laendernummer an Laenge/Breite (0 = Meer). Braucht keine Config, laeuft auch auf dem Client. */
+    public static int indexAt(double lon, double lat) {
+        if (!loaded() || lon < -180 || lon >= 180 || lat <= -90 || lat > 90) return 0;
+        int i = (int) Math.floor((lon + 180.0) / 360.0 * width);
+        int j = (int) Math.floor((90.0 - lat) / 180.0 * height);
+        if (i < 0 || j < 0 || i >= width || j >= height) return 0;
+        return cells[j * width + i] & 0xFF;
+    }
+
+    public static Country byIndex(int index) {
+        return loaded() && index > 0 && index < 256 ? byIndex[index] : null;
+    }
+
+    /** Grenzen eines Landes in Grad {lonMin, lonMax, latMin, latMax}, oder null. */
+    public static double[] degBounds(int index) {
+        if (!loaded() || index <= 0 || index >= 256 || bounds[index] == null) return null;
+        int[] b = bounds[index];
+        return new double[]{-180.0 + b[0] * 360.0 / width, -180.0 + (b[1] + 1) * 360.0 / width,
+                90.0 - (b[3] + 1) * 180.0 / height, 90.0 - b[2] * 180.0 / height};
+    }
+
+    /**
+     * Liegt das Land hoechstens {@code abstand} Felder (ein Feld = ein Chunk bei Standardgroesse) von einem der
+     * genannten Laender entfernt? 0 = muss direkt angrenzen. Laeuft nur im Umkreis des Ziellands.
+     */
+    public static boolean nahe(String code, java.util.Collection<String> codes, int abstand) {
+        if (!loaded()) return false;
+        Country ziel = byCode(code);
+        if (ziel == null || bounds[ziel.index()] == null) return false;
+        boolean[] eigen = new boolean[256];
+        for (String c : codes) {
+            Country x = byCode(c);
+            if (x != null) eigen[x.index()] = true;
+        }
+        int r = Math.max(1, abstand + 1);
+        int[] b = bounds[ziel.index()];
+        int i0 = Math.max(0, b[0] - r), i1 = Math.min(width - 1, b[1] + r);
+        int j0 = Math.max(0, b[2] - r), j1 = Math.min(height - 1, b[3] + r);
+        int w = i1 - i0 + 1, h = j1 - j0 + 1;
+        int[] dist = new int[w * h];
+        java.util.Arrays.fill(dist, -1);
+        int[] queue = new int[w * h];
+        int head = 0, tail = 0;
+        for (int j = j0; j <= j1; j++) {
+            for (int i = i0; i <= i1; i++) {
+                if (eigen[cells[j * width + i] & 0xFF]) {
+                    int k = (j - j0) * w + (i - i0);
+                    dist[k] = 0;
+                    queue[tail++] = k;
+                }
+            }
+        }
+        int zi = ziel.index();
+        while (head < tail) {
+            int k = queue[head++];
+            int i = k % w, j = k / w;
+            if ((cells[(j + j0) * width + (i + i0)] & 0xFF) == zi) return true;
+            if (dist[k] >= r) continue;
+            int[][] nb = {{1, 0}, {-1, 0}, {0, 1}, {0, -1}};
+            for (int[] d : nb) {
+                int ni = i + d[0], nj = j + d[1];
+                if (ni < 0 || nj < 0 || ni >= w || nj >= h) continue;
+                int nk = nj * w + ni;
+                if (dist[nk] >= 0) continue;
+                dist[nk] = dist[k] + 1;
+                queue[tail++] = nk;
+            }
+        }
+        return false;
+    }
+
     /** Farbe einer Nation auf der Karte: die ihres Stammlands, sonst aus dem Namen abgeleitet. */
     public static int colorOf(Nation n) {
         Country c = n.land == null || n.land.isEmpty() ? null : byCode(n.land);

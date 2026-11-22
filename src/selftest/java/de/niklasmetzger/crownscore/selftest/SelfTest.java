@@ -103,6 +103,9 @@ public class SelfTest {
         })).then(Commands.literal("flagge").executes(ctx -> {
             flagge(ctx.getSource().getServer());
             return 1;
+        })).then(Commands.literal("eroberung").executes(ctx -> {
+            eroberung(ctx.getSource().getServer());
+            return 1;
         })));
     }
 
@@ -312,6 +315,146 @@ public class SelfTest {
             de.niklasmetzger.crownscore.claims.OpacTerritory.syncChunks(server, List.of(new net.minecraft.world.level.ChunkPos(cx, cz)));
             check("Teileroberung: zurueckgesetzt", fra.staat().equals(ownerAt(2.35, 48.86)), "");
         });
+    }
+
+    /** Laender einnehmen: Kauf freier Laender, Besetzung im Krieg mit Haltezeit, zerstoerter Block, Kartenflaggen. */
+    private void eroberung(MinecraftServer srv) {
+        server = srv;
+        lvl = srv.overworld();
+        pass = fail = 0;
+        steps.clear();
+        LOG.info("[CCTEST] START Eroberung");
+        if (a == null) a = FakePlayerFactory.get(lvl, new GameProfile(A_ID, "TestAlpha"));
+        double bpg = de.niklasmetzger.crownscore.world.WorldMap.blocksPerDegree();
+        UUID jorBuerger = UUID.fromString("00000000-0000-0000-0000-0000000004a0");
+        final boolean[] online = {de.niklasmetzger.crownscore.config.CrownsConfig.EROBERUNG_VERTEIDIGER_ONLINE.get()};
+        final long[] gegruendet = {0};
+        final de.niklasmetzger.crownscore.data.War[] krieg = {null};
+        step("Vorbereitung", () -> {
+            CrownsData d = CrownsData.get(server);
+            Nation sau = nat("SAU"), yem = nat("YEM"), jor = nat("JOR");
+            check("Eroberung: SAU, YEM und JOR sind angelegt", sau != null && yem != null && jor != null, "");
+            sau.mitglieder.put(A_ID, "TestAlpha");
+            sau.chef = A_ID;
+            de.niklasmetzger.crownscore.treasury.TreasuryService.credit(d, sau.key(), 1.0E7);
+            d.landSperre.clear();
+            d.besatzungen.clear();
+            for (Nation n : d.nations.values()) {
+                if (n != yem) n.laender.remove("YEM");
+                if (n != jor) n.laender.remove("JOR");
+            }
+            yem.laender.add("YEM");
+            jor.laender.add("JOR");
+        });
+        step("Pruefungen beim Kauf", () -> {
+            CrownsData d = CrownsData.get(server);
+            Nation sau = nat("SAU");
+            var yem = de.niklasmetzger.crownscore.world.WorldMap.byCode("YEM");
+            var aus = de.niklasmetzger.crownscore.world.WorldMap.byCode("AUS");
+            check("Kauf: Jemen ist frei", de.niklasmetzger.crownscore.world.EroberungService.frei(d, yem), "");
+            String err = de.niklasmetzger.crownscore.world.EroberungService.pruefen(d, sau, yem, true);
+            check("Kauf: Saudi-Arabien darf den angrenzenden Jemen kaufen", err == null, err);
+            err = de.niklasmetzger.crownscore.world.EroberungService.pruefen(d, sau, aus, true);
+            check("Kauf: Australien ist zu weit weg", err != null && err.contains("zu weit"), err);
+            double erwartet = de.niklasmetzger.crownscore.config.CrownsConfig.EROBERUNG_KAUF_GRUNDPREIS.get()
+                    + de.niklasmetzger.crownscore.config.CrownsConfig.EROBERUNG_KAUF_PRO_CHUNK.get() * yem.fields();
+            check("Kauf: Preis = Grundpreis + Chunks", Math.abs(de.niklasmetzger.crownscore.world.EroberungService.kaufpreis(yem) - erwartet) < 1e-6, "");
+            check("Nachbarn: Deutschland grenzt an Frankreich", de.niklasmetzger.crownscore.world.WorldMap.nahe("FRA", List.of("DEU"), 0), "");
+            check("Nachbarn: Spanien grenzt nicht an Deutschland", !de.niklasmetzger.crownscore.world.WorldMap.nahe("ESP", List.of("DEU"), 0), "");
+            check("Nachbarn: Grossbritannien liegt mit 16 Chunks Abstand nahe Frankreich", de.niklasmetzger.crownscore.world.WorldMap.nahe("GBR", List.of("FRA"), 16), "");
+        });
+        step("Jemen kaufen", () -> {
+            CrownsData d = CrownsData.get(server);
+            Nation sau = nat("SAU");
+            double vorher = de.niklasmetzger.crownscore.treasury.TreasuryService.stand(d, sau.key());
+            String err = de.niklasmetzger.crownscore.world.EroberungService.kaufen(server, sau, de.niklasmetzger.crownscore.world.WorldMap.byCode("YEM"));
+            check("Kauf: gekauft", err == null, err);
+            check("Kauf: Saudi-Arabien haelt YEM", sau.laender.contains("YEM") && !nat("YEM").laender.contains("YEM"), String.valueOf(sau.laender));
+            check("Kauf: Preis abgebucht", vorher - de.niklasmetzger.crownscore.treasury.TreasuryService.stand(d, sau.key()) > 1, "");
+            check("Kauf: Jemen ist danach gesperrt", d.landSperre.containsKey("YEM")
+                    || de.niklasmetzger.crownscore.config.CrownsConfig.EROBERUNG_SPERRE_TAGE.get() == 0, "");
+        });
+        stepUntil("Karte nach Kauf", () -> !de.niklasmetzger.crownscore.claims.OpacTerritory.running(), 4000);
+        step("Kartenflaggen", () -> {
+            CrownsData d = CrownsData.get(server);
+            Nation sau = nat("SAU");
+            var m = de.niklasmetzger.crownscore.flag.MapFlagService.current(d);
+            check("Kartenflaggen: Saudi-Arabien hat eine Flagge fuer sein Staatskonto", m.containsKey(sau.staat()), m.size() + " Flaggen");
+            check("Kartenflaggen: Sanaa gehoert jetzt dem Staatskonto von Saudi-Arabien", sau.staat().equals(ownerAt(44.2, 15.35)), String.valueOf(ownerAt(44.2, 15.35)));
+        });
+        step("Besetzen ohne Krieg", () -> {
+            CrownsData d = CrownsData.get(server);
+            Nation jor = nat("JOR");
+            jor.mitglieder.put(jorBuerger, "Testbuerger_JOR");
+            gegruendet[0] = jor.gegruendet;
+            jor.gegruendet = 0;
+            String err = de.niklasmetzger.crownscore.world.EroberungService.pruefen(d, nat("SAU"), de.niklasmetzger.crownscore.world.WorldMap.byCode("JOR"), false);
+            check("Besetzen: ohne Krieg nicht erlaubt", err != null && err.contains("Krieg"), err);
+            krieg[0] = de.niklasmetzger.crownscore.war.WarService.declare(server, nat("SAU"), jor, de.niklasmetzger.crownscore.data.WarType.KRIEG,
+                    "Selbsttest der Besetzung", "TestAlpha");
+            err = de.niklasmetzger.crownscore.world.EroberungService.pruefen(d, nat("SAU"), de.niklasmetzger.crownscore.world.WorldMap.byCode("JOR"), false);
+            check("Besetzen: im Krieg erlaubt", err == null, err);
+        });
+        step("Besatzungsblock setzen", () -> {
+            int x = (int) Math.floor(36.0 * bpg), z = (int) Math.floor(-31.0 * bpg);
+            lvl.getChunk(x >> 4, z >> 4);
+            int y = lvl.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z);
+            a.setPos(x + 0.5, y, z + 0.5);
+            de.niklasmetzger.crownscore.config.CrownsConfig.EROBERUNG_VERTEIDIGER_ONLINE.set(false);
+            String err = de.niklasmetzger.crownscore.world.EroberungService.besetzen(a, nat("SAU"));
+            check("Besetzen: Block gesetzt", err == null, err);
+            CrownsData d = CrownsData.get(server);
+            var b = d.besatzungen.isEmpty() ? null : d.besatzungen.get(0);
+            check("Besetzen: Besetzung laeuft", b != null && b.land.equals("JOR"), "");
+            if (b != null) {
+                check("Besetzen: Block steht", lvl.getBlockState(b.pos).is(de.niklasmetzger.crownscore.world.EroberungService.block()), b.pos.toShortString());
+                b.rest = 3;
+            }
+        });
+        stepWait(100, "warten", () -> {});
+        step("Haltezeit vorbei", () -> {
+            CrownsData d = CrownsData.get(server);
+            Nation sau = nat("SAU");
+            check("Besetzen: Jordanien gehoert jetzt Saudi-Arabien", sau.laender.contains("JOR") && !nat("JOR").laender.contains("JOR"), String.valueOf(sau.laender));
+            check("Besetzen: keine Besetzung mehr offen", d.besatzungen.isEmpty(), "");
+        });
+        stepUntil("Karte nach Besetzung", () -> !de.niklasmetzger.crownscore.claims.OpacTerritory.running(), 4000);
+        step("Zweite Besetzung, Block wird zerstoert", () -> {
+            CrownsData d = CrownsData.get(server);
+            de.niklasmetzger.crownscore.world.WeltkarteCommand.uebertragen(server, List.of("JOR"), nat("JOR"), null, LOG::info);
+            d.landSperre.clear();
+            String err = de.niklasmetzger.crownscore.world.EroberungService.besetzen(a, nat("SAU"));
+            check("Besetzen: zweite Besetzung beginnt", err == null, err);
+            var b = d.besatzungen.isEmpty() ? null : d.besatzungen.get(0);
+            if (b != null) {
+                lvl.setChunkForced(b.pos.getX() >> 4, b.pos.getZ() >> 4, true);
+                lvl.removeBlock(b.pos, false);
+            }
+        });
+        stepWait(60, "warten", () -> {});
+        step("Gescheitert", () -> {
+            CrownsData d = CrownsData.get(server);
+            check("Besetzen: zerstoerter Block beendet die Besetzung", d.besatzungen.isEmpty(), "");
+            check("Besetzen: Jordanien bleibt bei Jordanien", nat("JOR").laender.contains("JOR"), "");
+            int bx = (int) Math.floor(36.0 * bpg), bz = (int) Math.floor(-31.0 * bpg);
+            lvl.setChunkForced(bx >> 4, bz >> 4, false);
+        });
+        stepUntil("Karte", () -> !de.niklasmetzger.crownscore.claims.OpacTerritory.running(), 4000);
+        step("Aufraeumen", () -> {
+            CrownsData d = CrownsData.get(server);
+            de.niklasmetzger.crownscore.config.CrownsConfig.EROBERUNG_VERTEIDIGER_ONLINE.set(online[0]);
+            if (krieg[0] != null) de.niklasmetzger.crownscore.war.WarService.end(server, krieg[0], "Selbsttest beendet", false);
+            Nation sau = nat("SAU"), jor = nat("JOR");
+            jor.mitglieder.remove(jorBuerger);
+            jor.gegruendet = gegruendet[0];
+            sau.mitglieder.remove(A_ID);
+            sau.chef = null;
+            de.niklasmetzger.crownscore.world.WeltkarteCommand.uebertragen(server, List.of("YEM"), nat("YEM"), null, LOG::info);
+            d.landSperre.clear();
+            d.setDirty();
+            check("Aufraeumen: Jemen wieder beim Jemen", nat("YEM").laender.contains("YEM"), "");
+        });
+        stepUntil("Karte zurueck", () -> !de.niklasmetzger.crownscore.claims.OpacTerritory.running(), 4000);
     }
 
     private static int[] rgb(java.awt.image.BufferedImage img, int x, int y) {

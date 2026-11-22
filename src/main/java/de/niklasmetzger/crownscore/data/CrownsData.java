@@ -43,6 +43,11 @@ public class CrownsData extends SavedData {
     public final Map<String, Map<Long, String>> claims = new HashMap<>();
     /** Interne Geldboerse, nur wenn keine Wirtschaftsmod da ist. */
     public final Map<UUID, Double> wallet = new HashMap<>();
+    /** Laufende Besetzungen von Laendern. */
+    public final List<Besatzung> besatzungen = new ArrayList<>();
+    public int nextBesatzungId = 1;
+    /** Laendercode -> Zeitpunkt (ms), bis zu dem das Land nicht erneut eingenommen werden kann. */
+    public final Map<String, Long> landSperre = new HashMap<>();
 
     public static CrownsData get(MinecraftServer server) {
         return server.overworld().getDataStorage().computeIfAbsent(CrownsData::load, CrownsData::new, NAME);
@@ -163,6 +168,11 @@ public class CrownsData extends SavedData {
         CompoundTag w = new CompoundTag();
         for (Map.Entry<UUID, Double> e : wallet.entrySet()) w.putDouble(e.getKey().toString(), e.getValue());
         t.put("wallet", w);
+        t.put("besatzungen", list(besatzungen, Besatzung::toNbt));
+        t.putInt("nextBesatzungId", nextBesatzungId);
+        CompoundTag sp = new CompoundTag();
+        for (Map.Entry<String, Long> e : landSperre.entrySet()) sp.putLong(e.getKey(), e.getValue());
+        t.put("landSperre", sp);
         return t;
     }
 
@@ -214,6 +224,10 @@ public class CrownsData extends SavedData {
             } catch (IllegalArgumentException ignored) {
             }
         }
+        for (CompoundTag c : compounds(t, "besatzungen")) d.besatzungen.add(Besatzung.fromNbt(c));
+        d.nextBesatzungId = Math.max(1, t.getInt("nextBesatzungId"));
+        CompoundTag sp = t.getCompound("landSperre");
+        for (String k : sp.getAllKeys()) d.landSperre.put(k, sp.getLong(k));
         return d;
     }
 
