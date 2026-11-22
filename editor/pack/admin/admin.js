@@ -103,7 +103,12 @@
     var tb = $("tabelle");
     tb.textContent = "";
     var z = { modrinth: 0, curseforge: 0, pi: 0, fehlt: 0 };
-    eintraege.forEach(function (e, i) {
+    // Reihenfolge: ohne Quelle zuerst, dann Modrinth, CurseForge, Pi; innerhalb nach Pfad
+    var RANG = { fehlt: 0, modrinth: 1, curseforge: 2, pi: 3 };
+    var sortiert = eintraege.slice().sort(function (a, b) {
+      return (RANG[a.quelle] - RANG[b.quelle]) || a.pfad.localeCompare(b.pfad, "de", { sensitivity: "base" });
+    });
+    sortiert.forEach(function (e, i) {
       if (e.drin) z[e.quelle]++;
       if (f === "fehlt" && e.quelle !== "fehlt") return;
       if (f && f !== "fehlt" && e.kategorie !== f) return;
