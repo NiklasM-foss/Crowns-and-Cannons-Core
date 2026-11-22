@@ -22,10 +22,20 @@ verschicken oder Dateien bearbeiten.
 
 ## Für Spieler: einmal einrichten
 
-- **Windows:** `Crowns-Helfer.bat` doppelklicken. Richtet eine Windows-Aufgabe ein (bei der Anmeldung und alle
-  15 Minuten, unsichtbar) und gleicht einmal ab. Entfernen: `Crowns-Helfer.bat entfernen`.
-- **Linux:** `python3 crowns-helfer.py`. Richtet einen systemd-Benutzer-Timer ein (sonst cron). Erkennt CurseForge- und
-  Prism-Launcher-Instanzen. Entfernen: `python3 crowns-helfer.py entfernen`.
+- **Windows:** `Crowns-Helfer.bat` doppelklicken. Danach sitzt der Helfer als Krone im Infobereich der Taskleiste
+  (unten rechts) und startet mit Windows.
+- **Linux (KDE Plasma und andere Desktops mit Infobereich):** `python3 crowns-helfer.py`. Mit Qt für Python (PyQt6,
+  PySide6 oder PyQt5, z.B. `sudo pacman -S python-pyqt6` oder `sudo apt install python3-pyqt6`) sitzt er ebenfalls
+  als Symbol im Infobereich und startet über `~/.config/autostart`. Ohne Qt läuft er als systemd-Timer bzw. cron.
+  Erkennt CurseForge- und Prism-Launcher-Instanzen.
+
+Menü des Symbols (Rechtsklick): **Status anzeigen** (auch Doppelklick: Pack-Version, letzter Abgleich, Dateien zum
+Selbst-Herunterladen mit Links), **Jetzt aktualisieren**, **Automatisch aktualisieren** an/aus (alle 15 Minuten),
+**Mit Windows/dem System starten** an/aus, **Protokoll öffnen**, **Beenden**. Neue Datei im Downloads-Ordner oder
+CurseForge-App geschlossen: der Helfer gleicht sofort ab.
+
+Entfernen: `Crowns-Helfer.bat entfernen` bzw. `python3 crowns-helfer.py entfernen`. Einmal abgleichen mit Ausgabe:
+`Crowns-Helfer.bat jetzt` bzw. `python3 crowns-helfer.py auto`.
 
 Was der Helfer bei jedem Lauf macht:
 
