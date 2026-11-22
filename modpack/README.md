@@ -1,4 +1,8 @@
-# Crowns-Helfer und Modpack-Verwaltung
+# Modpack-Verwaltung
+
+Der Client (Crowns-Helfer für Windows und Linux) liegt im eigenen Repository
+[Crowns-Helfer](https://github.com/NiklasM-foss/Crowns-Helfer) (lokal `C:\Tools\crowns-helfer`). Hier steht, wie das
+Pack gepflegt wird und wie der Server-Teil funktioniert.
 
 Hält das CurseForge-Modpack „Crowns & Cannons“ bei allen Spielern automatisch aktuell: Mods, Ressourcenpakete,
 Datenpakete, Shader, KubeJS und das Java-Argument. Gepflegt wird das Pack über eine Webseite, niemand muss mehr Links
