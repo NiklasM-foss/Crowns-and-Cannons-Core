@@ -138,6 +138,7 @@ public class CrownsCore {
         de.niklasmetzger.crownscore.flag.CapeService.reset();
         de.niklasmetzger.crownscore.flag.MapFlagService.reset();
         de.niklasmetzger.crownscore.handel.WappenStore.load(event.getServer());
+        de.niklasmetzger.crownscore.world.EroberungService.reset();
         de.niklasmetzger.crownscore.flag.FlagStore.load(event.getServer());
         if (ModList.get().isLoaded("waystones")) {
             WaystoneModule.init();

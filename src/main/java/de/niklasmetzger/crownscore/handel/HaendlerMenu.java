@@ -93,15 +93,15 @@ public final class HaendlerMenu extends ChestMenu {
     @Override
     public void clicked(int slot, int button, ClickType type, Player player) {
         if (slot >= 0 && slot < 27) {
-            if (player instanceof ServerPlayer sp && slot < angebote.size() && (type == ClickType.PICKUP || type == ClickType.QUICK_MOVE)) {
+            if (player instanceof ServerPlayer sp && slot < Math.min(angebote.size(), 18) && (type == ClickType.PICKUP || type == ClickType.QUICK_MOVE)) {
                 VillagerHandel.Angebot a = angebote.get(slot);
                 String err = VillagerHandel.kaufen(sp, a, button == 1);
                 if (err != null) Msg.player(sp, "§c" + err);
                 else Msg.player(sp, "§a" + a.name() + " gekauft. Er steht neben dir.");
                 fuellen(sp, box, angebote);
             }
-            setCarried(ItemStack.EMPTY);
-            broadcastFullState();
+            // Item am Mauszeiger bleibt, wo es ist; Client wieder auf den Stand des Servers bringen
+            sendAllDataToRemote();
             return;
         }
         if (type == ClickType.QUICK_MOVE) return;

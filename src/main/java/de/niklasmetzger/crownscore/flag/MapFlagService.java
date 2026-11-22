@@ -141,6 +141,7 @@ public final class MapFlagService {
 
     /** Einmal pro Sekunde aus dem Scheduler. Die Liste wird alle 5 Sekunden neu berechnet, Bilder gehen jede Sekunde raus. */
     public static void everySecond(MinecraftServer server) {
+        if (++entdeckenTakt % 5 == 0) entdecken(server);
         if (server.getPlayerList().getPlayers().stream().noneMatch(CcNetwork::present)) return;
         tick++;
         staedte(server);
@@ -198,8 +199,24 @@ public final class MapFlagService {
     private static void staedte(MinecraftServer server) {
         CrownsData d = CrownsData.get(server);
         String ow = net.minecraft.world.level.Level.OVERWORLD.location().toString();
-        // Entdecken: wer im Gebiet einer anerkannten Stadt steht, sieht sie ab jetzt
-        if (tick % 5 == 0) {
+        int gebiet = CrownsConfig.STADT_GEBIET.get();
+        java.util.List<CcNetwork.Belagerung> bl = new java.util.ArrayList<>();
+        for (de.niklasmetzger.crownscore.data.Besatzung b : d.besatzungen) {
+            if (!b.dim.equals(ow)) continue;
+            BlockPosHolder z = ziel(d, b);
+            bl.add(new CcNetwork.Belagerung(b.stadt, b.vonX, b.vonZ, z.x, z.z));
+        }
+        staedteSenden(server, d, ow, gebiet, bl);
+    }
+
+    private static int entdeckenTakt;
+
+    /** Wer im Gebiet einer anerkannten Stadt steht, sieht sie ab jetzt (auch Spieler ohne Crowns Core im Client). */
+    private static void entdecken(MinecraftServer server) {
+        CrownsData d = CrownsData.get(server);
+        if (d.staedte.isEmpty()) return;
+        String ow = net.minecraft.world.level.Level.OVERWORLD.location().toString();
+        {
             for (ServerPlayer p : server.getPlayerList().getPlayers()) {
                 if (p.level().dimension() != net.minecraft.world.level.Level.OVERWORLD) continue;
                 de.niklasmetzger.crownscore.data.Stadt s = de.niklasmetzger.crownscore.handel.StadtService.an(d, ow, p.blockPosition().getX() >> 4, p.blockPosition().getZ() >> 4);
@@ -211,13 +228,9 @@ public final class MapFlagService {
                 }
             }
         }
-        int gebiet = CrownsConfig.STADT_GEBIET.get();
-        java.util.List<CcNetwork.Belagerung> bl = new java.util.ArrayList<>();
-        for (de.niklasmetzger.crownscore.data.Besatzung b : d.besatzungen) {
-            if (!b.dim.equals(ow)) continue;
-            BlockPosHolder z = ziel(d, b);
-            bl.add(new CcNetwork.Belagerung(b.stadt, b.vonX, b.vonZ, z.x, z.z));
-        }
+    }
+
+    private static void staedteSenden(MinecraftServer server, CrownsData d, String ow, int gebiet, java.util.List<CcNetwork.Belagerung> bl) {
         java.util.Map<String, String> bilder = new java.util.HashMap<>();
         for (ServerPlayer viewer : server.getPlayerList().getPlayers()) {
             if (!CcNetwork.present(viewer)) continue;

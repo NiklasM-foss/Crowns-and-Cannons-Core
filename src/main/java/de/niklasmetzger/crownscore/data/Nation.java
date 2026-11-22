@@ -117,7 +117,7 @@ public class Nation {
         n.gegruendet = t.getLong("gegruendet");
         n.land = t.getString("land");
         n.laender.addAll(NbtUtil.stringSet(t, "laender"));
-        if (n.laender.isEmpty() && !n.land.isEmpty()) n.laender.add(n.land); // Daten vor den Eroberungen
+        if (!t.contains("laender") && !n.land.isEmpty()) n.laender.add(n.land); // nur Spielstaende vor den Eroberungen
         n.staat = NbtUtil.uuid(t, "staat");
         n.partei = NbtUtil.uuid(t, "partei");
         return n;

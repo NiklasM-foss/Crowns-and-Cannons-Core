@@ -8,6 +8,23 @@
 - **Transparente Flaggen**: Durchsichtige Stellen kommen jetzt auf weißen Stoff, wie in der
   Vorschau der Upload-Seite. Vorher waren sie auf dem Umhang schwarz und auf der Karte
   schien das Gelände durch. Stadtwappen bleiben auf der Karte freigestellt.
+- Fehler behoben, die eine Code-Prüfung gefunden hat:
+  - Ein verlorenes Stammland kam nach einem Neustart zurück zur alten Nation.
+  - Wer alle Städte eines Landes hielt, bekam das Land auch von einer Nation, mit der er
+    nicht im Krieg war.
+  - Händler- und Postfach-Menü haben ein Item am Mauszeiger gelöscht; Klicks auf leere
+    Händler-Felder konnten unsichtbare Angebote kaufen.
+  - Stadtnamen konnten im Discord @everyone auslösen und die Admin-Knöpfe kaputt machen;
+    erlaubt sind jetzt nur Buchstaben, Ziffern, Leerzeichen, Bindestrich und Apostroph.
+  - Stadtwappen ähnlich geschriebener Städte überschrieben sich; beim Auflösen einer Stadt
+    wird ihr Wappen gelöscht.
+  - Stadtantrag auf der Karte nur noch innerhalb von Weltgrenze und Karte.
+  - `/nation aufgeben` verlangt eine Nummer, wenn die Nation an mehreren Besetzungen
+    beteiligt ist.
+  - Städte werden auch von Spielern ohne Crowns Core im Client entdeckt.
+  - Ein Fehler in einer Sekundenaufgabe legt die anderen nicht mehr still.
+  - Besatzungsblock wird auch in entladenen Chunks entfernt.
+  - Antrags-Dienst: ungültige Anfragen (negative Länge, keine JSON-Objekte) werden abgewiesen.
 - Nur der Client ist betroffen, Server und Spieler sollten trotzdem dieselbe Version haben.
 
 ## 1.5.0

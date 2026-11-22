@@ -101,6 +101,10 @@ public final class DiscordWebhook {
             JsonObject json = new JsonObject();
             json.addProperty("content", content);
             json.addProperty("username", "Crowns Core");
+            // Spielertexte (z.B. Stadtnamen) duerfen niemanden anpingen, auch nicht @everyone
+            JsonObject mentions = new JsonObject();
+            mentions.add("parse", new com.google.gson.JsonArray());
+            json.add("allowed_mentions", mentions);
             HttpRequest req = HttpRequest.newBuilder(URI.create(url))
                     .timeout(Duration.ofSeconds(15))
                     .header("Content-Type", "application/json")

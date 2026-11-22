@@ -41,6 +41,13 @@ public final class EroberungService {
 
     private EroberungService() {}
 
+    /** Beim Serverstart: Zaehler aus einer vorherigen Welt verwerfen. */
+    public static void reset() {
+        ZERSTOERT_VON.clear();
+        ANGREIFER_WEG.clear();
+        VERTEIDIGER_WEG.clear();
+    }
+
     public static double kaufpreis(Country c) {
         return CrownsConfig.EROBERUNG_KAUF_GRUNDPREIS.get() + CrownsConfig.EROBERUNG_KAUF_PRO_CHUNK.get() * c.fields();
     }
@@ -263,7 +270,7 @@ public final class EroberungService {
         ANGREIFER_WEG.remove(b.id);
         VERTEIDIGER_WEG.remove(b.id);
         ServerLevel level = level(server, b);
-        if (level != null && level.isLoaded(b.pos) && level.getBlockState(b.pos).is(block())) {
+        if (level != null && level.getChunkAt(b.pos) != null && level.getBlockState(b.pos).is(block())) {
             level.removeBlock(b.pos, false);
         }
         Country c = WorldMap.byCode(b.land);
@@ -370,7 +377,7 @@ public final class EroberungService {
         ANGREIFER_WEG.remove(b.id);
         VERTEIDIGER_WEG.remove(b.id);
         ServerLevel level = level(server, b);
-        if (level != null && level.isLoaded(b.pos) && level.getBlockState(b.pos).is(block())) level.removeBlock(b.pos, false);
+        if (level != null && level.getChunkAt(b.pos) != null && level.getBlockState(b.pos).is(block())) level.removeBlock(b.pos, false);
         Nation angreifer = d.nations.get(b.angreifer), verteidiger = d.nations.get(b.verteidiger);
         if (angreifer == null || verteidiger == null) return;
         if (!b.stadt.isEmpty()) {
@@ -449,6 +456,15 @@ public final class EroberungService {
         CrownsData d = CrownsData.get(server);
         Nation n = d.nationOf(p.getUUID());
         if (n == null || !n.isBeamter(p.getUUID())) return "Aufgeben duerfen nur Staatschef und Beamte.";
+        if (nr <= 0) {
+            List<Besatzung> beteiligt = d.besatzungen.stream().filter(b -> b.angreifer.equals(n.key()) || b.verteidiger.equals(n.key())).toList();
+            if (beteiligt.size() > 1) {
+                return n.name + " ist an mehreren Besetzungen beteiligt, bitte die Nummer angeben: "
+                        + String.join(", ", beteiligt.stream().map(b -> "Nr. " + b.id + " (" + (!b.stadt.isEmpty() ? b.stadt : b.land)
+                        + (b.angreifer.equals(n.key()) ? ", ihr greift an" : ", ihr verteidigt") + ")").toList())
+                        + ". /nation aufgeben <Nr>";
+            }
+        }
         for (Besatzung b : new ArrayList<>(d.besatzungen)) {
             if (nr > 0 && b.id != nr) continue;
             String ziel = !b.stadt.isEmpty() ? b.stadt : b.land;
@@ -536,6 +552,8 @@ public final class EroberungService {
         if (c == null) return;
         Nation halter = besitzer(d, c);
         if (halter == null || halter == neu) return;
+        // Das Land wechselt nur, wenn es der Nation gehoert, die die Stadt verloren hat, oder einem Kriegsgegner
+        if (halter != alt && d.activeWar(neu.key(), halter.key()) == null) return;
         List<de.niklasmetzger.crownscore.data.Stadt> alle = de.niklasmetzger.crownscore.handel.StadtService.imLand(d, c.code());
         if (alle.isEmpty() || !alle.stream().allMatch(x -> x.nation.equals(neu.key()))) {
             long rest = alle.stream().filter(x -> !x.nation.equals(neu.key())).count();

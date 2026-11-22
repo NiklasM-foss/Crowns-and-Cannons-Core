@@ -128,6 +128,13 @@ public final class StadtService {
             return;
         }
         ServerLevel level = p.serverLevel();
+        boolean aufKarte = !de.niklasmetzger.crownscore.world.WorldMap.active()
+                || ((x >> 4) >= de.niklasmetzger.crownscore.world.WorldMap.minChunkX() && (x >> 4) <= de.niklasmetzger.crownscore.world.WorldMap.maxChunkX()
+                && (z >> 4) >= de.niklasmetzger.crownscore.world.WorldMap.minChunkZ() && (z >> 4) <= de.niklasmetzger.crownscore.world.WorldMap.maxChunkZ());
+        if (!level.getWorldBorder().isWithinBounds(x, z) || !aufKarte) {
+            de.niklasmetzger.crownscore.util.Msg.player(p, "\u00a7cDiese Stelle liegt ausserhalb der Karte.");
+            return;
+        }
         level.getChunk(x >> 4, z >> 4);
         int y = level.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z);
         String err = gruenden(p, n, name, new BlockPos(x, y, z));
@@ -150,6 +157,7 @@ public final class StadtService {
         CrownsData d = CrownsData.get(p.getServer());
         name = name.trim();
         if (name.length() < 2 || name.length() > 32) return "Der Name braucht 2 bis 32 Zeichen.";
+        if (!name.matches("[\\p{L}\\p{N}][\\p{L}\\p{N} '\\-]*")) return "Im Namen sind nur Buchstaben, Ziffern, Leerzeichen, Bindestrich und Apostroph erlaubt.";
         if (byName(d, name) != null) return "Eine Stadt namens " + name + " gibt es schon.";
         for (Stadt o : d.staedte) {
             if (!o.bestaetigt && o.nation.equals(n.key())) return n.name + " hat schon einen offenen Antrag (" + o.name + "). Erst wenn ein Admin entschieden hat, geht der naechste.";
@@ -236,6 +244,7 @@ public final class StadtService {
         Stadt s = byName(d, name);
         if (s == null) return "Keine Stadt namens " + name + ".";
         d.staedte.remove(s);
+        WappenStore.loeschen(s);
         d.setDirty();
         Nation n = d.nations.get(s.nation);
         String text = (s.bestaetigt ? "Die Stadt " + s.name + " wurde aufgeloest" : "Der Stadtantrag " + s.name + " wurde abgelehnt")

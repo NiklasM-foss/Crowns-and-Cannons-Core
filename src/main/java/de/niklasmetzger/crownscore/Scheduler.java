@@ -15,6 +15,14 @@ import net.minecraftforge.server.ServerLifecycleHooks;
 public class Scheduler {
     private int tick;
 
+    private static void sicher(String was, Runnable r) {
+        try {
+            r.run();
+        } catch (Exception e) {
+            CrownsCore.LOGGER.error("Fehler in der Sekundenaufgabe {}", was, e);
+        }
+    }
+
     @SubscribeEvent
     public void onServerTick(TickEvent.ServerTickEvent event) {
         if (event.phase != TickEvent.Phase.END) return;
@@ -28,19 +36,16 @@ public class Scheduler {
             CrownsCore.LOGGER.error("Fehler im Rollback", e);
         }
         if (tick % 20 == 0) {
-            try {
-                PresenceTracker.everySecond(server);
-                DuelManager.everySecond(server);
-                WarService.everySecond(server);
-                de.niklasmetzger.crownscore.mode.ModeService.everySecond(server);
-                de.niklasmetzger.crownscore.perms.RoleWatcher.everySecond(server);
-                de.niklasmetzger.crownscore.flag.CapeService.everySecond(server);
-                de.niklasmetzger.crownscore.world.EroberungService.everySecond(server);
-                de.niklasmetzger.crownscore.flag.MapFlagService.everySecond(server);
-                de.niklasmetzger.crownscore.handel.AntragService.everySecond(server);
-            } catch (Exception e) {
-                CrownsCore.LOGGER.error("Fehler in der Sekundenaufgabe", e);
-            }
+            // Jede Aufgabe einzeln, damit ein Fehler nicht alle folgenden stilllegt
+            sicher("Anwesenheit", () -> PresenceTracker.everySecond(server));
+            sicher("Duelle", () -> DuelManager.everySecond(server));
+            sicher("Kriege", () -> WarService.everySecond(server));
+            sicher("Spielermodus", () -> de.niklasmetzger.crownscore.mode.ModeService.everySecond(server));
+            sicher("Rollen", () -> de.niklasmetzger.crownscore.perms.RoleWatcher.everySecond(server));
+            sicher("Umhaenge", () -> de.niklasmetzger.crownscore.flag.CapeService.everySecond(server));
+            sicher("Besetzungen", () -> de.niklasmetzger.crownscore.world.EroberungService.everySecond(server));
+            sicher("Kartenflaggen", () -> de.niklasmetzger.crownscore.flag.MapFlagService.everySecond(server));
+            sicher("Antraege", () -> de.niklasmetzger.crownscore.handel.AntragService.everySecond(server));
         }
         if (tick % 1200 == 0) {
             try {

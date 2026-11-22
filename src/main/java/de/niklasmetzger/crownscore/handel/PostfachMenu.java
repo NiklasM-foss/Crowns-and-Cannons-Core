@@ -145,8 +145,7 @@ public final class PostfachMenu extends ChestMenu {
                 }
                 fuellen(sp);
             }
-            setCarried(ItemStack.EMPTY);
-            broadcastFullState();
+            sendAllDataToRemote();
             return;
         }
         if (type == ClickType.QUICK_MOVE) return;

@@ -74,10 +74,13 @@ class Handler(BaseHTTPRequestHandler):
 
     def body(self):
         n = int(self.headers.get("Content-Length") or 0)
-        if n > MAX_BODY:
-            raise ValueError("zu gross")
+        if n < 0 or n > MAX_BODY:
+            raise ValueError("Laenge ungueltig")
         raw = self.rfile.read(n) if n else b"{}"
-        return json.loads(raw.decode("utf-8") or "{}")
+        b = json.loads(raw.decode("utf-8") or "{}")
+        if not isinstance(b, dict):
+            raise ValueError("kein Objekt")
+        return b
 
     def server_ok(self):
         k = self.headers.get("X-Crowns-Schluessel", "")

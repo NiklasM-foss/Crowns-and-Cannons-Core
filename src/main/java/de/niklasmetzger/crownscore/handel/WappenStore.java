@@ -25,10 +25,19 @@ public final class WappenStore {
 
     private WappenStore() {}
 
+    /** Eindeutiger Dateiname: Hex der UTF-8-Bytes des klein geschriebenen Namens. */
     public static String key(String stadt) {
-        String k = stadt.toLowerCase(Locale.ROOT).replace("ä", "ae").replace("ö", "oe").replace("ü", "ue").replace("ß", "ss")
-                .replaceAll("[^a-z0-9]+", "_");
-        return k.isEmpty() ? "stadt" : k;
+        return java.util.HexFormat.of().formatHex(stadt.trim().toLowerCase(Locale.ROOT).getBytes(java.nio.charset.StandardCharsets.UTF_8));
+    }
+
+    /** Stadt aufgeloest: freigegebenes und wartendes Wappen loeschen. */
+    public static void loeschen(Stadt s) {
+        try {
+            entfernen(s);
+            ablehnen(s);
+        } catch (IOException e) {
+            CrownsCore.LOGGER.warn("Wappen von {} nicht geloescht: {}", s.name, e.toString());
+        }
     }
 
     public static void load(MinecraftServer server) {
