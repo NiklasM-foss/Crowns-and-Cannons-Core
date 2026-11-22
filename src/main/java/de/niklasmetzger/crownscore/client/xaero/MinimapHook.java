@@ -109,24 +109,29 @@ public final class MinimapHook {
 
         @Override
         public boolean regionHasHighlights(ResourceKey<Level> dim, int rx, int rz) {
-            return dim == Level.OVERWORLD && ClientMapFlags.aktiv();
+            return dim == Level.OVERWORLD && ClientMapFlags.etwasZuMalen();
         }
 
         @Override
         public boolean chunkIsHighlit(ResourceKey<Level> dim, int cx, int cz) {
-            return dim == Level.OVERWORLD && ClientMapFlags.hat(Claims.owner(dim, cx, cz));
+            return dim == Level.OVERWORLD && (ClientMapFlags.hat(Claims.owner(dim, cx, cz)) || ClientMapFlags.stadtImChunk(cx, cz));
         }
 
         @Override
         public int[] getChunkHighlitColor(ResourceKey<Level> dim, int cx, int cz) {
             if (dim != Level.OVERWORLD) return null;
             UUID o = Claims.owner(dim, cx, cz);
-            if (!ClientMapFlags.hat(o)) return null;
-            boolean n = !Objects.equals(o, Claims.owner(dim, cx, cz - 1));
-            boolean e = !Objects.equals(o, Claims.owner(dim, cx + 1, cz));
-            boolean s = !Objects.equals(o, Claims.owner(dim, cx, cz + 1));
-            boolean w = !Objects.equals(o, Claims.owner(dim, cx - 1, cz));
-            return ClientMapFlags.fill(o, cx, cz, n, e, s, w, resultStore) ? resultStore : null;
+            boolean flagge = false;
+            if (ClientMapFlags.hat(o)) {
+                boolean n = !Objects.equals(o, Claims.owner(dim, cx, cz - 1));
+                boolean e = !Objects.equals(o, Claims.owner(dim, cx + 1, cz));
+                boolean s = !Objects.equals(o, Claims.owner(dim, cx, cz + 1));
+                boolean w = !Objects.equals(o, Claims.owner(dim, cx - 1, cz));
+                flagge = ClientMapFlags.fill(o, cx, cz, n, e, s, w, resultStore);
+            }
+            if (!flagge) java.util.Arrays.fill(resultStore, 0);
+            boolean stadt = ClientMapFlags.staedteMalen(cx, cz, resultStore);
+            return flagge || stadt ? resultStore : null;
         }
 
         @Override

@@ -37,6 +37,7 @@ public class Scheduler {
                 de.niklasmetzger.crownscore.flag.CapeService.everySecond(server);
                 de.niklasmetzger.crownscore.world.EroberungService.everySecond(server);
                 de.niklasmetzger.crownscore.flag.MapFlagService.everySecond(server);
+                de.niklasmetzger.crownscore.handel.AntragService.everySecond(server);
             } catch (Exception e) {
                 CrownsCore.LOGGER.error("Fehler in der Sekundenaufgabe", e);
             }
@@ -46,6 +47,7 @@ public class Scheduler {
                 ActivityService.everyMinute(server);
                 ElectionService.everyMinute(server);
                 LoanService.everyMinute(server);
+                de.niklasmetzger.crownscore.handel.VillagerHandel.everyMinute(server);
                 de.niklasmetzger.crownscore.perms.PermissionManager.everyMinute();
             } catch (Exception e) {
                 CrownsCore.LOGGER.error("Fehler in der Minutenaufgabe", e);

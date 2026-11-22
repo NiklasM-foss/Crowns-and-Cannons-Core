@@ -69,6 +69,8 @@ public final class ClientMapFlags {
     }
 
     public static void clear() {
+        staedte = java.util.List.of();
+        verbunden = false;
         PNGS.clear();
         OWNERS.clear();
         DECODED.clear();
@@ -90,9 +92,89 @@ public final class ClientMapFlags {
         return h == null || !PNGS.containsKey(h) ? 0 : h.hashCode();
     }
 
-    /** Aendert sich, wenn Deckkraft, Kalibrierung oder An/Aus wechseln. */
+    /** Aendert sich, wenn Deckkraft, Kalibrierung, An/Aus oder die Staedte wechseln. */
     public static int settingsHash() {
-        return java.util.Objects.hash(aktiv, mitteX, mitteZ, bpg, alpha);
+        return java.util.Objects.hash(aktiv, mitteX, mitteZ, bpg, alpha, staedteHash);
+    }
+
+    // ---- Staedte --------------------------------------------------------
+
+    private static volatile java.util.List<CcNetwork.StadtEintrag> staedte = java.util.List.of();
+    private static volatile int gebiet = 4, staedteHash;
+    private static volatile boolean verbunden;
+
+    public static void staedte(CcNetwork.StadtKarte msg) {
+        staedte = java.util.List.copyOf(msg.staedte());
+        gebiet = msg.gebiet();
+        staedteHash = msg.staedte().hashCode() * 31 + gebiet;
+        verbunden = true;
+        changed();
+    }
+
+    /** Gibt es ueberhaupt etwas zu malen (Flaggen oder Staedte)? */
+    public static boolean etwasZuMalen() {
+        return aktiv() || !staedte.isEmpty();
+    }
+
+    /** Hat der Server Crowns Core 1.5.0 (dann gibt es den Stadtantrag auf der Karte)? */
+    public static boolean serverHatStaedte() {
+        return verbunden;
+    }
+
+    /** Liegt im Chunk ein Rand oder die Mitte einer Stadt? */
+    public static boolean stadtImChunk(int cx, int cz) {
+        int r = gebiet;
+        for (CcNetwork.StadtEintrag s : staedte) {
+            int sx = s.x() >> 4, sz = s.z() >> 4;
+            if (Math.abs(cx - sx) > r || Math.abs(cz - sz) > r) continue;
+            if (Math.abs(cx - sx) == r || Math.abs(cz - sz) == r || (cx == sx && cz == sz)) return true;
+        }
+        return false;
+    }
+
+    /** Stadt, in deren Gebiet der Block liegt, oder null. */
+    public static CcNetwork.StadtEintrag stadtAn(int bx, int bz) {
+        int cx = bx >> 4, cz = bz >> 4, r = gebiet;
+        for (CcNetwork.StadtEintrag s : staedte) {
+            if (Math.abs(cx - (s.x() >> 4)) <= r && Math.abs(cz - (s.z() >> 4)) <= r) return s;
+        }
+        return null;
+    }
+
+    /**
+     * Malt Stadtrahmen (2 Bloecke breit, gold fuer anerkannte, grau gestrichelt fuer wartende Antraege) und die
+     * Stadtmitte in {@code out}. true = es wurde etwas gemalt.
+     */
+    public static boolean staedteMalen(int cx, int cz, int[] out) {
+        boolean any = false;
+        int r = gebiet;
+        for (CcNetwork.StadtEintrag s : staedte) {
+            int sx = s.x() >> 4, sz = s.z() >> 4;
+            int dx = cx - sx, dz = cz - sz;
+            if (Math.abs(dx) > r || Math.abs(dz) > r) continue;
+            int farbe = s.anerkannt() ? (0xF2 << 24) | (0xC2 << 16) | (0x30 << 8) | 0xF0 : (0xD0 << 24) | (0xD0 << 16) | (0xD0 << 8) | 0xC8;
+            for (int z = 0; z < 16; z++) {
+                for (int x = 0; x < 16; x++) {
+                    boolean rand = (dx == -r && x < 2) || (dx == r && x > 13) || (dz == -r && z < 2) || (dz == r && z > 13);
+                    if (rand && !s.anerkannt() && (((cx * 16 + x) + (cz * 16 + z)) / 4) % 2 == 0) rand = false;
+                    if (rand) {
+                        out[(z << 4) | x] = farbe;
+                        any = true;
+                    }
+                }
+            }
+            if (dx == 0 && dz == 0) {
+                int lx = s.x() & 15, lz = s.z() & 15;
+                for (int z = Math.max(0, lz - 2); z <= Math.min(15, lz + 2); z++) {
+                    for (int x = Math.max(0, lx - 2); x <= Math.min(15, lx + 2); x++) {
+                        boolean kern = Math.abs(x - lx) <= 1 && Math.abs(z - lz) <= 1;
+                        out[(z << 4) | x] = kern ? farbe : (0x20 << 24) | (0x18 << 16) | (0x10 << 8) | 0xF0;
+                    }
+                }
+                any = true;
+            }
+        }
+        return any;
     }
 
     public static boolean aktiv() {

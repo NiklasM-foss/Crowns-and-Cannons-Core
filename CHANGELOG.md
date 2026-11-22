@@ -1,5 +1,27 @@
 # Changelog
 
+## 1.5.0
+
+- **Städte**: `/stadt gruenden <Name>` oder Rechtsklick auf der World Map („Stadt hier
+  beantragen“). Geprüft werden Betten, Glocke, Abstand zur nächsten Stadt und eigenes
+  Gebiet, dann muss ein Admin bestätigen: im Spiel, im Postfach oder im Browser über
+  den Link, den der Antrag in den Discord schickt (`editor/antraege/`).
+- **Städte auf der Karte**: Stadtgebiete haben auf World Map und Minimap einen goldenen
+  Rahmen und einen Punkt in der Mitte, wartende Anträge sind grau gestrichelt. Der
+  Tooltip der World Map zeigt Stadt und Nation.
+- **Städte erobern**: Länder mit Städten werden Stadt für Stadt besetzt. Wer alle Städte
+  eines Landes hält, bekommt das ganze Land. Länder ohne Städte wie bisher als Ganzes.
+- **Villager-Händler**: `/cccore haendler setzen` stellt einen Händler auf, der nie
+  ausverkauft ist. Villager und Rekruten (Villager Recruits, gehören gleich dem Käufer)
+  gegen Geld oder Rohstoffe. Wie viele eine Nation kaufen darf, hängt an ihren Städten,
+  ab 8 Städten unbegrenzt. Jeder Kauf macht den nächsten teurer, die Nachfrage sinkt mit
+  der Zeit. Gekaufte Villager sind arbeitslos und können direkt bei VillagerShop arbeiten.
+- **Postfach** `/postfach` für jeden Spieler als Menü: Entscheidungen, Besatzungs-Alarm,
+  Eroberungen, Flaggen-Freigaben, Briefe an die eigene Nation, für Admins die offenen
+  Anträge. Hinweis beim Einloggen.
+- Neue Config-Abschnitte `[stadt]`, `[villagerkauf]`, `[antraege]`, Webhook
+  `discord.antraege`. Netzwerkversion 3, Clients brauchen 1.5.0.
+
 ## 1.4.0
 
 - **Flaggen auf der Karte**: Auf Xaero's World Map und Minimap liegt über jedem Land

@@ -46,6 +46,15 @@ public class CrownsData extends SavedData {
     /** Laufende Besetzungen von Laendern. */
     public final List<Besatzung> besatzungen = new ArrayList<>();
     public int nextBesatzungId = 1;
+    /** Gegruendete Staedte. */
+    public final List<Stadt> staedte = new ArrayList<>();
+    /** Gekaufte Villager je Nation (fuer die Grenze). */
+    public final Map<String, Integer> villagerGekauft = new HashMap<>();
+    /** Nachfrage je Nation, steigt mit jedem Kauf und sinkt mit der Zeit. */
+    public final Map<String, Double> villagerNachfrage = new HashMap<>();
+    /** Postfach: Nachrichten an einzelne Spieler. */
+    public final List<Nachricht> nachrichten = new ArrayList<>();
+    public int nextNachrichtId = 1;
     /** Laendercode -> Zeitpunkt (ms), bis zu dem das Land nicht erneut eingenommen werden kann. */
     public final Map<String, Long> landSperre = new HashMap<>();
 
@@ -173,6 +182,15 @@ public class CrownsData extends SavedData {
         CompoundTag sp = new CompoundTag();
         for (Map.Entry<String, Long> e : landSperre.entrySet()) sp.putLong(e.getKey(), e.getValue());
         t.put("landSperre", sp);
+        t.put("staedte", list(staedte, Stadt::toNbt));
+        CompoundTag vg = new CompoundTag();
+        for (Map.Entry<String, Integer> e : villagerGekauft.entrySet()) vg.putInt(e.getKey(), e.getValue());
+        t.put("villagerGekauft", vg);
+        CompoundTag vn = new CompoundTag();
+        for (Map.Entry<String, Double> e : villagerNachfrage.entrySet()) vn.putDouble(e.getKey(), e.getValue());
+        t.put("villagerNachfrage", vn);
+        t.put("nachrichten", list(nachrichten, Nachricht::toNbt));
+        t.putInt("nextNachrichtId", nextNachrichtId);
         return t;
     }
 
@@ -228,6 +246,13 @@ public class CrownsData extends SavedData {
         d.nextBesatzungId = Math.max(1, t.getInt("nextBesatzungId"));
         CompoundTag sp = t.getCompound("landSperre");
         for (String k : sp.getAllKeys()) d.landSperre.put(k, sp.getLong(k));
+        for (CompoundTag c : compounds(t, "staedte")) d.staedte.add(Stadt.fromNbt(c));
+        CompoundTag vg = t.getCompound("villagerGekauft");
+        for (String k : vg.getAllKeys()) d.villagerGekauft.put(k, vg.getInt(k));
+        CompoundTag vn = t.getCompound("villagerNachfrage");
+        for (String k : vn.getAllKeys()) d.villagerNachfrage.put(k, vn.getDouble(k));
+        for (CompoundTag c : compounds(t, "nachrichten")) d.nachrichten.add(Nachricht.fromNbt(c));
+        d.nextNachrichtId = Math.max(1, t.getInt("nextNachrichtId"));
         return d;
     }
 

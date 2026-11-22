@@ -144,6 +144,36 @@ der Vatikan sind dafür zu klein, die Antarktis ist ausgelassen.
   Nation sonst nichts mehr hat, ein eingenommenes Land ist `sperreNachEroberungTage`
   gesperrt, eine Nation hat höchstens `gleichzeitigeBesetzungen` laufende Besetzungen.
 
+## Städte, Villager-Händler und Postfach
+
+- **Stadt beantragen:** `/stadt gruenden <Name>` am Standort oder Rechtsklick auf der
+  World Map („Stadt hier beantragen“, eingehängt per Mixin in Xaero's Rechtsklick-Menü,
+  `mixin/GuiMapMixin.java`). Geprüft werden `stadt.mindestBetten` im Umkreis
+  `stadt.radius`, eine Glocke, `stadt.mindestAbstand` zur nächsten Stadt und das eigene
+  Gebiet. Pro Nation ist ein Antrag gleichzeitig offen.
+- **Bestätigen:** Admins bekommen den Antrag im Spiel (Knöpfe Hinreisen, Annehmen,
+  Ablehnen), im `/postfach` und im Discord (Webhook `discord.antraege`, sonst News). Ist
+  der Antrags-Dienst eingerichtet (`antraege.schluessel`), steht im Discord ein Link zum
+  Entscheiden im Browser. Die Mod holt die Entscheidungen alle 30 Sekunden selbst ab.
+- **Karte:** Stadtgebiete (`stadt.gebietChunks` um die Mitte) bekommen auf beiden Karten
+  einen goldenen Rahmen, wartende Anträge einen grauen gestrichelten.
+- **Eroberung:** In Ländern mit Städten steht der Besatzungsblock in einem Stadtgebiet.
+  Die eroberte Stadt geht samt Gebiet an den Angreifer, wer alle Städte eines Landes
+  hält, bekommt das ganze Land.
+- **Villager-Händler:** `/cccore haendler setzen`, Kaufmenü per Rechtsklick (Linksklick =
+  Geld, Rechtsklick = Rohstoffe), oder `/haendler kaufen`. Angebote, Grenzen pro
+  Stadtanzahl, `unbegrenztAb`, `aufschlagProzent` und `erholungProzentProTag` in
+  `[villagerkauf]`.
+- **Postfach:** `/postfach` als Truhenmenü. Klick liest, Shift-Klick löscht.
+
+### Antrags-Dienst (`editor/antraege/`)
+
+Läuft im Docker-Compose des Rechte-Editors (Python-Container, Seite unter
+`/antraege/`). In `editor/.env` `ANTRAEGE_SCHLUESSEL=<zufälliger Wert>` setzen, denselben
+Wert in der Mod-Config `antraege.schluessel`, dann `docker compose up -d`. Jeder Antrag
+hat ein eigenes Token, das nur im Discord-Link steht (im Teil nach `#`, landet also in
+keinem Server-Log). Der Discord-Kanal für `antraege` sollte nur für Admins sichtbar sein.
+
 ## Flaggen als Umhang (`/nation flagge`)
 
 Jeder Bürger trägt die Flagge seiner Nation als Umhang. Ein Umhang ist hochkant,
@@ -279,6 +309,11 @@ ersten Start mit Kommentaren erzeugt. Wichtig:
 - `umhang.aktiv`, `landesflaggen`, `freigabe`, `drehung` (`RECHTS` = Mastseite
   oben, `LINKS`), `seiteUrl` (leer = `editorUrl` mit `flagge/` statt `editor/`).
 - `kartenflaggen.aktiv`, `deckkraft`, `breite`.
+- `stadt.radius`, `gebietChunks`, `mindestBetten`, `glockeNoetig`, `mindestAbstand`,
+  `nurImEigenenGebiet`.
+- `villagerkauf.aktiv`, `angebote`, `grenzen`, `unbegrenztAb`, `aufschlagProzent`,
+  `erholungProzentProTag`.
+- `antraege.webUrl`, `schluessel`, `discord.antraege`.
 - `eroberung.kaufen`, `kaufGrundpreis`, `kaufProChunk`, `nachbarAbstandChunks`,
   `besetzen`, `nurImKrieg`, `nurKampfkrieg`, `besatzungGrundgebuehr`,
   `besatzungProChunk`, `haltezeitMinuten`, `nurWennVerteidigerOnline`,

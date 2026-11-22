@@ -312,9 +312,12 @@ public final class FlagCommand {
         if (ok) {
             Msg.ok(src, "Flagge von " + n.name + " freigegeben.");
             Msg.nation(src.getServer(), n, "§aDie neue Flagge von " + n.name + " ist freigegeben. Ihr tragt sie ab sofort als Umhang.");
+            de.niklasmetzger.crownscore.handel.Postfach.nation(src.getServer(), n, "Flagge freigegeben", "Die neue Flagge von " + n.name + " ist freigegeben.", null);
         } else {
             Msg.ok(src, "Flagge von " + n.name + " abgelehnt.");
             Msg.nation(src.getServer(), n, "§cDie eingereichte Flagge von " + n.name + " wurde abgelehnt" + (grund.isBlank() ? "." : ": " + grund));
+            de.niklasmetzger.crownscore.handel.Postfach.nation(src.getServer(), n, "Flagge abgelehnt", "Die eingereichte Flagge von " + n.name
+                    + " wurde abgelehnt" + (grund.isBlank() ? "." : ": " + grund), null);
         }
         return 1;
     }

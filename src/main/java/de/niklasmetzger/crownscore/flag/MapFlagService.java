@@ -41,6 +41,8 @@ public final class MapFlagService {
         String settings = "";
         /** Es fehlen noch Bilder (Drosselung). */
         boolean offen;
+        /** Zuletzt geschickte Staedteliste. */
+        String staedte = "";
     }
 
     private static final Map<UUID, Viewer> VIEWERS = new ConcurrentHashMap<>();
@@ -130,6 +132,7 @@ public final class MapFlagService {
     public static void everySecond(MinecraftServer server) {
         if (server.getPlayerList().getPlayers().stream().noneMatch(CcNetwork::present)) return;
         tick++;
+        staedte(server);
         boolean neu = tick % 5 == 0 || VIEWERS.values().stream().anyMatch(v -> !v.init);
         CrownsData d = CrownsData.get(server);
         Map<UUID, String> want = null;
@@ -177,6 +180,27 @@ public final class MapFlagService {
             st.known = known;
             st.settings = settings;
             st.init = true;
+        }
+    }
+
+    /** Staedte fuer die Karten, an jeden Client nur bei Aenderung. */
+    private static void staedte(MinecraftServer server) {
+        CrownsData d = CrownsData.get(server);
+        java.util.List<CcNetwork.StadtEintrag> l = new java.util.ArrayList<>();
+        String ow = net.minecraft.world.level.Level.OVERWORLD.location().toString();
+        for (de.niklasmetzger.crownscore.data.Stadt s : d.staedte) {
+            if (!s.dim.equals(ow)) continue;
+            Nation n = d.nations.get(s.nation);
+            l.add(new CcNetwork.StadtEintrag(s.name, n == null ? s.nation : n.name, s.pos.getX(), s.pos.getZ(), s.bestaetigt));
+        }
+        int gebiet = CrownsConfig.STADT_GEBIET.get();
+        String sig = gebiet + "|" + l;
+        for (ServerPlayer viewer : server.getPlayerList().getPlayers()) {
+            if (!CcNetwork.present(viewer)) continue;
+            Viewer st = VIEWERS.computeIfAbsent(viewer.getUUID(), k -> new Viewer());
+            if (sig.equals(st.staedte)) continue;
+            CcNetwork.send(viewer, new CcNetwork.StadtKarte(gebiet, l));
+            st.staedte = sig;
         }
     }
 

@@ -36,9 +36,22 @@
 @eroberung	Länder einnehmen	Freie Länder kauft man aus der Staatskasse, Länder anderer Nationen besetzt man im Krieg mit einem Besatzungsblock, der die Haltezeit überstehen muss. Preise und Regeln stehen in der Config [eroberung].
 /nation land preis <Land>	ALLE	Zeigt Besitzer, Größe, Kaufpreis oder Besatzungsgebühr eines Landes und ob deine Nation es einnehmen darf.
 /nation land kaufen <Land>	CHEF	Kauft ein freies Land (Nation ohne Spieler) aus der Staatskasse. Es muss nahe am eigenen Gebiet liegen. Erst Preis, dann [Kaufen] bestätigen.
-/nation besetzen	BEAMTER	Setzt einen Besatzungsblock an deine Position in einem Land, mit dessen Nation ihr im Krieg seid. Hält er die Haltezeit, gehört euch das Land. Wird er zerstört, ist die Gebühr weg.
+/nation besetzen	BEAMTER	Setzt einen Besatzungsblock an deine Position: in einer Stadt einer Nation, mit der ihr im Krieg seid (Länder mit Städten nur so), sonst im Land. Hält er die Haltezeit, gehört euch die Stadt; wer alle Städte eines Landes hält, bekommt das ganze Land. Wird er zerstört, ist die Gebühr weg.
 /nation besetzen abbrechen [Nr]	BEAMTER	Bricht die laufende Besetzung deiner Nation ab. Admins können mit Nr jede Besetzung beenden.
 /nation besetzungen	ALLE	Alle laufenden Besetzungen mit Ort des Blocks und Restzeit.
+@staedte	Städte, Villager-Händler und Postfach	Städte beantragt man im Spiel oder per Rechtsklick auf der World Map, ein Admin bestätigt sie (im Spiel, im Postfach oder per Link aus dem Discord). Je mehr Städte, desto mehr Villager darf die Nation beim Händler kaufen.
+/stadt	BUERGER	Zeigt die Städte deiner Nation und wie viele Villager ihr noch kaufen dürft.
+/stadt liste [Nation]	ALLE	Städte einer Nation mit Ort, Betten und Status.
+/stadt pruefen	BEAMTER	Prüft deinen Standort: Betten, Glocke, Abstand zur nächsten Stadt, eigenes Gebiet.
+/stadt gruenden <Name>	BEAMTER	Stellt den Antrag auf eine Stadt an deinem Standort. Geht auch per Rechtsklick auf der World Map („Stadt hier beantragen“).
+/haendler	ALLE	Preise beim Villager-Händler für deine Nation, mit Aufschlag durch Nachfrage.
+/haendler kaufen <Angebot> [geld|rohstoffe]	BUERGER	Villager oder Rekrut kaufen, ohne zum Händler zu gehen. Zählt für die Grenze deiner Nation.
+/postfach	ALLE	Öffnet dein Postfach: Entscheidungen, Kriegs- und Besatzungsmeldungen, Briefe an deine Nation. Admins sehen offene Anträge.
+/cccore staedte	ADMIN	Offene Stadtanträge im Postfach.
+/cccore staedte annehmen <Stadt>	ADMIN	Stadtantrag bestätigen.
+/cccore staedte ablehnen <Stadt> [Grund]	ADMIN	Stadtantrag ablehnen oder eine Stadt auflösen.
+/cccore haendler setzen	ADMIN	Stellt einen Villager-Händler an deine Position. Rechtsklick öffnet das Kaufmenü, er ist nie ausverkauft.
+/cccore haendler entfernen	ADMIN	Entfernt Händler im Umkreis von 5 Blöcken.
 @krieg	Kriege	Kriegserklärung mit Kriegsart und Grund, Frieden und Wechsel der Kriegsart (Regel 4.1 und 4.2).
 /krieg liste	ALLE	Laufende Konflikte mit Kriegsart, Grund und Friedensangeboten.
 /krieg arten	ALLE	Alle Kriegsarten und ob dabei PvP erlaubt ist.

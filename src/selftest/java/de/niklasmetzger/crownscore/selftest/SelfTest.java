@@ -106,6 +106,9 @@ public class SelfTest {
         })).then(Commands.literal("eroberung").executes(ctx -> {
             eroberung(ctx.getSource().getServer());
             return 1;
+        })).then(Commands.literal("staedte").executes(ctx -> {
+            staedte(ctx.getSource().getServer());
+            return 1;
         })));
     }
 
@@ -453,6 +456,172 @@ public class SelfTest {
             d.landSperre.clear();
             d.setDirty();
             check("Aufraeumen: Jemen wieder beim Jemen", nat("YEM").laender.contains("YEM"), "");
+        });
+        stepUntil("Karte zurueck", () -> !de.niklasmetzger.crownscore.claims.OpacTerritory.running(), 4000);
+    }
+
+    /** Staedte: Antrag, Bestaetigung, Villager-Haendler mit Grenze und Preis, Eroberung einer Stadt und damit des Landes. */
+    private void staedte(MinecraftServer srv) {
+        server = srv;
+        lvl = srv.overworld();
+        pass = fail = 0;
+        steps.clear();
+        LOG.info("[CCTEST] START Staedte");
+        if (a == null) a = FakePlayerFactory.get(lvl, new GameProfile(A_ID, "TestAlpha"));
+        double bpg = de.niklasmetzger.crownscore.world.WorldMap.blocksPerDegree();
+        UUID jorBuerger = UUID.fromString("00000000-0000-0000-0000-0000000004a0");
+        final boolean[] online = {de.niklasmetzger.crownscore.config.CrownsConfig.EROBERUNG_VERTEIDIGER_ONLINE.get()};
+        final long[] gegruendet = {0};
+        final de.niklasmetzger.crownscore.data.War[] krieg = {null};
+        final List<BlockPos> gesetzt = new java.util.ArrayList<>();
+        final net.minecraft.world.entity.Entity[] gekauft = {null};
+        // Betten und Glocke an einer Stelle aufbauen, Spieler in die Mitte stellen
+        java.util.function.BiFunction<Double, Double, BlockPos> dorf = (lon, lat) -> {
+            int x = (int) Math.floor(lon * bpg), z = (int) Math.floor(-lat * bpg);
+            lvl.getChunk(x >> 4, z >> 4);
+            lvl.setChunkForced(x >> 4, z >> 4, true);
+            int y = lvl.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z) + 3;
+            for (int i = 0; i < 10; i++) {
+                BlockPos foot = new BlockPos(x - 10 + i * 2, y, z + 4), head = foot.south();
+                var bed = net.minecraft.world.level.block.Blocks.RED_BED.defaultBlockState()
+                        .setValue(net.minecraft.world.level.block.BedBlock.FACING, net.minecraft.core.Direction.SOUTH);
+                lvl.setBlock(foot, bed.setValue(net.minecraft.world.level.block.BedBlock.PART, net.minecraft.world.level.block.state.properties.BedPart.FOOT), 2);
+                lvl.setBlock(head, bed.setValue(net.minecraft.world.level.block.BedBlock.PART, net.minecraft.world.level.block.state.properties.BedPart.HEAD), 2);
+                gesetzt.add(foot);
+                gesetzt.add(head);
+            }
+            BlockPos glocke = new BlockPos(x + 2, y, z);
+            lvl.setBlock(glocke, net.minecraft.world.level.block.Blocks.BELL.defaultBlockState(), 2);
+            gesetzt.add(glocke);
+            a.setPos(x + 0.5, y, z + 0.5);
+            return new BlockPos(x, y, z);
+        };
+        step("Vorbereitung", () -> {
+            CrownsData d = CrownsData.get(server);
+            Nation sau = nat("SAU"), jor = nat("JOR");
+            sau.mitglieder.put(A_ID, "TestAlpha");
+            sau.chef = A_ID;
+            jor.mitglieder.put(jorBuerger, "Testbuerger_JOR");
+            gegruendet[0] = jor.gegruendet;
+            jor.gegruendet = 0;
+            d.staedte.removeIf(s -> s.name.startsWith("Test"));
+            d.besatzungen.clear();
+            d.landSperre.clear();
+            d.villagerGekauft.remove(sau.key());
+            d.villagerNachfrage.remove(sau.key());
+            for (Nation n : d.nations.values()) if (n != jor) n.laender.remove("JOR");
+            jor.laender.add("JOR");
+            check("Staedte: Saudi-Arabien hat am Anfang keine Stadt", de.niklasmetzger.crownscore.handel.StadtService.anzahl(d, sau.key()) == 0, "");
+        });
+        step("Antrag Riad", () -> {
+            CrownsData d = CrownsData.get(server);
+            Nation sau = nat("SAU");
+            dorf.apply(46.72, 24.69);
+            var pr = de.niklasmetzger.crownscore.handel.StadtService.pruefen(a, sau);
+            check("Stadt: 10 Betten gezaehlt", pr.betten() == 10, String.valueOf(pr.betten()));
+            check("Stadt: Glocke gefunden", pr.glocke(), "");
+            String err = de.niklasmetzger.crownscore.handel.StadtService.gruenden(a, sau, "Testriad");
+            check("Stadt: Antrag gestellt", err == null, err);
+            check("Stadt: Antrag wartet auf Admin", de.niklasmetzger.crownscore.handel.StadtService.offen(d).stream().anyMatch(s -> s.name.equals("Testriad")), "");
+            check("Stadt: wartender Antrag zaehlt nicht", de.niklasmetzger.crownscore.handel.StadtService.anzahl(d, sau.key()) == 0, "");
+            err = de.niklasmetzger.crownscore.handel.StadtService.gruenden(a, sau, "Testriad2");
+            check("Stadt: zweiter Antrag waehrend der erste offen ist abgelehnt", err != null, err);
+            check("Postfach: Antragsteller hat eine Nachricht", de.niklasmetzger.crownscore.handel.Postfach.von(d, A_ID).stream().anyMatch(n -> n.titel.contains("Testriad")), "");
+            check("Haendler: ohne Stadt Grenze 0", de.niklasmetzger.crownscore.handel.VillagerHandel.grenze(d, sau.key()) == 0, "");
+        });
+        step("Annehmen", () -> {
+            CrownsData d = CrownsData.get(server);
+            Nation sau = nat("SAU");
+            String err = de.niklasmetzger.crownscore.handel.StadtService.annehmen(server, "Testriad", "Selbsttest", true);
+            check("Stadt: angenommen", err == null, err);
+            check("Stadt: zaehlt jetzt", de.niklasmetzger.crownscore.handel.StadtService.anzahl(d, sau.key()) == 1, "");
+            check("Haendler: mit einer Stadt Grenze 5", de.niklasmetzger.crownscore.handel.VillagerHandel.grenze(d, sau.key()) == 5, "");
+        });
+        step("Villager kaufen", () -> {
+            CrownsData d = CrownsData.get(server);
+            Nation sau = nat("SAU");
+            var angebot = de.niklasmetzger.crownscore.handel.VillagerHandel.angebot("villager");
+            check("Haendler: Angebot Dorfbewohner da", angebot != null, "");
+            if (angebot == null) return;
+            double vorher = de.niklasmetzger.crownscore.handel.VillagerHandel.geldpreis(d, sau.key(), angebot);
+            a.getInventory().clearContent();
+            angebot.rohstoffe().forEach((item, n) -> a.getInventory().add(new net.minecraft.world.item.ItemStack(item, n)));
+            String err = de.niklasmetzger.crownscore.handel.VillagerHandel.kaufen(a, angebot, true);
+            check("Haendler: mit Rohstoffen gekauft", err == null, err);
+            check("Haendler: Rohstoffe weg", a.getInventory().isEmpty(), "");
+            var v = lvl.getEntitiesOfClass(net.minecraft.world.entity.npc.Villager.class, new net.minecraft.world.phys.AABB(a.blockPosition()).inflate(3));
+            check("Haendler: Villager steht neben dem Kaeufer", !v.isEmpty(), "");
+            if (!v.isEmpty()) gekauft[0] = v.get(0);
+            check("Haendler: zaehlt fuer die Grenze", de.niklasmetzger.crownscore.handel.VillagerHandel.gekauft(d, sau.key()) == 1, "");
+            double nachher = de.niklasmetzger.crownscore.handel.VillagerHandel.geldpreis(d, sau.key(), angebot);
+            check("Haendler: naechster Kauf ist teurer", nachher > vorher, vorher + " -> " + nachher);
+            err = de.niklasmetzger.crownscore.handel.VillagerHandel.kaufen(a, angebot, true);
+            check("Haendler: ohne Rohstoffe kein Kauf", err != null, err);
+            d.villagerGekauft.put(sau.key(), 5);
+            err = de.niklasmetzger.crownscore.handel.VillagerHandel.kaufen(a, angebot, false);
+            check("Haendler: Grenze erreicht", err != null && err.contains("Grenze"), err);
+        });
+        step("Stadt in Jordanien", () -> {
+            CrownsData d = CrownsData.get(server);
+            Nation jor = nat("JOR");
+            dorf.apply(35.93, 31.95);
+            String err = de.niklasmetzger.crownscore.handel.StadtService.gruenden(a, jor, "Testamman");
+            check("Stadt: Amman beantragt", err == null, err);
+            de.niklasmetzger.crownscore.handel.StadtService.annehmen(server, "Testamman", "Selbsttest", true);
+            check("Stadt: Amman liegt in Jordanien", de.niklasmetzger.crownscore.handel.StadtService.imLand(d, "JOR").stream().anyMatch(s -> s.name.equals("Testamman")), "");
+            krieg[0] = de.niklasmetzger.crownscore.war.WarService.declare(server, nat("SAU"), jor, de.niklasmetzger.crownscore.data.WarType.KRIEG, "Selbsttest der Staedte", "TestAlpha");
+        });
+        step("Ausserhalb der Stadt besetzen geht nicht", () -> {
+            int x = (int) Math.floor(37.5 * bpg), z = (int) Math.floor(-30.5 * bpg);
+            lvl.getChunk(x >> 4, z >> 4);
+            a.setPos(x + 0.5, lvl.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z), z + 0.5);
+            String err = de.niklasmetzger.crownscore.world.EroberungService.besetzen(a, nat("SAU"));
+            check("Besetzen: Land mit Staedten nur ueber die Staedte", err != null && err.contains("Testamman"), err);
+        });
+        step("Stadt besetzen", () -> {
+            CrownsData d = CrownsData.get(server);
+            var s = de.niklasmetzger.crownscore.handel.StadtService.byName(d, "Testamman");
+            int bx = s.pos.getX() + 3, bz = s.pos.getZ() - 3;
+            a.setPos(bx + 0.5, lvl.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, bx, bz), bz + 0.5);
+            de.niklasmetzger.crownscore.config.CrownsConfig.EROBERUNG_VERTEIDIGER_ONLINE.set(false);
+            String err = de.niklasmetzger.crownscore.world.EroberungService.besetzen(a, nat("SAU"));
+            check("Besetzen: Block in Amman gesetzt", err == null, err);
+            var b = d.besatzungen.isEmpty() ? null : d.besatzungen.get(0);
+            check("Besetzen: Ziel ist die Stadt", b != null && "Testamman".equals(b.stadt), b == null ? "" : b.stadt);
+            if (b != null) b.rest = 3;
+        });
+        stepWait(100, "warten", () -> {});
+        stepUntil("Karte", () -> !de.niklasmetzger.crownscore.claims.OpacTerritory.running(), 4000);
+        step("Ganzes Land", () -> {
+            CrownsData d = CrownsData.get(server);
+            Nation sau = nat("SAU");
+            var s = de.niklasmetzger.crownscore.handel.StadtService.byName(d, "Testamman");
+            check("Eroberung: Amman gehoert Saudi-Arabien", s != null && s.nation.equals(sau.key()), s == null ? "" : s.nation);
+            check("Eroberung: einzige Stadt erobert, ganz Jordanien gehoert Saudi-Arabien", sau.laender.contains("JOR"), String.valueOf(sau.laender));
+            check("Postfach: Jordanien hat die Meldung", de.niklasmetzger.crownscore.handel.Postfach.von(d, jorBuerger).stream().anyMatch(n -> n.titel.contains("Stadt verloren")), "");
+        });
+        step("Aufraeumen", () -> {
+            CrownsData d = CrownsData.get(server);
+            de.niklasmetzger.crownscore.config.CrownsConfig.EROBERUNG_VERTEIDIGER_ONLINE.set(online[0]);
+            if (krieg[0] != null) de.niklasmetzger.crownscore.war.WarService.end(server, krieg[0], "Selbsttest beendet", false);
+            Nation sau = nat("SAU"), jor = nat("JOR");
+            de.niklasmetzger.crownscore.world.WeltkarteCommand.uebertragen(server, List.of("JOR"), jor, null, LOG::info);
+            d.staedte.removeIf(s -> s.name.startsWith("Test"));
+            d.landSperre.clear();
+            d.villagerGekauft.remove(sau.key());
+            d.villagerNachfrage.remove(sau.key());
+            d.nachrichten.removeIf(n -> A_ID.equals(n.an) || jorBuerger.equals(n.an));
+            jor.mitglieder.remove(jorBuerger);
+            jor.gegruendet = gegruendet[0];
+            sau.mitglieder.remove(A_ID);
+            sau.chef = null;
+            if (gekauft[0] != null) gekauft[0].discard();
+            for (BlockPos p : gesetzt) {
+                lvl.setBlock(p, net.minecraft.world.level.block.Blocks.AIR.defaultBlockState(), 2);
+                lvl.setChunkForced(p.getX() >> 4, p.getZ() >> 4, false);
+            }
+            d.setDirty();
+            check("Aufraeumen: Jordanien wieder bei Jordanien", jor.laender.contains("JOR"), "");
         });
         stepUntil("Karte zurueck", () -> !de.niklasmetzger.crownscore.claims.OpacTerritory.running(), 4000);
     }

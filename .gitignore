@@ -27,3 +27,6 @@ forge*changelog.txt
 # Logs und lokale Testserver
 *.log
 libs/
+
+# Schluessel des Antrags-Dienstes
+editor/.env

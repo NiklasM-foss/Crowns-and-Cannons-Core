@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<title>Antrag entscheiden</title>
+<link rel="icon" href="../flagge/logo.png">
+<style>
+  :root { --bg:#16130f; --karte:#221d17; --rand:#3a3128; --text:#efe6d8; --leise:#a89b88; --gold:#d8a74a; --gruen:#4caf6a; --rot:#d0574b; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--text); font:16px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  header { display:flex; gap:14px; align-items:center; padding:18px 16px; border-bottom:1px solid var(--rand); max-width:760px; margin:0 auto; }
+  header img { width:48px; height:48px; image-rendering:pixelated; }
+  h1 { margin:0; font-size:1.3rem; color:var(--gold); }
+  .sub { margin:0; color:var(--leise); font-size:.9rem; }
+  main { max-width:760px; margin:0 auto; padding:16px; }
+  .karte { background:var(--karte); border:1px solid var(--rand); border-radius:10px; padding:18px; margin-bottom:16px; }
+  h2 { margin:0 0 6px; font-size:1.2rem; }
+  dl { display:grid; grid-template-columns:max-content 1fr; gap:4px 14px; margin:12px 0; }
+  dt { color:var(--leise); }
+  dd { margin:0; overflow-wrap:anywhere; }
+  ul { margin:8px 0 0; padding-left:20px; }
+  label { display:block; margin:12px 0 4px; color:var(--leise); font-size:.9rem; }
+  input, textarea { width:100%; padding:10px; border-radius:8px; border:1px solid var(--rand); background:#120f0c; color:var(--text); font:inherit; }
+  textarea { min-height:70px; resize:vertical; }
+  .knoepfe { display:flex; gap:10px; margin-top:16px; flex-wrap:wrap; }
+  button { flex:1; min-width:140px; padding:12px; border:0; border-radius:8px; font:inherit; font-weight:600; cursor:pointer; color:#fff; }
+  button.ja { background:var(--gruen); }
+  button.nein { background:var(--rot); }
+  button:disabled { opacity:.5; cursor:default; }
+  .status { padding:12px; border-radius:8px; margin-top:12px; }
+  .status.ok { background:rgba(76,175,106,.15); border:1px solid var(--gruen); }
+  .status.weg { background:rgba(208,87,75,.15); border:1px solid var(--rot); }
+  .status.info { background:rgba(216,167,74,.12); border:1px solid var(--gold); }
+  .leise { color:var(--leise); font-size:.9rem; }
+</style>
+</head>
+<body>
+<header>
+  <img src="../flagge/logo.png" alt="">
+  <div>
+    <h1>Antrag entscheiden</h1>
+    <p class="sub">Crowns Core: Anträge an die Admins von Crowns &amp; Cannons</p>
+  </div>
+</header>
+<main>
+  <section class="karte" id="laden"><p>Antrag wird geladen …</p></section>
+  <section class="karte" id="antrag" hidden>
+    <h2 id="titel"></h2>
+    <dl>
+      <dt>Nation</dt><dd id="nation"></dd>
+      <dt>Beantragt von</dt><dd id="von"></dd>
+      <dt>Ort</dt><dd id="ort"></dd>
+      <dt>Eingegangen</dt><dd id="zeit"></dd>
+    </dl>
+    <ul id="details"></ul>
+    <div id="entscheiden">
+      <label for="admin">Dein Minecraft-Name (steht im Protokoll und im Discord)</label>
+      <input id="admin" maxlength="16" autocomplete="username" placeholder="z.B. Ghast0607">
+      <label for="grund">Begründung (bei Ablehnung empfohlen, sieht die Nation)</label>
+      <textarea id="grund" maxlength="300"></textarea>
+      <div class="knoepfe">
+        <button class="ja" id="ja">Annehmen</button>
+        <button class="nein" id="nein">Ablehnen</button>
+      </div>
+      <p class="leise">Die Entscheidung kommt innerhalb von etwa 30 Sekunden im Spiel an.</p>
+    </div>
+    <div id="ergebnis"></div>
+  </section>
+</main>
+<script>
+(function () {
+  "use strict";
+  var teile = (location.hash || "").replace(/^#/, "").split(".");
+  var id = teile[0] || "", token = teile[1] || "";
+  var $ = function (x) { return document.getElementById(x); };
+
+  function api(pfad, daten) {
+    return fetch("api/antrag/" + encodeURIComponent(id) + pfad, {
+      method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(daten)
+    }).then(function (r) { return r.json().then(function (j) { j._code = r.status; return j; }); });
+  }
+
+  function datum(s) { return s ? new Date(s * 1000).toLocaleString("de-DE") : ""; }
+
+  function zeigen(a) {
+    $("laden").hidden = true;
+    $("antrag").hidden = false;
+    $("titel").textContent = a.titel || "Antrag";
+    $("nation").textContent = a.nation || "";
+    $("von").textContent = a.von || "";
+    $("ort").textContent = a.ort || "";
+    $("zeit").textContent = datum(a.zeit);
+    var ul = $("details");
+    ul.textContent = "";
+    (a.details || []).forEach(function (d) { var li = document.createElement("li"); li.textContent = d; ul.appendChild(li); });
+    var erg = $("ergebnis");
+    erg.textContent = "";
+    if (a.status && a.status !== "offen") {
+      $("entscheiden").hidden = true;
+      var div = document.createElement("div");
+      div.className = "status " + (a.entscheidung === "annehmen" ? "ok" : "weg");
+      div.textContent = (a.entscheidung === "annehmen" ? "Angenommen" : "Abgelehnt") + " von " + (a.admin || "?") +
+        (a.entschieden ? " am " + datum(a.entschieden) : "") + (a.grund ? ": " + a.grund : "") +
+        (a.status === "entschieden" ? " (wird gerade an den Server übertragen)" : "");
+      erg.appendChild(div);
+    }
+  }
+
+  function fehler(t) {
+    $("laden").innerHTML = "";
+    var p = document.createElement("p");
+    p.className = "status weg";
+    p.textContent = t;
+    $("laden").appendChild(p);
+  }
+
+  function entscheiden(ent) {
+    var admin = $("admin").value.trim();
+    if (!/^[A-Za-z0-9_]{2,16}$/.test(admin)) { $("admin").focus(); alert("Bitte deinen Minecraft-Namen eintragen."); return; }
+    try { localStorage.setItem("crowns-admin", admin); } catch (e) {}
+    $("ja").disabled = $("nein").disabled = true;
+    api("/entscheiden", { t: token, entscheidung: ent, admin: admin, grund: $("grund").value }).then(function (a) {
+      if (a._code === 200 || a._code === 409) zeigen(a);
+      else { alert(a.fehler || "Fehler"); $("ja").disabled = $("nein").disabled = false; }
+    }).catch(function () { alert("Keine Verbindung."); $("ja").disabled = $("nein").disabled = false; });
+  }
+
+  try { $("admin").value = localStorage.getItem("crowns-admin") || ""; } catch (e) {}
+  $("ja").onclick = function () { entscheiden("annehmen"); };
+  $("nein").onclick = function () { entscheiden("ablehnen"); };
+
+  if (!id || !token) { fehler("Der Link ist unvollständig. Öffne ihn direkt aus der Discord-Nachricht."); return; }
+  api("", { t: token }).then(function (a) {
+    if (a._code === 200) zeigen(a); else fehler(a.fehler || "Antrag nicht gefunden.");
+  }).catch(function () { fehler("Keine Verbindung zum Server."); });
+})();
+</script>
+</body>
+</html>

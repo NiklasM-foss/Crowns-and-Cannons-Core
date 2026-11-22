@@ -20,7 +20,7 @@ import java.util.UUID;
  * Spieler ohne Crowns Core koennen sich verbinden, sie sehen dann nur keine Umhaenge und keine Flaggen auf der Karte.
  */
 public final class CcNetwork {
-    private static final String VERSION = "2"; // 2 = Flaggen auf der Karte (1.4.0), Clients mit 1.3.0 muessen updaten
+    private static final String VERSION = "3"; // 2 = Flaggen auf der Karte (1.4.0), 3 = Staedte (1.5.0); alte Clients muessen updaten
     public static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
             new ResourceLocation(CrownsCore.MODID, "main"), () -> VERSION,
             NetworkRegistry.acceptMissingOr(VERSION), NetworkRegistry.acceptMissingOr(VERSION));
@@ -105,6 +105,44 @@ public final class CcNetwork {
         }
     }
 
+    /** Staedte fuer die Karten: Name, Nation, Mitte, anerkannt. gebiet = Stadtgebiet in Chunks um die Mitte. */
+    public record StadtKarte(int gebiet, java.util.List<StadtEintrag> staedte) {
+        void write(FriendlyByteBuf b) {
+            b.writeVarInt(gebiet);
+            b.writeVarInt(staedte.size());
+            for (StadtEintrag e : staedte) {
+                b.writeUtf(e.name(), 64);
+                b.writeUtf(e.nation(), 100);
+                b.writeInt(e.x());
+                b.writeInt(e.z());
+                b.writeBoolean(e.anerkannt());
+            }
+        }
+
+        static StadtKarte read(FriendlyByteBuf b) {
+            int g = b.readVarInt();
+            int n = Math.min(b.readVarInt(), 10000);
+            java.util.List<StadtEintrag> l = new java.util.ArrayList<>();
+            for (int i = 0; i < n; i++) l.add(new StadtEintrag(b.readUtf(64), b.readUtf(100), b.readInt(), b.readInt(), b.readBoolean()));
+            return new StadtKarte(g, l);
+        }
+    }
+
+    public record StadtEintrag(String name, String nation, int x, int z, boolean anerkannt) {}
+
+    /** Client -> Server: Stadt an einer Stelle der World Map beantragen. */
+    public record StadtAnfrage(String name, int x, int z) {
+        void write(FriendlyByteBuf b) {
+            b.writeUtf(name, 64);
+            b.writeInt(x);
+            b.writeInt(z);
+        }
+
+        static StadtAnfrage read(FriendlyByteBuf b) {
+            return new StadtAnfrage(b.readUtf(64), b.readInt(), b.readInt());
+        }
+    }
+
     public static void init() {
         CHANNEL.messageBuilder(CapeTexture.class, 0, NetworkDirection.PLAY_TO_CLIENT)
                 .encoder(CapeTexture::write).decoder(CapeTexture::read)
@@ -125,6 +163,18 @@ public final class CcNetwork {
                 .encoder(MapFlags::write).decoder(MapFlags::read)
                 .consumerMainThread((msg, ctx) -> DistExecutor.unsafeRunWhenOn(Dist.CLIENT,
                         () -> () -> de.niklasmetzger.crownscore.client.ClientMapFlags.map(msg)))
+                .add();
+        CHANNEL.messageBuilder(StadtAnfrage.class, 4, NetworkDirection.PLAY_TO_SERVER)
+                .encoder(StadtAnfrage::write).decoder(StadtAnfrage::read)
+                .consumerMainThread((msg, ctx) -> {
+                    ServerPlayer p = ctx.get().getSender();
+                    if (p != null) de.niklasmetzger.crownscore.handel.StadtService.anfrageAusKarte(p, msg.name(), msg.x(), msg.z());
+                })
+                .add();
+        CHANNEL.messageBuilder(StadtKarte.class, 5, NetworkDirection.PLAY_TO_CLIENT)
+                .encoder(StadtKarte::write).decoder(StadtKarte::read)
+                .consumerMainThread((msg, ctx) -> DistExecutor.unsafeRunWhenOn(Dist.CLIENT,
+                        () -> () -> de.niklasmetzger.crownscore.client.ClientMapFlags.staedte(msg)))
                 .add();
     }
 

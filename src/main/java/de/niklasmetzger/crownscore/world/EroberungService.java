@@ -109,6 +109,34 @@ public final class EroberungService {
         return null;
     }
 
+    /** Darf {@code wer} die Stadt besetzen? null = ja. */
+    public static String pruefenStadt(CrownsData d, Nation wer, de.niklasmetzger.crownscore.data.Stadt s) {
+        if (!CrownsConfig.EROBERUNG_BESETZEN.get()) return "Besetzungen sind auf diesem Server ausgeschaltet.";
+        if (s.nation.equals(wer.key())) return s.name + " gehoert schon " + wer.name + ".";
+        Nation besitzer = d.nations.get(s.nation);
+        if (besitzer == null) return "Die Nation von " + s.name + " gibt es nicht mehr.";
+        long now = TimeUtil.now();
+        Long sperre = d.landSperre.get("stadt:" + s.name.toLowerCase(Locale.ROOT));
+        if (sperre != null && sperre > now) return s.name + " wurde gerade erst eingenommen und ist noch " + TimeUtil.duration(sperre - now) + " gesperrt.";
+        if (CrownsConfig.EROBERUNG_NUR_IM_KRIEG.get()) {
+            War w = d.activeWar(wer.key(), besitzer.key());
+            if (w == null) return "Du bist nicht im Krieg mit " + besitzer.name + ". Besetzen geht nur im Krieg (/krieg erklaeren).";
+            if (CrownsConfig.EROBERUNG_NUR_KAMPFKRIEG.get() && !w.art.kampfErlaubt()) {
+                return "Im " + w.art.anzeige + " ist kein Kampf erlaubt, also auch keine Besetzung. Erst die Kriegsart wechseln.";
+            }
+        }
+        int schutz = CrownsConfig.EROBERUNG_SCHUTZ_TAGE.get();
+        if (schutz > 0 && besitzer.gegruendet + schutz * TAG > now) {
+            return besitzer.name + " ist eine neue Nation und noch " + TimeUtil.duration(besitzer.gegruendet + schutz * TAG - now) + " geschuetzt.";
+        }
+        long laufend = d.besatzungen.stream().filter(b -> b.angreifer.equals(wer.key())).count();
+        if (laufend >= CrownsConfig.EROBERUNG_GLEICHZEITIG.get()) return wer.name + " hat schon " + laufend + " laufende Besetzung(en), mehr sind nicht erlaubt.";
+        for (Besatzung b : d.besatzungen) {
+            if (b.stadt.equalsIgnoreCase(s.name)) return s.name + " wird schon von " + d.anzeige(b.angreifer) + " besetzt.";
+        }
+        return null;
+    }
+
     /** Freies Land kaufen. null = gekauft, sonst Fehler. */
     public static String kaufen(MinecraftServer server, Nation wer, Country c) {
         CrownsData d = CrownsData.get(server);
@@ -138,27 +166,46 @@ public final class EroberungService {
         MinecraftServer server = p.getServer();
         CrownsData d = CrownsData.get(server);
         if (p.level().dimension() != net.minecraft.world.level.Level.OVERWORLD) return "Besetzen geht nur in der Oberwelt.";
-        Country c = WorldMap.atChunk(p.blockPosition().getX() >> 4, p.blockPosition().getZ() >> 4);
-        if (c == null) return "Hier ist kein Land auf der Weltkarte (Meer). Stell dich in das Land, das du besetzen willst.";
-        String err = pruefen(d, wer, c, false);
-        if (err != null) return err;
+        int pcx = p.blockPosition().getX() >> 4, pcz = p.blockPosition().getZ() >> 4;
+        de.niklasmetzger.crownscore.data.Stadt stadt = de.niklasmetzger.crownscore.handel.StadtService.an(d, p.level().dimension().location().toString(), pcx, pcz);
+        Country c = WorldMap.atChunk(pcx, pcz);
+        if (stadt != null && !stadt.nation.equals(wer.key())) {
+            String err = pruefenStadt(d, wer, stadt);
+            if (err != null) return err;
+        } else {
+            stadt = null;
+            if (c == null) return "Hier ist kein Land auf der Weltkarte (Meer). Stell dich in eine Stadt oder ein Land, das du besetzen willst.";
+            Nation halter = besitzer(d, c);
+            if (halter != null && halter != wer) {
+                List<String> namen = de.niklasmetzger.crownscore.handel.StadtService.imLand(d, c.code()).stream()
+                        .filter(s -> !s.nation.equals(wer.key())).map(s -> s.name).toList();
+                if (!namen.isEmpty()) {
+                    return c.name() + " hat Staedte. Besetzt sie einzeln, wer alle haelt, bekommt das ganze Land: " + String.join(", ", namen)
+                            + ". Stell dich in das Stadtgebiet (auf der Karte umrandet).";
+                }
+            }
+            String err = pruefen(d, wer, c, false);
+            if (err != null) return err;
+        }
         ServerLevel level = p.serverLevel();
         BlockPos pos = p.blockPosition();
         if (!level.getBlockState(pos).canBeReplaced()) pos = pos.above();
         if (!level.getBlockState(pos).canBeReplaced() || !level.getBlockState(pos.below()).isSolid()) {
             return "Hier kann der Besatzungsblock nicht stehen. Stell dich auf festen Boden mit freiem Platz.";
         }
-        double gebuehr = besatzungsgebuehr(c);
+        double gebuehr = stadt != null ? CrownsConfig.EROBERUNG_GEBUEHR_GRUND.get()
+                + CrownsConfig.EROBERUNG_GEBUEHR_PRO_CHUNK.get() * de.niklasmetzger.crownscore.handel.StadtService.chunks(stadt).size() : besatzungsgebuehr(c);
         if (!de.niklasmetzger.crownscore.treasury.TreasuryService.charge(d, wer.key(), gebuehr)) {
             return "Die Besatzungsgebuehr von " + Msg.money(gebuehr) + " ist nicht in der Staatskasse.";
         }
-        Nation verteidiger = besitzer(d, c);
+        Nation verteidiger = stadt != null ? d.nations.get(stadt.nation) : besitzer(d, c);
         level.setBlockAndUpdate(pos, block().defaultBlockState());
         Besatzung b = new Besatzung();
         b.id = d.nextBesatzungId++;
         b.angreifer = wer.key();
         b.verteidiger = verteidiger.key();
-        b.land = c.code();
+        b.land = c == null ? "" : c.code();
+        b.stadt = stadt == null ? "" : stadt.name;
         b.dim = level.dimension().location().toString();
         b.pos = pos.immutable();
         b.start = TimeUtil.now();
@@ -169,13 +216,16 @@ public final class EroberungService {
         d.setDirty();
         String wo = pos.getX() + " " + pos.getY() + " " + pos.getZ();
         String dauer = TimeUtil.duration(b.rest * 1000L);
-        Msg.broadcast(server, "§c" + wer.name + " besetzt " + c.name() + " (" + verteidiger.name + ")! Der Besatzungsblock steht bei " + wo
-                + ". Haelt er " + dauer + ", gehoert das Land " + wer.name + ".");
-        Msg.nation(server, verteidiger, "§c§lAlarm: §c" + wer.name + " besetzt " + c.name() + ". Zerstoert den Besatzungsblock bei " + wo + "!");
-        DiscordWebhook.kriegsnews(":triangular_flag_on_post: **" + wer.name + " besetzt " + c.name() + "** (" + verteidiger.name + ")\n"
+        String ziel = stadt != null ? "die Stadt " + stadt.name : c.name();
+        Msg.broadcast(server, "§c" + wer.name + " besetzt " + ziel + " (" + verteidiger.name + ")! Der Besatzungsblock steht bei " + wo
+                + ". Haelt er " + dauer + ", gehoert " + ziel + " " + wer.name + ".");
+        Msg.nation(server, verteidiger, "§c§lAlarm: §c" + wer.name + " besetzt " + ziel + ". Zerstoert den Besatzungsblock bei " + wo + "!");
+        de.niklasmetzger.crownscore.handel.Postfach.nation(server, verteidiger, "Alarm: " + ziel + " wird besetzt",
+                wer.name + " hat einen Besatzungsblock bei " + wo + " gesetzt. Haelt er " + dauer + ", verliert ihr " + ziel + ". Zerstoert ihn!", null);
+        DiscordWebhook.kriegsnews(":triangular_flag_on_post: **" + wer.name + " besetzt " + ziel + "** (" + verteidiger.name + ")\n"
                 + "Besatzungsblock bei " + wo + ", Haltezeit " + dauer
                 + (CrownsConfig.EROBERUNG_VERTEIDIGER_ONLINE.get() ? " (zaehlt nur, solange jemand aus " + verteidiger.name + " online ist)" : ""));
-        CrownsCore.LOGGER.info("Besetzung {}: {} besetzt {} ({}) bei {}", b.id, wer.name, c.code(), verteidiger.name, wo);
+        CrownsCore.LOGGER.info("Besetzung {}: {} besetzt {} ({}) bei {}", b.id, wer.name, ziel, verteidiger.name, wo);
         return null;
     }
 
@@ -190,9 +240,13 @@ public final class EroberungService {
             level.removeBlock(b.pos, false);
         }
         Country c = WorldMap.byCode(b.land);
-        String land = c == null ? b.land : c.name();
+        String land = !b.stadt.isEmpty() ? b.stadt : c == null ? b.land : c.name();
         String text = "Die Besetzung von " + land + " durch " + d.anzeige(b.angreifer) + " ist gescheitert: " + grund;
         Msg.broadcast(server, "§e" + text);
+        for (String k : List.of(b.angreifer, b.verteidiger)) {
+            Nation x = d.nations.get(k);
+            if (x != null) de.niklasmetzger.crownscore.handel.Postfach.nation(server, x, "Besetzung von " + land + " beendet", text, null);
+        }
         DiscordWebhook.kriegsnews(":shield: " + text);
         CrownsCore.LOGGER.info("Besetzung {} beendet: {}", b.id, grund);
     }
@@ -229,6 +283,10 @@ public final class EroberungService {
         long now = TimeUtil.now();
         d.landSperre.values().removeIf(t -> t < now);
         for (Besatzung b : new ArrayList<>(d.besatzungen)) {
+            if (!b.stadt.isEmpty()) {
+                stadtSekunde(server, d, b);
+                continue;
+            }
             Country c = WorldMap.byCode(b.land);
             Nation angreifer = d.nations.get(b.angreifer);
             Nation verteidiger = d.nations.get(b.verteidiger);
@@ -281,11 +339,99 @@ public final class EroberungService {
         }
     }
 
+    private static void stadtSekunde(MinecraftServer server, CrownsData d, Besatzung b) {
+        de.niklasmetzger.crownscore.data.Stadt s = de.niklasmetzger.crownscore.handel.StadtService.byName(d, b.stadt);
+        Nation angreifer = d.nations.get(b.angreifer);
+        Nation verteidiger = d.nations.get(b.verteidiger);
+        if (s == null || angreifer == null || verteidiger == null) {
+            abbrechen(server, b, "die Stadt oder eine der Nationen gibt es nicht mehr.");
+            return;
+        }
+        if (!s.nation.equals(b.verteidiger)) {
+            abbrechen(server, b, s.name + " gehoert inzwischen jemand anderem.");
+            return;
+        }
+        if (CrownsConfig.EROBERUNG_NUR_IM_KRIEG.get() && d.activeWar(b.angreifer, b.verteidiger) == null) {
+            abbrechen(server, b, "der Krieg ist vorbei.");
+            return;
+        }
+        ServerLevel level = level(server, b);
+        if (level == null) {
+            abbrechen(server, b, "die Dimension gibt es nicht mehr.");
+            return;
+        }
+        boolean geladen = level.isLoaded(b.pos);
+        boolean steht = geladen && level.getBlockState(b.pos).is(block());
+        if (steht) ZERSTOERT_VON.remove(b.id);
+        if (geladen ? !steht : ZERSTOERT_VON.containsKey(b.id)) {
+            String wer = ZERSTOERT_VON.get(b.id);
+            if (wer != null && wer.isEmpty()) wer = null;
+            abbrechen(server, b, "der Besatzungsblock wurde zerstoert" + (wer == null ? "." : " (von " + wer + ")."));
+            return;
+        }
+        if (CrownsConfig.EROBERUNG_VERTEIDIGER_ONLINE.get() && !online(server, d, b.verteidiger)) return;
+        b.rest--;
+        d.setDirty();
+        if (b.rest > 0) {
+            if (b.rest % 900 == 0) {
+                String text = "Besetzung von " + s.name + ": noch " + TimeUtil.duration(b.rest * 1000L) + ", Block bei "
+                        + b.pos.getX() + " " + b.pos.getY() + " " + b.pos.getZ() + ".";
+                Msg.nation(server, angreifer, "§6" + text);
+                Msg.nation(server, verteidiger, "§c" + text);
+            }
+            return;
+        }
+        d.besatzungen.remove(b);
+        ZERSTOERT_VON.remove(b.id);
+        if (level.isLoaded(b.pos) && level.getBlockState(b.pos).is(block())) level.removeBlock(b.pos, false);
+        stadtUebergeben(server, s, angreifer, verteidiger);
+    }
+
+    /** Stadt geht an den Eroberer; haelt er danach alle Staedte des Landes, bekommt er das ganze Land. */
+    public static void stadtUebergeben(MinecraftServer server, de.niklasmetzger.crownscore.data.Stadt s, Nation neu, Nation alt) {
+        CrownsData d = CrownsData.get(server);
+        s.nation = neu.key();
+        int tage = CrownsConfig.EROBERUNG_SPERRE_TAGE.get();
+        if (tage > 0) d.landSperre.put("stadt:" + s.name.toLowerCase(Locale.ROOT), TimeUtil.now() + tage * TAG);
+        java.util.Map<Long, String> map = d.claims.computeIfAbsent(s.dim, k -> new HashMap<>());
+        List<net.minecraft.world.level.ChunkPos> chunks = de.niklasmetzger.crownscore.handel.StadtService.chunks(s);
+        for (net.minecraft.world.level.ChunkPos cp : chunks) map.put(cp.toLong(), neu.key());
+        d.setDirty();
+        String text = neu.name + " hat die Stadt " + s.name + " von " + alt.name + " erobert.";
+        Msg.broadcast(server, "§c" + text);
+        DiscordWebhook.kriegsnews(":crossed_swords: " + text);
+        de.niklasmetzger.crownscore.handel.Postfach.nation(server, neu, "Stadt erobert", text, null);
+        de.niklasmetzger.crownscore.handel.Postfach.nation(server, alt, "Stadt verloren", text, null);
+        boolean opac = net.minecraftforge.fml.ModList.get().isLoaded("openpartiesandclaims");
+        if (opac && s.dim.equals(net.minecraft.world.level.Level.OVERWORLD.location().toString())) {
+            de.niklasmetzger.crownscore.claims.OpacTerritory.syncNation(server, neu);
+            de.niklasmetzger.crownscore.claims.OpacTerritory.syncChunks(server, chunks);
+        }
+        CrownsCore.LOGGER.info("Stadt {} geht von {} an {}", s.name, alt.name, neu.name);
+        Country c = WorldMap.atChunk(s.pos.getX() >> 4, s.pos.getZ() >> 4);
+        if (c == null) return;
+        Nation halter = besitzer(d, c);
+        if (halter == null || halter == neu) return;
+        List<de.niklasmetzger.crownscore.data.Stadt> alle = de.niklasmetzger.crownscore.handel.StadtService.imLand(d, c.code());
+        if (alle.isEmpty() || !alle.stream().allMatch(x -> x.nation.equals(neu.key()))) {
+            long rest = alle.stream().filter(x -> !x.nation.equals(neu.key())).count();
+            Msg.nation(server, neu, "§6Noch " + rest + " Stadt/Staedte in " + c.name() + ", dann gehoert euch das ganze Land.");
+            return;
+        }
+        sperren(d, c);
+        WeltkarteCommand.uebertragen(server, List.of(c.code()), neu, "mit allen Staedten eingenommen", log());
+        // Die Stadtgebiete gehoeren jetzt ohnehin zum Land, Sonderzuweisungen aufraeumen
+        for (de.niklasmetzger.crownscore.data.Stadt x : alle) {
+            for (net.minecraft.world.level.ChunkPos cp : de.niklasmetzger.crownscore.handel.StadtService.chunks(x)) map.remove(cp.toLong());
+        }
+        d.setDirty();
+    }
+
     /** Kurze Zeile fuer Listen. */
     public static String zeile(CrownsData d, Besatzung b) {
         Country c = WorldMap.byCode(b.land);
         return String.format(Locale.GERMANY, "Nr. %d: %s besetzt %s (%s), Block bei %d %d %d, noch %s", b.id, d.anzeige(b.angreifer),
-                c == null ? b.land : c.name(), d.anzeige(b.verteidiger), b.pos.getX(), b.pos.getY(), b.pos.getZ(), TimeUtil.duration(b.rest * 1000L));
+                !b.stadt.isEmpty() ? "die Stadt " + b.stadt : c == null ? b.land : c.name(), d.anzeige(b.verteidiger), b.pos.getX(), b.pos.getY(), b.pos.getZ(), TimeUtil.duration(b.rest * 1000L));
     }
 
     public static class Events {

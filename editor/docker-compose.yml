@@ -1,6 +1,7 @@
 # Rechte-Editor fuer Crowns Core. Start: docker compose up -d --build
 # Danach erreichbar unter http://<server>:8095 (Rechte-Editor) und http://<server>:8095/flagge/
-# (Flaggen-Upload), Port links bei Bedarf aendern.
+# (Flaggen-Upload) und http://<server>:8095/antraege/ (Antraege entscheiden), Port links bei Bedarf aendern.
+# Fuer die Antraege in .env neben dieser Datei: ANTRAEGE_SCHLUESSEL=<zufaelliger Wert, gleich wie antraege.schluessel in der Mod>
 services:
   frontend:
     build: .
@@ -12,17 +13,30 @@ services:
     volumes:
       - bytebin:/opt/bytebin/content
 
+  antraege:
+    image: python:3.12-alpine
+    restart: unless-stopped
+    command: ["python", "-u", "/app/server.py"]
+    environment:
+      - ANTRAEGE_SCHLUESSEL=${ANTRAEGE_SCHLUESSEL:-}
+    volumes:
+      - ./antraege/server.py:/app/server.py:ro
+      - antraege:/data
+
   proxy:
     image: nginx:alpine
     restart: unless-stopped
     depends_on:
       - frontend
       - bytebin
+      - antraege
     ports:
       - "8095:80"
     volumes:
       - ./proxy.conf:/etc/nginx/conf.d/default.conf:ro
       - ./flagge:/usr/share/nginx/flagge:ro
+      - ./antraege/web:/usr/share/nginx/antraege:ro
 
 volumes:
   bytebin: {}
+  antraege: {}

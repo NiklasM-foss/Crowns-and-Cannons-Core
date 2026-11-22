@@ -76,6 +76,8 @@ public class CrownsCore {
         MinecraftForge.EVENT_BUS.register(new de.niklasmetzger.crownscore.flag.CapeService.Events());
         MinecraftForge.EVENT_BUS.register(new de.niklasmetzger.crownscore.world.EroberungService.Events());
         MinecraftForge.EVENT_BUS.register(new de.niklasmetzger.crownscore.flag.MapFlagService.Events());
+        MinecraftForge.EVENT_BUS.register(new de.niklasmetzger.crownscore.handel.HandelCommand.Events());
+        MinecraftForge.EVENT_BUS.register(new de.niklasmetzger.crownscore.handel.Postfach.Events());
         de.niklasmetzger.crownscore.net.CcNetwork.init();
     }
 
@@ -101,6 +103,7 @@ public class CrownsCore {
         de.niklasmetzger.crownscore.world.WeltkarteCommand.register(d);
         de.niklasmetzger.crownscore.flag.FlagCommand.register(d);
         de.niklasmetzger.crownscore.world.EroberungCommand.register(d);
+        de.niklasmetzger.crownscore.handel.HandelCommand.register(d);
     }
 
     /** Nach allen Mods: eigene Befehle nach Rolle ausblenden, alle Befehle ueber command.<name> steuerbar machen. */

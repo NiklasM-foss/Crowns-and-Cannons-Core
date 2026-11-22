@@ -64,6 +64,16 @@ public final class DiscordWebhook {
         send(url, text);
     }
 
+    /** Antraege an die Admins, sonst News-Kanal. */
+    public static void antraege(String text) {
+        String url = CrownsConfig.WEBHOOK_ANTRAEGE.get();
+        if (url == null || url.isBlank()) {
+            news(text);
+            return;
+        }
+        send(url, text);
+    }
+
     public static void send(String url, String text) {
         if (url == null || url.isBlank() || text == null || text.isBlank()) return;
         if (executor == null) start();

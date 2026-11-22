@@ -12,6 +12,9 @@ public final class CrownsConfig {
     public static final ForgeConfigSpec.ConfigValue<String> WEBHOOK_GERICHT;
     public static final ForgeConfigSpec.ConfigValue<String> WEBHOOK_AKTIVITAET;
     public static final ForgeConfigSpec.ConfigValue<String> WEBHOOK_NEWS;
+    public static final ForgeConfigSpec.ConfigValue<String> WEBHOOK_ANTRAEGE;
+    public static final ForgeConfigSpec.ConfigValue<String> ANTRAG_URL;
+    public static final ForgeConfigSpec.ConfigValue<String> ANTRAG_SCHLUESSEL;
     public static final ForgeConfigSpec.ConfigValue<List<? extends String>> ADMINS;
     public static final ForgeConfigSpec.ConfigValue<String> ZEITZONE;
     public static final ForgeConfigSpec.BooleanValue CHAT_NATION;
@@ -106,6 +109,20 @@ public final class CrownsConfig {
     public static final ForgeConfigSpec.IntValue EROBERUNG_GLEICHZEITIG;
     public static final ForgeConfigSpec.ConfigValue<String> EROBERUNG_BLOCK;
 
+    public static final ForgeConfigSpec.IntValue STADT_RADIUS;
+    public static final ForgeConfigSpec.IntValue STADT_GEBIET;
+    public static final ForgeConfigSpec.IntValue STADT_BETTEN;
+    public static final ForgeConfigSpec.BooleanValue STADT_GLOCKE;
+    public static final ForgeConfigSpec.IntValue STADT_ABSTAND;
+    public static final ForgeConfigSpec.BooleanValue STADT_EIGENES_GEBIET;
+
+    public static final ForgeConfigSpec.BooleanValue VKAUF_AKTIV;
+    public static final ForgeConfigSpec.ConfigValue<List<? extends String>> VKAUF_ANGEBOTE;
+    public static final ForgeConfigSpec.ConfigValue<List<? extends Integer>> VKAUF_GRENZEN;
+    public static final ForgeConfigSpec.IntValue VKAUF_UNBEGRENZT_AB;
+    public static final ForgeConfigSpec.DoubleValue VKAUF_AUFSCHLAG;
+    public static final ForgeConfigSpec.DoubleValue VKAUF_ERHOLUNG;
+
     static {
         ForgeConfigSpec.Builder b = new ForgeConfigSpec.Builder();
 
@@ -114,6 +131,7 @@ public final class CrownsConfig {
         WEBHOOK_GERICHT = b.comment("Export von Akten und Vertraegen").define("gericht", "");
         WEBHOOK_AKTIVITAET = b.comment("Woechentlicher Aktivitaetsbericht").define("aktivitaet", "");
         WEBHOOK_NEWS = b.comment("Allgemeine Meldungen (Wahlen, Kolonien, Darlehen). Leer = Kriegsnews-Webhook").define("news", "");
+        WEBHOOK_ANTRAEGE = b.comment("Antraege an die Admins (Stadtgruendungen). Leer = News-Webhook").define("antraege", "");
         b.pop();
 
         b.comment("Allgemein").push("allgemein");
@@ -275,6 +293,49 @@ public final class CrownsConfig {
         EROBERUNG_GLEICHZEITIG = b.comment("So viele Besetzungen darf eine Nation gleichzeitig laufen haben")
                 .defineInRange("gleichzeitigeBesetzungen", 1, 1, 100);
         EROBERUNG_BLOCK = b.comment("Block, der als Besatzungsblock gesetzt wird").define("besatzungsblock", "minecraft:red_banner");
+        b.pop();
+
+        b.comment("Antraege im Browser entscheiden (Ordner editor/antraege/ beim Rechte-Editor). Der Link geht in den Discord-Webhook antraege.",
+                "Der Server holt die Entscheidungen alle 30 Sekunden selbst ab, er braucht dafuer keinen offenen Port.").push("antraege");
+        ANTRAG_URL = b.comment("Adresse der Seite, z.B. https://editor.example.de/antraege/. Leer = rechte.editorUrl mit antraege/ statt editor/")
+                .define("webUrl", "");
+        ANTRAG_SCHLUESSEL = b.comment("Gemeinsamer Schluessel mit dem Antrags-Dienst (ANTRAEGE_SCHLUESSEL in editor/.env). Leer = nur im Spiel entscheiden")
+                .define("schluessel", "");
+        b.pop();
+
+        b.comment("Staedte (/stadt gruenden). Eine Stadt muss beim Antrag diese Anforderungen im Umkreis erfuellen,",
+                "danach bestaetigt ein Admin sie mit /cccore staedte. Antraege gehen auch an den Discord-Webhook antraege.",
+                "Wie viele Staedte eine Nation hat, bestimmt, wie viele Villager sie beim Haendler kaufen darf.",
+                "Die Werte hier sind Vorschlaege und noch nicht mit der Projektleitung abgestimmt.").push("stadt");
+        STADT_RADIUS = b.comment("Umkreis in Bloecken, in dem Betten und Glocke gezaehlt werden").defineInRange("radius", 48, 8, 256);
+        STADT_GEBIET = b.comment("Stadtgebiet in Chunks um die Mitte (4 = 9 x 9 Chunks). Das wird bei einer Besetzung erobert und auf der Karte umrandet")
+                .defineInRange("gebietChunks", 4, 0, 32);
+        STADT_BETTEN = b.comment("So viele Betten braucht eine Stadt mindestens").defineInRange("mindestBetten", 10, 0, 10000);
+        STADT_GLOCKE = b.comment("Eine Glocke (Dorfmittelpunkt) ist Pflicht").define("glockeNoetig", true);
+        STADT_ABSTAND = b.comment("Mindestabstand in Bloecken zur naechsten Stadt (egal welcher Nation)").defineInRange("mindestAbstand", 300, 0, 100000);
+        STADT_EIGENES_GEBIET = b.comment("Nur im eigenen Gebiet der Nation (Weltkarte oder Claims)").define("nurImEigenenGebiet", true);
+        b.pop();
+
+        b.comment("Villager-Haendler: verkauft Villager und Rekruten gegen Geld oder Rohstoffe, nie ausverkauft.",
+                "Ein Admin stellt ihn mit /cccore haendler setzen auf. Kaufen duerfen Buerger fuer ihre Nation.",
+                "Die Werte hier sind Vorschlaege und noch nicht mit der Projektleitung abgestimmt.").push("villagerkauf");
+        VKAUF_AKTIV = b.comment("Villager kaufen erlauben").define("aktiv", true);
+        VKAUF_ANGEBOTE = b.comment("Angebote: Entity-ID;Anzeigename;Geldpreis;Rohstoffpreis (Item*Anzahl, mehrere mit +, leer = nur Geld)",
+                        "Villager Recruits: recruits:recruit, recruits:bowman, recruits:crossbowman, recruits:recruit_shieldman, recruits:horseman, recruits:scout")
+                .defineListAllowEmpty(List.of("angebote"), () -> List.of(
+                        "minecraft:villager;Dorfbewohner;250;minecraft:emerald*8+minecraft:bread*16",
+                        "recruits:recruit;Rekrut;400;minecraft:iron_ingot*12",
+                        "recruits:bowman;Bogenschuetze;450;minecraft:iron_ingot*8+minecraft:arrow*32",
+                        "recruits:crossbowman;Armbrustschuetze;500;minecraft:iron_ingot*12+minecraft:arrow*32",
+                        "recruits:recruit_shieldman;Schildtraeger;550;minecraft:iron_ingot*16"), o -> o instanceof String);
+        VKAUF_GRENZEN = b.comment("Wie viele Villager eine Nation insgesamt kaufen darf, nach Anzahl ihrer Staedte:",
+                        "erster Wert = 0 Staedte, zweiter = 1 Stadt, usw. Mehr Staedte als Werte = letzter Wert")
+                .defineList("grenzen", List.of(0, 5, 10, 16, 22, 30, 40, 50), o -> o instanceof Integer);
+        VKAUF_UNBEGRENZT_AB = b.comment("Ab so vielen Staedten gibt es keine Grenze mehr (0 = nie)").defineInRange("unbegrenztAb", 8, 0, 1000);
+        VKAUF_AUFSCHLAG = b.comment("Jeder Kauf macht den naechsten fuer die Nation um so viel Prozent teurer (Nachfrage)")
+                .defineInRange("aufschlagProzent", 10.0, 0.0, 1000.0);
+        VKAUF_ERHOLUNG = b.comment("Die Nachfrage sinkt pro Tag um so viel Prozent, der Preis faellt also langsam zurueck")
+                .defineInRange("erholungProzentProTag", 25.0, 0.0, 100.0);
         b.pop();
 
         SPEC = b.build();

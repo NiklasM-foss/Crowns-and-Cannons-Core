@@ -15,6 +15,8 @@ public class Besatzung {
     public String verteidiger;
     /** Laendercode auf der Weltkarte. */
     public String land;
+    /** Name der besetzten Stadt, leer = ganzes Land. */
+    public String stadt = "";
     public String dim;
     public BlockPos pos;
     public long start;
@@ -29,6 +31,7 @@ public class Besatzung {
         t.putString("angreifer", angreifer);
         t.putString("verteidiger", verteidiger);
         t.putString("land", land);
+        t.putString("stadt", stadt);
         t.putString("dim", dim);
         t.putLong("pos", pos.asLong());
         t.putLong("start", start);
@@ -44,6 +47,7 @@ public class Besatzung {
         b.angreifer = t.getString("angreifer");
         b.verteidiger = t.getString("verteidiger");
         b.land = t.getString("land");
+        b.stadt = t.getString("stadt");
         b.dim = t.getString("dim");
         b.pos = BlockPos.of(t.getLong("pos"));
         b.start = t.getLong("start");

@@ -224,7 +224,9 @@ public final class WeltkarteCommand {
         de.niklasmetzger.crownscore.discord.DiscordWebhook.kriegsnews(":crossed_swords: " + text);
         for (Nation n : vorher) {
             if (n.laender.isEmpty() && n.gespielt()) Msg.nation(server, n, "§e" + n.name + " hat jetzt kein Land mehr.");
+            if (n.gespielt()) de.niklasmetzger.crownscore.handel.Postfach.nation(server, n, "Land verloren", text, null);
         }
+        if (ziel.gespielt()) de.niklasmetzger.crownscore.handel.Postfach.nation(server, ziel, "Neues Land", text, null);
         if (opac() && !d.karteModus.isEmpty() && !d.karteModus.equals("AUS")) {
             de.niklasmetzger.crownscore.claims.OpacTerritory.syncNation(server, ziel);
             for (Nation n : vorher) de.niklasmetzger.crownscore.claims.OpacTerritory.syncNation(server, n);
