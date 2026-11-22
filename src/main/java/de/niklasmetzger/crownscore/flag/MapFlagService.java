@@ -32,6 +32,8 @@ public final class MapFlagService {
 
     private static final Map<String, byte[]> TEXTURES = new ConcurrentHashMap<>();
     private static final Map<byte[], String> BY_SOURCE = new IdentityHashMap<>();
+    /** Wappen bleiben freigestellt (eigener Zwischenspeicher, ohne Stoff-Hintergrund). */
+    private static final Map<byte[], String> BY_SOURCE_FREI = new IdentityHashMap<>();
     private static int breite = -1;
 
     private static final class Viewer {
@@ -54,6 +56,7 @@ public final class MapFlagService {
         TEXTURES.clear();
         synchronized (BY_SOURCE) {
             BY_SOURCE.clear();
+            BY_SOURCE_FREI.clear();
         }
     }
 
@@ -71,20 +74,28 @@ public final class MapFlagService {
         return land;
     }
 
-    /** Verkleinertes Kartenbild zu einem Flaggenbild, Hash oder leer. */
+    /** Verkleinertes Kartenbild zu einem Flaggenbild (durchsichtige Stellen auf weissem Stoff), Hash oder leer. */
     static String texture(byte[] flagPng) {
+        return texture(flagPng, true);
+    }
+
+    /** Verkleinertes Kartenbild. tuch = durchsichtige Stellen weiss fuellen (Flaggen), sonst freigestellt lassen (Wappen). */
+    public static String texture(byte[] flagPng, boolean tuch) {
         if (flagPng == null) return "";
         int w = CrownsConfig.KARTENFLAGGEN_BREITE.get();
         synchronized (BY_SOURCE) {
             if (w != breite) {
                 BY_SOURCE.clear();
+                BY_SOURCE_FREI.clear();
                 breite = w;
             }
-            String h = BY_SOURCE.get(flagPng);
+            Map<byte[], String> cache = tuch ? BY_SOURCE : BY_SOURCE_FREI;
+            String h = cache.get(flagPng);
             if (h != null) return h;
             try {
                 BufferedImage img = javax.imageio.ImageIO.read(new ByteArrayInputStream(flagPng));
                 if (img == null) return "";
+                if (tuch) img = FlagImages.aufTuch(img);
                 int nw = Math.min(w, img.getWidth());
                 int nh = Math.max(1, Math.round(img.getHeight() * (nw / (float) img.getWidth())));
                 if (nh > w) {
@@ -100,7 +111,7 @@ public final class MapFlagService {
                 byte[] png = FlagImages.png(out);
                 h = FlagImages.hash(png);
                 TEXTURES.put(h, png);
-                BY_SOURCE.put(flagPng, h);
+                cache.put(flagPng, h);
                 return h;
             } catch (Exception e) {
                 CrownsCore.LOGGER.warn("Kartenflagge konnte nicht erzeugt werden: {}", e.toString());
@@ -224,11 +235,9 @@ public final class MapFlagService {
                 if (!sichtbar) continue;
                 String bild = bilder.computeIfAbsent(s.name, k -> {
                     byte[] w = de.niklasmetzger.crownscore.handel.WappenStore.wappen(s);
-                    if (w == null) {
-                        Nation n = d.nations.get(s.nation);
-                        w = n == null ? null : flagge(n);
-                    }
-                    return texture(w);
+                    if (w != null) return texture(w, false);
+                    Nation n = d.nations.get(s.nation);
+                    return texture(n == null ? null : flagge(n), true);
                 });
                 if (!bild.isEmpty() && !st.sent.contains(bild) && TEXTURES.containsKey(bild)) {
                     CcNetwork.send(viewer, new CcNetwork.MapFlagTexture(bild, TEXTURES.get(bild)));

@@ -50,6 +50,26 @@ public final class FlagImages {
         return scale(img, Math.max(1, (int) Math.round(w * f)), Math.max(1, (int) Math.round(h * f)));
     }
 
+    /**
+     * Durchsichtige Stellen auf weissen Stoff legen. Ein Umhang wird massiv gezeichnet und auf der Karte wuerde sonst
+     * das Gelaende durchscheinen; die Upload-Seite zeigt die Vorschau genauso auf Weiss.
+     */
+    public static BufferedImage aufTuch(BufferedImage src) {
+        int w = src.getWidth(), h = src.getHeight();
+        BufferedImage dst = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB);
+        for (int y = 0; y < h; y++) {
+            for (int x = 0; x < w; x++) {
+                int c = src.getRGB(x, y);
+                int a = c >>> 24;
+                int r = ((c >> 16 & 255) * a + 255 * (255 - a)) / 255;
+                int g = ((c >> 8 & 255) * a + 255 * (255 - a)) / 255;
+                int b = ((c & 255) * a + 255 * (255 - a)) / 255;
+                dst.setRGB(x, y, 0xFF000000 | r << 16 | g << 8 | b);
+            }
+        }
+        return dst;
+    }
+
     /** Flagge um 90 Grad drehen. rechts = im Uhrzeigersinn (Mast oben), sonst gegen den Uhrzeigersinn (Mast unten). */
     public static BufferedImage rotate(BufferedImage src, boolean rechts) {
         int w = src.getWidth(), h = src.getHeight();
@@ -65,7 +85,7 @@ public final class FlagImages {
 
     /** Die sichtbare Umhangflaeche (FACE_W x FACE_H): gedrehte Flagge, fuellend skaliert und mittig zugeschnitten. */
     public static BufferedImage face(BufferedImage flag, boolean rechts) {
-        BufferedImage r = rotate(flag, rechts);
+        BufferedImage r = rotate(aufTuch(flag), rechts);
         double f = Math.max((double) FACE_W / r.getWidth(), (double) FACE_H / r.getHeight());
         int sw = Math.max(FACE_W, (int) Math.ceil(r.getWidth() * f));
         int sh = Math.max(FACE_H, (int) Math.ceil(r.getHeight() * f));

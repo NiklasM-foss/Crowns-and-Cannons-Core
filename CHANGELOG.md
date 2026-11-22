@@ -5,6 +5,9 @@
 - **Kartenfarben korrigiert**: Rot und Blau waren auf World Map und Minimap vertauscht
   (Flaggen, Stadtwappen, Stadtrahmen, Angriffslinie). Xaero erwartet die Farbkanäle in
   der Reihenfolge Blau, Grün, Rot, Alpha.
+- **Transparente Flaggen**: Durchsichtige Stellen kommen jetzt auf weißen Stoff, wie in der
+  Vorschau der Upload-Seite. Vorher waren sie auf dem Umhang schwarz und auf der Karte
+  schien das Gelände durch. Stadtwappen bleiben auf der Karte freigestellt.
 - Nur der Client ist betroffen, Server und Spieler sollten trotzdem dieselbe Version haben.
 
 ## 1.5.0
