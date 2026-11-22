@@ -79,6 +79,7 @@ public class SelfTest {
 
     @SubscribeEvent
     public void onCommands(RegisterCommandsEvent e) {
+        e.getDispatcher().register(Spieler.befehle(Commands.literal("cctest").requires(s -> s.hasPermission(4))));
         e.getDispatcher().register(Commands.literal("cctest").requires(s -> s.hasPermission(4)).executes(ctx -> {
             start(ctx.getSource().getServer());
             return 1;
