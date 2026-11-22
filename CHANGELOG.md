@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.5.1
+
+- **Kartenfarben korrigiert**: Rot und Blau waren auf World Map und Minimap vertauscht
+  (Flaggen, Stadtwappen, Stadtrahmen, Angriffslinie). Xaero erwartet die Farbkanäle in
+  der Reihenfolge Blau, Grün, Rot, Alpha.
+- Nur der Client ist betroffen, Server und Spieler sollten trotzdem dieselbe Version haben.
+
 ## 1.5.0
 
 - **Städte**: `/stadt gruenden <Name>` oder Rechtsklick auf der World Map („Stadt hier
