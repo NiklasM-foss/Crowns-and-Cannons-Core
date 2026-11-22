@@ -1,34 +1,49 @@
-# Crowns-Helfer
+# Crowns-Helfer und Modpack-Verwaltung
 
-Ergänzt das CurseForge-Modpack „Crowns & Cannons“ um das, was CurseForge selbst nicht kann, und hält es automatisch
-aktuell:
+Hält das CurseForge-Modpack „Crowns & Cannons“ bei allen Spielern automatisch aktuell: Mods, Ressourcenpakete,
+Datenpakete, Shader, KubeJS und das Java-Argument. Gepflegt wird das Pack über eine Webseite, niemand muss mehr Links
+verschicken oder Dateien bearbeiten.
 
-- **Zusatz-Mods**, die es auf CurseForge nicht (in der nötigen Version) gibt, zum Beispiel CC: Tweaked 1.122.0 von
-  Modrinth. Download nur von der offiziellen Quelle, Prüfung per SHA-512, alte Versionen derselben Mod werden ersetzt.
-- **Java-Argumente** der Instanz, zum Beispiel `-Dorg.lwjgl.system.allocator=system`.
+## Für Admins: Pack veröffentlichen
 
-Eigene Mods der Spieler werden nie angefasst: Gelöscht werden nur Dateien, die zum Muster `ersetzt` einer Zusatz-Mod
-passen, und nur wenn die richtige Version schon da ist.
+1. `https://editor.niklasmetzger.de/pack/admin/` öffnen, mit dem Pack-Passwort anmelden (Tresor `crowns-editor-env`,
+   Feld `PACK_PASSWORT`).
+2. Den Instanz-Ordner wählen (z.B. `C:\curseforge\Instances\Crowns & Cannons staged`). Der Browser rechnet die
+   Prüfsummen aus; die Dateien selbst werden nicht hochgeladen.
+3. Der Dienst sucht zu jeder Datei eine Quelle, in dieser Reihenfolge:
+   - **Modrinth**: exakt dieselbe Datei (SHA-1). Modrinth erlaubt Downloads durch Programme immer.
+   - **CurseForge**: wenn der Autor Downloads durch Programme erlaubt.
+   - **Pi**: eine hochgeladene Kopie. Hochladen nur mit Angabe, warum es erlaubt ist (eigene Datei, Lizenz erlaubt
+     Weitergabe, Erlaubnis vom Autor mit Notiz). KubeJS-Dateien gehen mit einem Klick als eigene Dateien auf den Pi.
+   - **keine**: Die Spieler bekommen ein Fenster mit dem Download-Link, der Helfer holt die Datei dann aus ihrem
+     Downloads-Ordner.
+4. Java-Argumente eintragen, Dateien abwählen, die nicht ins Pack sollen, **Veröffentlichen**. Jede Veröffentlichung
+   bekommt eine neue Pack-Version; alte Versionen derselben Mod merkt sich der Dienst und der Helfer entfernt sie.
 
-## Für Spieler
+## Für Spieler: einmal einrichten
 
 - **Windows:** `Crowns-Helfer.bat` doppelklicken. Richtet eine Windows-Aufgabe ein (bei der Anmeldung und alle
-  15 Minuten, unsichtbar) und läuft einmal. Entfernen: `Crowns-Helfer.bat entfernen`.
-- **Linux:** `python3 crowns-helfer.py`. Richtet einen systemd-Benutzer-Timer ein (sonst cron). Entfernen:
-  `python3 crowns-helfer.py entfernen`. Erkennt CurseForge- und Prism-Launcher-Instanzen.
-- Das Java-Argument setzt der Helfer erst, wenn die CurseForge-App geschlossen ist, weil die App die Einstellung
-  sonst beim Beenden überschreibt.
-- Protokoll: Windows `%LOCALAPPDATA%\CrownsHelfer\helfer.log`, Linux `~/.local/share/crowns-helfer/helfer.log`.
+  15 Minuten, unsichtbar) und gleicht einmal ab. Entfernen: `Crowns-Helfer.bat entfernen`.
+- **Linux:** `python3 crowns-helfer.py`. Richtet einen systemd-Benutzer-Timer ein (sonst cron). Erkennt CurseForge- und
+  Prism-Launcher-Instanzen. Entfernen: `python3 crowns-helfer.py entfernen`.
 
-## Für Admins: neue Zusatz-Mod oder neues Argument
+Was der Helfer bei jedem Lauf macht:
 
-Die Liste liegt in `editor/pack/crowns.json` und wird vom Editor-Container unter
-`https://editor.niklasmetzger.de/pack/crowns.json` ausgeliefert. Neue Mod eintragen mit `datei`, `url` (offizieller
-Download), `sha512` und `ersetzt` (Dateimuster der alten Versionen), auf den Pi bringen, fertig. Beim nächsten Lauf
-haben alle Spieler den neuen Stand.
+- Liste von `https://editor.niklasmetzger.de/pack/crowns.json` holen (offline: die zuletzt geladene).
+- Jede Datei per SHA-512 prüfen; fehlt sie oder ist sie anders, von der ersten funktionierenden Quelle laden und nur
+  ablegen, wenn die Prüfsumme stimmt.
+- Alte Versionen derselben Mod entfernen, aber nur Dateien, die das Pack früher selbst verteilt hat.
+- Java-Argument setzen, sobald die CurseForge-App geschlossen ist (sie überschreibt die Einstellung sonst beim Beenden).
+- Dateien ohne automatische Quelle: Fenster mit Links (Windows) bzw. Benachrichtigung (Linux), höchstens alle
+  6 Stunden; liegt die Datei im Downloads-Ordner, wird sie übernommen.
 
-URL und SHA-512 einer Modrinth-Datei:
+**Eigene Dateien der Spieler werden nie angefasst.**
 
-    curl -s "https://api.modrinth.com/v2/project/<slug>/version?loaders=%5B%22forge%22%5D&game_versions=%5B%221.20.1%22%5D"
+Protokoll: Windows `%LOCALAPPDATA%\CrownsHelfer\helfer.log`, Linux `~/.local/share/crowns-helfer/helfer.log`.
 
-Beim Modpack-Export in der CurseForge-App die Zusatz-Mods nicht mit exportieren, sie ergänzt der Helfer.
+## Technik
+
+- Dienst: `editor/antraege/pack.py` im Antrags-Container (Python-Stdlib). Daten in `/data/pack` (Volume): `crowns.json`,
+  `verlauf/`, `dateien/` (Pi-Kopien nach SHA-512), `uploads.json` (Erlaubnis-Angaben).
+- Umgebung in `editor/.env`: `PACK_PASSWORT`, `CF_API_KEY` (CurseForge-Schnittstelle, sonst nur Modrinth und Pi).
+- nginx: `/pack/crowns.json`, `/pack/datei/<sha512>`, `/pack/api/` (Admin, Passwort im Header), `/pack/admin/`.

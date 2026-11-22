@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 """Crowns & Cannons Helfer fuer Linux.
 
-Haelt Zusatz-Mods (die es nicht auf CurseForge gibt) und das Java-Argument fuer das Modpack automatisch aktuell.
-Eigene Mods im mods-Ordner werden nie angefasst. Gleiche Logik wie Crowns-Helfer.bat unter Windows.
+Haelt das ganze Modpack automatisch aktuell: Mods, Ressourcenpakete, Datenpakete, Shader, KubeJS und das
+Java-Argument. Quellen: Modrinth, CurseForge oder der Pi. Dateien, die niemand automatisch laden darf, holt der
+Helfer aus dem Downloads-Ordner, sobald der Spieler sie dort hat. Eigene Dateien werden nie angefasst.
+Gleiche Logik wie Crowns-Helfer.bat unter Windows.
 
   python3 crowns-helfer.py            einrichten (systemd-Timer bzw. cron) und einmal ausfuehren
   python3 crowns-helfer.py auto       nur abgleichen (so ruft der Timer ihn auf)
@@ -27,7 +29,9 @@ QUELLE = os.environ.get("CROWNS_HELFER_QUELLE", "https://editor.niklasmetzger.de
 HOME = Path.home()
 ORDNER = Path(os.environ.get("XDG_DATA_HOME", HOME / ".local/share")) / "crowns-helfer"
 LOG = ORDNER / "helfer.log"
-UA = {"User-Agent": "crowns-helfer/1.0"}
+UA = {"User-Agent": "crowns-helfer/2.0"}
+ERLAUBT = re.compile(r"^(mods|resourcepacks|datapacks|shaderpacks|kubejs)/")
+DOWNLOADS = Path(os.environ.get("CROWNS_HELFER_DOWNLOADS", "") or (HOME / "Downloads"))
 AUTO = len(sys.argv) > 1 and sys.argv[1] == "auto"
 TEST_WURZEL = os.environ.get("CROWNS_HELFER_WURZEL", "")
 
@@ -82,7 +86,7 @@ def entfernen():
         alt = subprocess.run(["crontab", "-l"], capture_output=True, text=True).stdout
         subprocess.run(["crontab", "-"], input="\n".join(z for z in alt.splitlines() if "crowns-helfer.py" not in z) + "\n", text=True)
     shutil.rmtree(ORDNER, ignore_errors=True)
-    print("Crowns-Helfer ist entfernt. Mods in deinen Instanzen bleiben, wie sie sind.")
+    print("Crowns-Helfer ist entfernt. Die Dateien in deinen Instanzen bleiben, wie sie sind.")
 
 
 def liste():
@@ -157,31 +161,90 @@ def sha512(p):
     return h.hexdigest()
 
 
-def mods_abgleichen(pack, mods):
-    mods.mkdir(parents=True, exist_ok=True)
-    for m in pack.get("mods", []):
-        ziel = mods / m["datei"]
-        ok = ziel.exists() and sha512(ziel).lower() == m["sha512"].lower()
+def pfad_ok(p):
+    return bool(ERLAUBT.match(p)) and ".." not in p.split("/") and ":" not in p and "\\" not in p and len(p) < 300
+
+
+def aus_downloads(d):
+    if not DOWNLOADS.is_dir():
+        return None
+    for f in DOWNLOADS.iterdir():
+        try:
+            if f.is_file() and (not d.get("groesse") or f.stat().st_size == int(d["groesse"])) and sha512(f) == d["sha512"].lower():
+                return f
+        except OSError:
+            continue
+    return None
+
+
+def dateien_abgleichen(pack, ordner, basis, manuell):
+    neu = weg = 0
+    for d in pack.get("dateien", []):
+        if not pfad_ok(d.get("pfad", "")):
+            continue
+        ziel = ordner / d["pfad"]
+        ok = ziel.exists() and sha512(ziel) == d["sha512"].lower()
         if not ok:
-            tmp = ORDNER / (m["datei"] + ".download")
-            try:
-                with urllib.request.urlopen(urllib.request.Request(m["url"], headers=UA), timeout=120) as r, open(tmp, "wb") as f:
-                    shutil.copyfileobj(r, f)
-                if sha512(tmp).lower() != m["sha512"].lower():
-                    raise ValueError("Pruefsumme stimmt nicht")
-                shutil.move(str(tmp), str(ziel))
-                ok = True
-                schreib(f"  {m['name']}: {m['datei']} installiert")
-            except Exception as e:
-                tmp.unlink(missing_ok=True)
-                schreib(f"  {m['name']}: Download fehlgeschlagen ({e}), naechster Versuch spaeter")
-        else:
-            schreib(f"  {m['name']}: aktuell")
-        if ok and m.get("ersetzt"):
-            for alt in mods.iterdir():
-                if alt.is_file() and fnmatch.fnmatch(alt.name, m["ersetzt"]) and alt.name != m["datei"]:
-                    alt.unlink()
-                    schreib(f"  alte Version entfernt: {alt.name}")
+            ziel.parent.mkdir(parents=True, exist_ok=True)
+            tmp = ORDNER / "download.tmp"
+            for q in d.get("quellen", []):
+                url = basis + q if q.startswith("/") else q
+                try:
+                    with urllib.request.urlopen(urllib.request.Request(url, headers=UA), timeout=300) as r, open(tmp, "wb") as f:
+                        shutil.copyfileobj(r, f)
+                    if sha512(tmp) != d["sha512"].lower():
+                        raise ValueError("Pruefsumme stimmt nicht")
+                    shutil.move(str(tmp), str(ziel))
+                    ok = True
+                    neu += 1
+                    schreib("  neu: " + d["pfad"])
+                    break
+                except Exception as e:
+                    tmp.unlink(missing_ok=True)
+                    schreib(f"  {d['pfad']}: Quelle fehlgeschlagen ({e})")
+            if not ok:
+                dl = aus_downloads(d)
+                if dl:
+                    shutil.move(str(dl), str(ziel))
+                    ok = True
+                    neu += 1
+                    schreib("  aus Downloads uebernommen: " + d["pfad"])
+                else:
+                    manuell[d["sha512"]] = d
+        if ok:
+            for a in d.get("alt", []):
+                if pfad_ok(a) and a != d["pfad"] and (ordner / a).exists():
+                    try:
+                        (ordner / a).unlink()
+                        weg += 1
+                        schreib("  alte Version entfernt: " + a)
+                    except OSError:
+                        schreib(f"  {a} ist gerade gesperrt, naechster Versuch spaeter")
+    schreib(f"  {neu} neu, {weg} entfernt")
+
+
+def hinweis_manuell(manuell):
+    """Dateien, die man selbst herunterladen muss: Hinweis mit Links (hoechstens alle 6 Stunden im Hintergrund)."""
+    if not manuell:
+        return
+    stand = ORDNER / "hinweis.json"
+    try:
+        zuletzt = json.loads(stand.read_text()).get("zeit", 0)
+    except Exception:
+        zuletzt = 0
+    if AUTO and time.time() - zuletzt < 6 * 3600:
+        return
+    stand.write_text(json.dumps({"zeit": time.time()}))
+    zeilen = [f"{d.get('name') or d['pfad']}: {d.get('seite') or 'keine Seite angegeben'}" for d in manuell.values()]
+    text = ("Diese Dateien darf der Helfer nicht selbst laden. Bitte herunterladen (in " + str(DOWNLOADS)
+            + "), der Helfer legt sie beim naechsten Lauf an die richtige Stelle:\n" + "\n".join(zeilen))
+    schreib(text)
+    if shutil.which("notify-send"):
+        subprocess.run(["notify-send", "-a", "Crowns-Helfer", "Crowns & Cannons: bitte herunterladen", text], capture_output=True)
+    if not AUTO and shutil.which("xdg-open"):
+        for d in manuell.values():
+            if d.get("seite"):
+                subprocess.run(["xdg-open", d["seite"]], capture_output=True)
 
 
 def cf_laeuft():
@@ -240,9 +303,14 @@ def abgleichen():
     if not gefunden:
         schreib("Keine Crowns-&-Cannons-Instanz gefunden.")
         return
+    m = re.match(r"^(https?://[^/]+)", QUELLE)
+    basis = m.group(1) if m else ""
+    manuell = {}
     for art, d, name, mods in gefunden:
-        schreib(f"Instanz: {name} ({'CurseForge' if art == 'cf' else 'Prism'})")
-        mods_abgleichen(pack, mods)
+        schreib(f"Instanz: {name} ({'CurseForge' if art == 'cf' else 'Prism'}, Pack-Version {pack.get('version')})")
+        dateien_abgleichen(pack, mods.parent, basis, manuell)
+        if not pack.get("jvm"):
+            continue
         try:
             if art == "cf":
                 jvm_cf(pack, d / "minecraftinstance.json")
@@ -250,10 +318,12 @@ def abgleichen():
                 jvm_prism(pack, d / "instance.cfg")
         except Exception as e:
             schreib(f"  Java-Argument nicht gesetzt: {e}")
+    if not os.environ.get("CROWNS_HELFER_TEST"):
+        hinweis_manuell(manuell)
     try:
         z = LOG.read_text(encoding="utf-8").splitlines()
-        if len(z) > 500:
-            LOG.write_text("\n".join(z[-300:]) + "\n", encoding="utf-8")
+        if len(z) > 800:
+            LOG.write_text("\n".join(z[-400:]) + "\n", encoding="utf-8")
     except Exception:
         pass
 
@@ -263,8 +333,8 @@ if __name__ == "__main__":
         entfernen()
     else:
         if not AUTO:
-            print("\nCrowns & Cannons Helfer\nHaelt Zusatz-Mods und das Java-Argument fuer das Modpack automatisch aktuell.\n"
-                  "Eigene Mods in deinem mods-Ordner werden nie angefasst.\n")
+            print("\nCrowns & Cannons Helfer\nHaelt das Modpack automatisch aktuell (Mods, Ressourcenpakete, Datenpakete, Shader, KubeJS, Java-Argument).\n"
+                  "Eigene Dateien werden nie angefasst.\n")
             if not TEST_WURZEL:
                 einrichten()
             print()

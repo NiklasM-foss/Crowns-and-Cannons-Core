@@ -15,6 +15,8 @@ import threading
 import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
+import pack
+
 SCHLUESSEL = os.environ.get("ANTRAEGE_SCHLUESSEL", "")
 DATEI = os.environ.get("ANTRAEGE_DATEI", "/data/antraege.json")
 PORT = int(os.environ.get("PORT", "8080"))
@@ -87,6 +89,8 @@ class Handler(BaseHTTPRequestHandler):
         return bool(SCHLUESSEL) and hmac.compare_digest(k.encode(), SCHLUESSEL.encode())
 
     def do_GET(self):
+        if pack.handle(self, "GET"):
+            return
         pfad = self.path.split("?")[0]
         if pfad == "/api/entscheidungen":
             if not self.server_ok():
@@ -100,6 +104,8 @@ class Handler(BaseHTTPRequestHandler):
         return self.antwort(404, {"fehler": "unbekannt"})
 
     def do_POST(self):
+        if pack.handle(self, "POST"):
+            return
         pfad = self.path.split("?")[0]
         try:
             b = self.body()

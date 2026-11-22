@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<title>Modpack verwalten</title>
+<link rel="icon" href="../../flagge/logo.png">
+<style>
+  :root { --bg:#16130f; --karte:#221d17; --rand:#3a3128; --text:#efe6d8; --leise:#a89b88; --gold:#d8a74a; --gruen:#4caf6a; --rot:#d0574b; --blau:#4f8fd8; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--text); font:15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  header { display:flex; gap:14px; align-items:center; padding:16px; border-bottom:1px solid var(--rand); max-width:1200px; margin:0 auto; }
+  header img { width:44px; height:44px; image-rendering:pixelated; }
+  h1 { margin:0; font-size:1.25rem; color:var(--gold); }
+  .sub { margin:0; color:var(--leise); font-size:.9rem; }
+  main { max-width:1200px; margin:0 auto; padding:16px; }
+  .karte { background:var(--karte); border:1px solid var(--rand); border-radius:10px; padding:16px; margin-bottom:14px; }
+  h2 { margin:0 0 8px; font-size:1.05rem; }
+  input[type=text], input[type=password], select { padding:8px 10px; border-radius:8px; border:1px solid var(--rand); background:#120f0c; color:var(--text); font:inherit; }
+  input[type=text] { width:100%; }
+  button { padding:9px 14px; border:0; border-radius:8px; font:inherit; font-weight:600; cursor:pointer; background:var(--gold); color:#1a140c; }
+  button.zweit { background:#3a3128; color:var(--text); }
+  button:disabled { opacity:.5; cursor:default; }
+  .zeile { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+  .leise { color:var(--leise); font-size:.88rem; }
+  .fehler { color:var(--rot); }
+  table { width:100%; border-collapse:collapse; font-size:.88rem; }
+  th, td { text-align:left; padding:6px 8px; border-bottom:1px solid var(--rand); vertical-align:top; }
+  th { color:var(--leise); font-weight:600; position:sticky; top:0; background:var(--karte); }
+  td.datei { overflow-wrap:anywhere; }
+  .q { display:inline-block; padding:1px 8px; border-radius:99px; font-size:.8rem; font-weight:600; }
+  .q.modrinth { background:rgba(76,175,106,.2); color:#7fd69a; }
+  .q.curseforge { background:rgba(216,167,74,.2); color:var(--gold); }
+  .q.pi { background:rgba(79,143,216,.2); color:#8db8ec; }
+  .q.fehlt { background:rgba(208,87,75,.2); color:#ee8c82; }
+  .hoch { margin-top:6px; display:flex; gap:6px; flex-wrap:wrap; align-items:center; }
+  .hoch input[type=text] { width:260px; }
+  .tabwrap { max-height:60vh; overflow:auto; }
+  .zahlen span { margin-right:14px; }
+  .unten { position:sticky; bottom:0; background:var(--bg); padding:12px 0; }
+</style>
+</head>
+<body>
+<header>
+  <img src="../../flagge/logo.png" alt="">
+  <div>
+    <h1>Modpack verwalten</h1>
+    <p class="sub">Crowns &amp; Cannons: Instanz auswählen, prüfen, veröffentlichen. Der Crowns-Helfer bringt jeden Spieler auf diesen Stand.</p>
+  </div>
+</header>
+<main>
+  <section class="karte" id="anmeldung">
+    <h2>1. Anmelden</h2>
+    <div class="zeile">
+      <input type="password" id="passwort" placeholder="Admin-Passwort" autocomplete="current-password">
+      <button id="anmelden">Anmelden</button>
+      <span id="anmeldeStatus" class="leise"></span>
+    </div>
+  </section>
+
+  <section class="karte" id="auswahl" hidden>
+    <h2>2. Instanz-Ordner wählen</h2>
+    <p class="leise">Den Ordner deiner CurseForge-Instanz wählen, z.B. <code>C:\curseforge\Instances\Crowns &amp; Cannons staged</code>.
+      Gelesen werden <code>mods</code>, <code>resourcepacks</code>, <code>datapacks</code>, <code>shaderpacks</code> und <code>kubejs</code>.
+      Die Prüfsummen rechnet dein Browser aus, hochgeladen wird nur, was du ausdrücklich auf den Pi legst.</p>
+    <div class="zeile">
+      <input type="file" id="ordner" webkitdirectory directory multiple>
+      <span id="leseStatus" class="leise"></span>
+    </div>
+  </section>
+
+  <section class="karte" id="ergebnis" hidden>
+    <h2>3. Prüfen</h2>
+    <p class="zahlen" id="zahlen"></p>
+    <div class="zeile" style="margin-bottom:8px">
+      <label class="leise">Anzeigen:
+        <select id="filter">
+          <option value="">alle</option><option value="fehlt">nur ohne Quelle</option>
+          <option value="mod">Mods</option><option value="rp">Ressourcenpakete</option><option value="dp">Datenpakete</option>
+          <option value="shader">Shader</option><option value="kubejs">KubeJS</option>
+        </select>
+      </label>
+      <button class="zweit" id="kubejsAlle">Alle KubeJS-Dateien auf den Pi (eigene Skripte)</button>
+    </div>
+    <div class="tabwrap">
+      <table>
+        <thead><tr><th>Im Pack</th><th>Datei</th><th>Kategorie</th><th>Quelle</th><th>Hinweis</th></tr></thead>
+        <tbody id="tabelle"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="karte" id="veroeff" hidden>
+    <h2>4. Veröffentlichen</h2>
+    <label class="leise" for="jvm">Java-Argumente (mit Leerzeichen getrennt)</label>
+    <input type="text" id="jvm" placeholder="-Dorg.lwjgl.system.allocator=system">
+    <p class="leise">Dateien ohne Quelle kommen trotzdem ins Pack: Der Helfer zeigt den Spielern dann den Download-Link und holt die Datei aus ihrem Downloads-Ordner.</p>
+    <div class="unten zeile">
+      <button id="veroeffentlichen">Veröffentlichen</button>
+      <span id="veroeffStatus" class="leise"></span>
+    </div>
+  </section>
+</main>
+<script src="admin.js"></script>
+</body>
+</html>
