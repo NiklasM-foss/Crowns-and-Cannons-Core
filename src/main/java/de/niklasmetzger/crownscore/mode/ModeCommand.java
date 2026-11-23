@@ -33,7 +33,7 @@ public final class ModeCommand {
                 .then(Commands.literal("rp").executes(ctx -> setzen(ctx, PlayerMode.RP, null)))
                 .then(Commands.literal("farm").executes(ctx -> setzen(ctx, PlayerMode.FARM, null)))
                 .then(Commands.literal("afk")
-                        .then(Commands.argument("bis", StringArgumentType.word())
+                        .then(Commands.argument("bis", StringArgumentType.greedyString())
                                 .suggests((c, b) -> SharedSuggestionProvider.suggest(List.of("30m", "1h", "2h", "20:00"), b))
                                 .executes(ctx -> setzen(ctx, PlayerMode.AFK, StringArgumentType.getString(ctx, "bis")))))
                 .then(Commands.literal("liste").executes(ModeCommand::liste))

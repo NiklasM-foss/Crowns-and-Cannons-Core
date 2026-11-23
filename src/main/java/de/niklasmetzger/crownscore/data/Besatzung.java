@@ -26,6 +26,10 @@ public class Besatzung {
     public double gebuehr;
     /** Startpunkt der Angriffslinie auf der Karte (naechster Punkt im Gebiet des Angreifers). */
     public int vonX, vonZ;
+    /** Sekunden ohne Angreifer bzw. ohne Verteidiger in der Naehe (ueberleben einen Neustart). */
+    public int angreiferWeg, verteidigerWeg;
+    /** Wer den Block zerstoert hat, solange der Chunk nicht geladen war; null = steht noch. */
+    public String zerstoertVon;
 
     public CompoundTag toNbt() {
         CompoundTag t = new CompoundTag();
@@ -42,6 +46,9 @@ public class Besatzung {
         t.putDouble("gebuehr", gebuehr);
         t.putInt("vonX", vonX);
         t.putInt("vonZ", vonZ);
+        t.putInt("angreiferWeg", angreiferWeg);
+        t.putInt("verteidigerWeg", verteidigerWeg);
+        if (zerstoertVon != null) t.putString("zerstoertVon", zerstoertVon);
         return t;
     }
 
@@ -60,6 +67,9 @@ public class Besatzung {
         b.gebuehr = t.getDouble("gebuehr");
         b.vonX = t.getInt("vonX");
         b.vonZ = t.getInt("vonZ");
+        b.angreiferWeg = t.getInt("angreiferWeg");
+        b.verteidigerWeg = t.getInt("verteidigerWeg");
+        b.zerstoertVon = t.contains("zerstoertVon") ? t.getString("zerstoertVon") : null;
         return b;
     }
 }

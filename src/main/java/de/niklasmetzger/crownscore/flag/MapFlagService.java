@@ -110,6 +110,12 @@ public final class MapFlagService {
                 g.dispose();
                 byte[] png = FlagImages.png(out);
                 h = FlagImages.hash(png);
+                if (TEXTURES.size() > 1024) {
+                    // Alte Flaggen und Wappen nicht ewig im Speicher halten, sie werden bei Bedarf neu erzeugt
+                    TEXTURES.clear();
+                    synchronized (BY_SOURCE) { BY_SOURCE.clear(); }
+                    synchronized (BY_SOURCE_FREI) { BY_SOURCE_FREI.clear(); }
+                }
                 TEXTURES.put(h, png);
                 cache.put(flagPng, h);
                 return h;

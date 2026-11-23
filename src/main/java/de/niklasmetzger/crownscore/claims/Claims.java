@@ -28,6 +28,33 @@ public final class Claims {
     }
 
     public static String nationAt(ServerLevel level, ChunkPos chunk) {
+        return nationAt(level, chunk, true);
+    }
+
+    /**
+     * Nation einer "Base": interne Claims, OPAC-Spielerclaims und Stadtgebiete, ohne die Flaeche der Weltkarte.
+     * Fuer Camping (Regel 4.5), wo nicht jedes Durchreisen eines fremden Landes zaehlen soll.
+     */
+    public static String baseAt(ServerLevel level, ChunkPos chunk) {
+        String n = nationAt(level, chunk, false);
+        if (n != null) return n;
+        CrownsData data = CrownsData.get(level.getServer());
+        de.niklasmetzger.crownscore.data.Stadt s = de.niklasmetzger.crownscore.handel.StadtService.an(data, level.dimension().location().toString(), chunk.x, chunk.z);
+        return s != null && s.bestaetigt && data.nations.containsKey(s.nation) ? s.nation : null;
+    }
+
+    public static String baseNear(ServerLevel level, BlockPos pos) {
+        ChunkPos c = new ChunkPos(pos);
+        for (int dx = -1; dx <= 1; dx++) {
+            for (int dz = -1; dz <= 1; dz++) {
+                String n = baseAt(level, new ChunkPos(c.x + dx, c.z + dz));
+                if (n != null) return n;
+            }
+        }
+        return null;
+    }
+
+    private static String nationAt(ServerLevel level, ChunkPos chunk, boolean mitKarte) {
         CrownsData data = CrownsData.get(level.getServer());
         String dim = level.dimension().location().toString();
         Map<Long, String> map = data.claims.get(dim);
@@ -48,7 +75,7 @@ public final class Claims {
         }
         // Zuletzt die Weltkarte: Land an dieser Stelle und die damit verknuepfte Nation. Nur Nationen, die
         // gespielt werden (Staatschef oder Mitglieder), besitzen ihr Land; unbespielte Laender sind freies Land.
-        if (level.dimension() == net.minecraft.world.level.Level.OVERWORLD && de.niklasmetzger.crownscore.world.WorldMap.active()) {
+        if (mitKarte && level.dimension() == net.minecraft.world.level.Level.OVERWORLD && de.niklasmetzger.crownscore.world.WorldMap.active()) {
             String key = de.niklasmetzger.crownscore.world.WorldMap.nationFor(data, de.niklasmetzger.crownscore.world.WorldMap.atChunk(chunk.x, chunk.z));
             de.niklasmetzger.crownscore.data.Nation n = key == null ? null : data.nations.get(key);
             if (n != null && n.gespielt()) return key;

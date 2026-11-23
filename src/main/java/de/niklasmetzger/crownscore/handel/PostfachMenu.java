@@ -76,7 +76,7 @@ public final class PostfachMenu extends ChestMenu {
             }
         }
         Nation own = d.nationOf(p.getUUID());
-        if (own != null) {
+        if (own != null && own.isBeamter(p.getUUID())) {
             for (Mail m : Postfach.briefe(d, own)) {
                 add(Art.BRIEF, m, Items.PAPER, "Brief von " + d.anzeige(m.vonNation), ChatFormatting.AQUA, true,
                         List.of(TimeUtil.fmtShort(m.zeit), "Klick: lesen"));

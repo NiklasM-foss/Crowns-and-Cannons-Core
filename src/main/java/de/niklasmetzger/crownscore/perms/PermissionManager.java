@@ -207,6 +207,8 @@ public final class PermissionManager {
     static List<String> candidates(String node) {
         List<String> out = new ArrayList<>();
         out.add(node);
+        // Adminrechte nie ueber crownscore.* oder * vergeben, nur ausdruecklich
+        if (node.equals(de.niklasmetzger.crownscore.util.Perms.ADMIN_NODE)) return out;
         String n = node;
         int i;
         while ((i = n.lastIndexOf('.')) > 0) {

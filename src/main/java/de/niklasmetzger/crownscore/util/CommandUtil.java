@@ -22,7 +22,7 @@ public final class CommandUtil {
         List<String> out = new ArrayList<>();
         for (Nation n : d.nations.values()) {
             out.add(n.kuerzel);
-            if (!n.name.contains(" ")) out.add(n.name);
+            out.add(com.mojang.brigadier.arguments.StringArgumentType.escapeIfRequired(n.name));
         }
         return SharedSuggestionProvider.suggest(out, b);
     };

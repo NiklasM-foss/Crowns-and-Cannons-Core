@@ -500,6 +500,12 @@ public class SelfTest {
         step("Vorbereitung", () -> {
             CrownsData d = CrownsData.get(server);
             Nation sau = nat("SAU"), jor = nat("JOR");
+            // Testspieler aus allen Nationen loesen (Reste abgebrochener Laeufe)
+            for (Nation x : d.nations.values()) {
+                x.mitglieder.remove(A_ID);
+                x.beamte.remove(A_ID);
+                if (A_ID.equals(x.chef)) x.chef = null;
+            }
             sau.mitglieder.put(A_ID, "TestAlpha");
             sau.chef = A_ID;
             jor.mitglieder.put(jorBuerger, "Testbuerger_JOR");
@@ -585,6 +591,8 @@ public class SelfTest {
             int bx = s.pos.getX() + 3, bz = s.pos.getZ() - 3;
             a.setPos(bx + 0.5, lvl.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, bx, bz), bz + 0.5);
             de.niklasmetzger.crownscore.config.CrownsConfig.EROBERUNG_VERTEIDIGER_ONLINE.set(false);
+            // eigenes Startgeld, die Suite darf nicht vom Stand frueherer Laeufe abhaengen
+            de.niklasmetzger.crownscore.treasury.TreasuryService.credit(d, nat("SAU").key(), 1.0E6);
             String err = de.niklasmetzger.crownscore.world.EroberungService.besetzen(a, nat("SAU"));
             check("Besetzen: Block in Amman gesetzt", err == null, err);
             var b = d.besatzungen.isEmpty() ? null : d.besatzungen.get(0);

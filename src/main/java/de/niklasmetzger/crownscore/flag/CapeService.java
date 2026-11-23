@@ -71,6 +71,11 @@ public final class CapeService {
             try {
                 byte[] png = FlagImages.png(FlagImages.cape(javax.imageio.ImageIO.read(new ByteArrayInputStream(flagPng)), rechts));
                 String h = FlagImages.hash(png);
+                if (TEXTURES.size() > 1024) {
+                    TEXTURES.clear();
+                    BY_SOURCE.clear();
+                    synchronized (SOURCE_HASH) { SOURCE_HASH.clear(); }
+                }
                 TEXTURES.put(h, png);
                 return h;
             } catch (Exception e) {

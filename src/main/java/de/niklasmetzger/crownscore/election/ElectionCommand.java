@@ -13,6 +13,7 @@ import de.niklasmetzger.crownscore.discord.DiscordWebhook;
 import de.niklasmetzger.crownscore.util.CommandUtil;
 import de.niklasmetzger.crownscore.util.Msg;
 import de.niklasmetzger.crownscore.util.Perms;
+import de.niklasmetzger.crownscore.config.CrownsConfig;
 import de.niklasmetzger.crownscore.util.TimeUtil;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
@@ -99,6 +100,15 @@ public final class ElectionCommand {
             return 0;
         }
         boolean amt = BoolArgumentType.getBool(ctx, "amt");
+        int dauer = IntegerArgumentType.getInteger(ctx, "dauerMinuten");
+        if (amt && !admin && !n.isBeamter(p.getUUID())) {
+            Msg.err(ctx.getSource(), "Eine Wahl des Staatschefs setzen nur Staatschef oder Beamte an.");
+            return 0;
+        }
+        if (amt && !admin && dauer < CrownsConfig.WAHL_AMT_MINDEST_MINUTEN.get()) {
+            Msg.err(ctx.getSource(), "Eine Wahl des Staatschefs dauert mindestens " + CrownsConfig.WAHL_AMT_MINDEST_MINUTEN.get() + " Minuten, damit alle Buerger abstimmen koennen.");
+            return 0;
+        }
         if (amt) {
             for (String k : kandidaten) {
                 if (n.mitglieder.values().stream().noneMatch(m -> m.equalsIgnoreCase(k))) {
@@ -113,7 +123,7 @@ public final class ElectionCommand {
         e.titel = amt ? "Wahl des Staatschefs" : "Abstimmung";
         e.optionen.addAll(kandidaten);
         e.start = TimeUtil.now();
-        e.ende = e.start + IntegerArgumentType.getInteger(ctx, "dauerMinuten") * 60_000L;
+        e.ende = e.start + dauer * 60_000L;
         e.amt = amt;
         d.elections.add(e);
         d.setDirty();

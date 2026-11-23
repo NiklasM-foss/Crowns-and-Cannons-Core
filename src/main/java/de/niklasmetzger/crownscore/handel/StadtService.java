@@ -135,6 +135,20 @@ public final class StadtService {
             de.niklasmetzger.crownscore.util.Msg.player(p, "\u00a7cDiese Stelle liegt ausserhalb der Karte.");
             return;
         }
+        if (!n.key().equals(de.niklasmetzger.crownscore.claims.Claims.nationAt(level, new net.minecraft.world.level.ChunkPos(x >> 4, z >> 4)))) {
+            de.niklasmetzger.crownscore.util.Msg.player(p, "\u00a7cDiese Stelle liegt nicht im Gebiet von " + n.name + ".");
+            return;
+        }
+        int r = CrownsConfig.STADT_RADIUS.get();
+        for (int cx = (x - r) >> 4; cx <= (x + r) >> 4; cx++) {
+            for (int cz = (z - r) >> 4; cz <= (z + r) >> 4; cz++) {
+                net.minecraft.world.level.chunk.ChunkAccess ca = level.getChunk(cx, cz, net.minecraft.world.level.chunk.ChunkStatus.EMPTY, true);
+                if (ca == null || !ca.getStatus().isOrAfter(net.minecraft.world.level.chunk.ChunkStatus.FULL)) {
+                    de.niklasmetzger.crownscore.util.Msg.player(p, "\u00a7cDort war noch niemand, das Gebiet ist nicht erkundet. Eine Stadt braucht gebaute Haeuser.");
+                    return;
+                }
+            }
+        }
         level.getChunk(x >> 4, z >> 4);
         int y = level.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z);
         String err = gruenden(p, n, name, new BlockPos(x, y, z));
@@ -193,7 +207,12 @@ public final class StadtService {
                     List.of(s.betten + " Betten im Umkreis von " + CrownsConfig.STADT_RADIUS.get() + " Bloecken",
                             s.glocke ? "Glocke vorhanden" : "keine Glocke",
                             "Staedte der Nation bisher: " + anzahl(CrownsData.get(server), n.key())));
-            link = AntragService.link(ids[0], ids[1]);
+            String adminKanal = de.niklasmetzger.crownscore.config.CrownsConfig.WEBHOOK_ANTRAEGE.get();
+            if (adminKanal != null && !adminKanal.isBlank()) {
+                link = AntragService.link(ids[0], ids[1]);
+            } else {
+                de.niklasmetzger.crownscore.CrownsCore.LOGGER.warn("Kein Webhook fuer Antraege gesetzt (webhooks.antraege): der Entscheidungslink geht nicht in einen oeffentlichen Kanal.");
+            }
         }
         for (ServerPlayer admin : server.getPlayerList().getPlayers()) {
             if (!de.niklasmetzger.crownscore.util.Perms.isAdmin(admin)) continue;
@@ -238,11 +257,20 @@ public final class StadtService {
         return null;
     }
 
+    /** Text aus dem Browser: keine Farbcodes, keine Zeilenumbrueche, keine Discord-Erwaehnungen, begrenzte Laenge. */
+    static String sauber(String t, int max) {
+        if (t == null) return "";
+        t = t.replace("\u00a7", "").replaceAll("[\\r\\n\\t]+", " ").replace("@", "@\u200b").trim();
+        return t.length() > max ? t.substring(0, max) : t;
+    }
+
     /** Admin lehnt einen Antrag ab oder loest eine Stadt auf. null = ok. */
     public static String ablehnen(net.minecraft.server.MinecraftServer server, String name, String admin, String grund, boolean imSpiel) {
         CrownsData d = CrownsData.get(server);
         Stadt s = byName(d, name);
         if (s == null) return "Keine Stadt namens " + name + ".";
+        grund = sauber(grund, 200);
+        admin = sauber(admin, 48);
         d.staedte.remove(s);
         WappenStore.loeschen(s);
         d.setDirty();

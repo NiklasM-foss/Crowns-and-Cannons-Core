@@ -111,6 +111,7 @@ public final class HandelCommand {
         CommandSourceStack src = ctx.getSource();
         CrownsData d = CommandUtil.data(ctx);
         Nation n;
+        if (arg != null) arg = arg.trim().replaceAll("^\"(.*)\"$", "$1");
         if (arg != null) n = CommandUtil.nation(src, d, arg);
         else n = src.getEntity() instanceof ServerPlayer p ? d.nationOf(p.getUUID()) : null;
         if (n == null) {

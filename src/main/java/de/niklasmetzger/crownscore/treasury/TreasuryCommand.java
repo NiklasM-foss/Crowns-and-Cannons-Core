@@ -8,6 +8,7 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import de.niklasmetzger.crownscore.data.CrownsData;
 import de.niklasmetzger.crownscore.data.Nation;
 import de.niklasmetzger.crownscore.data.Treasury;
+import de.niklasmetzger.crownscore.util.Perms;
 import de.niklasmetzger.crownscore.economy.Economy;
 import de.niklasmetzger.crownscore.util.CommandUtil;
 import de.niklasmetzger.crownscore.util.Msg;
@@ -50,6 +51,14 @@ public final class TreasuryCommand {
 
     private static int stand(CommandContext<CommandSourceStack> ctx, String arg) throws CommandSyntaxException {
         CrownsData d = CommandUtil.data(ctx);
+        if (arg == null && !Perms.isAdmin(ctx.getSource())) {
+            Nation eigene = ctx.getSource().getEntity() instanceof ServerPlayer sp ? d.nationOf(sp.getUUID()) : null;
+            if (eigene == null) {
+                Msg.err(ctx.getSource(), "Du gehoerst keiner Nation an. /staatskasse stand <Nation>");
+                return 0;
+            }
+            arg = eigene.key();
+        }
         if (arg == null) {
             Msg.info(ctx.getSource(), "Staatskassen:");
             for (Nation n : d.nations.values()) {
@@ -90,6 +99,17 @@ public final class TreasuryCommand {
         if (n == null) return 0;
         if (!CommandUtil.chef(ctx.getSource(), n, p)) return 0;
         double betrag = Math.round(DoubleArgumentType.getDouble(ctx, "betrag") * 100) / 100.0;
+        Treasury kasse = d.treasury(n.key());
+        if (kasse.imVerzug()) {
+            Msg.err(ctx.getSource(), "Im Zahlungsverzug ist die Staatskasse fuer Auszahlungen gesperrt. Erst die faellige Rate tilgen.");
+            return 0;
+        }
+        double frei = Math.max(0, kasse.stand - kasse.schulden());
+        if (betrag > frei + 1e-9) {
+            Msg.err(ctx.getSource(), "Geliehenes Geld bleibt in der Staatskasse. Auszahlbar sind nur " + Msg.money(frei)
+                    + " (Stand " + Msg.money(kasse.stand) + " minus Schulden " + Msg.money(kasse.schulden()) + ").");
+            return 0;
+        }
         if (!TreasuryService.charge(d, n.key(), betrag)) {
             Msg.err(ctx.getSource(), "Staatskasse nicht gedeckt. Stand: " + Msg.money(d.treasury(n.key()).stand));
             return 0;

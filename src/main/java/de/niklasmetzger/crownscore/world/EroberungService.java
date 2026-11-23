@@ -37,15 +37,11 @@ import java.util.Map;
 public final class EroberungService {
     private static final long TAG = 24L * 60 * 60 * 1000;
     /** Abgebaute oder gesprengte Besatzungsbloecke (Besatzungs-Nr -> wer, leer = unbekannt). */
-    private static final Map<Integer, String> ZERSTOERT_VON = new HashMap<>();
 
     private EroberungService() {}
 
     /** Beim Serverstart: Zaehler aus einer vorherigen Welt verwerfen. */
     public static void reset() {
-        ZERSTOERT_VON.clear();
-        ANGREIFER_WEG.clear();
-        VERTEIDIGER_WEG.clear();
     }
 
     public static double kaufpreis(Country c) {
@@ -196,6 +192,10 @@ public final class EroberungService {
         }
         ServerLevel level = p.serverLevel();
         BlockPos pos = p.blockPosition();
+        String hierGehoert = de.niklasmetzger.crownscore.claims.Claims.nationAt(level, pos);
+        if (wer.key().equals(hierGehoert)) {
+            return "Du stehst in eigenem Gebiet. Der Besatzungsblock muss im Gebiet der Verteidiger stehen.";
+        }
         if (!level.getBlockState(pos).canBeReplaced()) pos = pos.above();
         if (!level.getBlockState(pos).canBeReplaced() || !level.getBlockState(pos.below()).isSolid()) {
             return "Hier kann der Besatzungsblock nicht stehen. Stell dich auf festen Boden mit freiem Platz.";
@@ -266,9 +266,7 @@ public final class EroberungService {
         CrownsData d = CrownsData.get(server);
         if (!d.besatzungen.remove(b)) return;
         d.setDirty();
-        ZERSTOERT_VON.remove(b.id);
-        ANGREIFER_WEG.remove(b.id);
-        VERTEIDIGER_WEG.remove(b.id);
+        b.zerstoertVon = null;
         ServerLevel level = level(server, b);
         if (level != null && level.getChunkAt(b.pos) != null && level.getBlockState(b.pos).is(block())) {
             level.removeBlock(b.pos, false);
@@ -344,9 +342,9 @@ public final class EroberungService {
             }
             boolean geladen = level.isLoaded(b.pos);
             boolean steht = geladen && level.getBlockState(b.pos).is(block());
-            if (steht) ZERSTOERT_VON.remove(b.id); // Abbauen wurde verhindert (z.B. Bauschutz)
-            if (geladen ? !steht : ZERSTOERT_VON.containsKey(b.id)) {
-                String wer = ZERSTOERT_VON.get(b.id);
+            if (steht) b.zerstoertVon = null; // Abbauen wurde verhindert (z.B. Bauschutz)
+            if (geladen ? !steht : b.zerstoertVon != null) {
+                String wer = b.zerstoertVon;
                 if (wer != null && wer.isEmpty()) wer = null;
                 abbrechen(server, b, "der Besatzungsblock wurde zerstoert" + (wer == null ? "." : " (von " + wer + ")."));
                 continue;
@@ -373,9 +371,7 @@ public final class EroberungService {
         CrownsData d = CrownsData.get(server);
         if (!d.besatzungen.remove(b)) return;
         d.setDirty();
-        ZERSTOERT_VON.remove(b.id);
-        ANGREIFER_WEG.remove(b.id);
-        VERTEIDIGER_WEG.remove(b.id);
+        b.zerstoertVon = null;
         ServerLevel level = level(server, b);
         if (level != null && level.getChunkAt(b.pos) != null && level.getBlockState(b.pos).is(block())) level.removeBlock(b.pos, false);
         Nation angreifer = d.nations.get(b.angreifer), verteidiger = d.nations.get(b.verteidiger);
@@ -393,8 +389,6 @@ public final class EroberungService {
         CrownsCore.LOGGER.info("Besetzung {} erfolgreich: {} hat {} eingenommen", b.id, angreifer.name, c.code());
     }
 
-    private static final java.util.Map<Integer, Integer> ANGREIFER_WEG = new HashMap<>();
-    private static final java.util.Map<Integer, Integer> VERTEIDIGER_WEG = new HashMap<>();
 
     /** Mitte, um die herum die Anwesenheit zaehlt: Stadtmitte oder Besatzungsblock. */
     static BlockPos mitte(CrownsData d, Besatzung b) {
@@ -422,8 +416,13 @@ public final class EroberungService {
         if (r <= 0) return false;
         BlockPos m = mitte(d, b);
         String ziel = !b.stadt.isEmpty() ? b.stadt : b.land;
-        if (inDerNaehe(server, d, b.angreifer, b.dim, m, r) == 0) {
-            int weg = ANGREIFER_WEG.merge(b.id, 1, Integer::sum);
+        // Steht die Uhr (Verteidiger offline), muessen die Angreifer auch nicht vor Ort warten
+        boolean uhrLaeuft = !CrownsConfig.EROBERUNG_VERTEIDIGER_ONLINE.get() || online(server, d, b.verteidiger);
+        if (!uhrLaeuft) {
+            b.angreiferWeg = 0;
+        } else if (inDerNaehe(server, d, b.angreifer, b.dim, m, r) == 0) {
+            int weg = ++b.angreiferWeg;
+            d.setDirty();
             if (weg == 1) Msg.nation(server, d.nations.get(b.angreifer), "§eNiemand von euch ist mehr in " + r + " Bloecken um " + ziel
                     + ". Kommt zurueck, sonst gilt die Besetzung in " + CrownsConfig.EROBERUNG_ANGREIFER_KULANZ.get() + " Sekunden als aufgegeben.");
             if (weg >= CrownsConfig.EROBERUNG_ANGREIFER_KULANZ.get()) {
@@ -431,10 +430,11 @@ public final class EroberungService {
                 return true;
             }
         } else {
-            ANGREIFER_WEG.remove(b.id);
+            b.angreiferWeg = 0;
         }
         if (online(server, d, b.verteidiger) && inDerNaehe(server, d, b.verteidiger, b.dim, m, r) == 0) {
-            int weg = VERTEIDIGER_WEG.merge(b.id, 1, Integer::sum);
+            int weg = ++b.verteidigerWeg;
+            d.setDirty();
             int kulanz = CrownsConfig.EROBERUNG_VERTEIDIGER_KULANZ.get() * 60;
             if (weg == 1 || (kulanz - weg) % 300 == 0 && kulanz - weg > 0) {
                 Msg.nation(server, d.nations.get(b.verteidiger), "§c" + ziel + " wird belagert und niemand von euch verteidigt! Noch "
@@ -446,7 +446,7 @@ public final class EroberungService {
                 return true;
             }
         } else {
-            VERTEIDIGER_WEG.remove(b.id);
+            b.verteidigerWeg = 0;
         }
         return false;
     }
@@ -504,9 +504,9 @@ public final class EroberungService {
         }
         boolean geladen = level.isLoaded(b.pos);
         boolean steht = geladen && level.getBlockState(b.pos).is(block());
-        if (steht) ZERSTOERT_VON.remove(b.id);
-        if (geladen ? !steht : ZERSTOERT_VON.containsKey(b.id)) {
-            String wer = ZERSTOERT_VON.get(b.id);
+        if (steht) b.zerstoertVon = null;
+        if (geladen ? !steht : b.zerstoertVon != null) {
+            String wer = b.zerstoertVon;
             if (wer != null && wer.isEmpty()) wer = null;
             abbrechen(server, b, "der Besatzungsblock wurde zerstoert" + (wer == null ? "." : " (von " + wer + ")."));
             return;
@@ -560,6 +560,15 @@ public final class EroberungService {
             Msg.nation(server, neu, "§6Noch " + rest + " Stadt/Staedte in " + c.name() + ", dann gehoert euch das ganze Land.");
             return;
         }
+        if (CrownsConfig.EROBERUNG_STAMMLAND_SCHUTZ.get() && c.code().equalsIgnoreCase(halter.land) && halter.laender.size() > 1) {
+            Msg.nation(server, neu, "§6" + c.name() + " ist das Stammland von " + halter.name + ". Das Land wechselt erst, wenn " + halter.name + " keine anderen Laender mehr hat, die Staedte gehoeren euch.");
+            return;
+        }
+        int abstand = CrownsConfig.EROBERUNG_NACHBAR_ABSTAND.get();
+        if (abstand >= 0 && !neu.laender.isEmpty() && !WorldMap.nahe(c.code(), neu.laender, abstand)) {
+            Msg.nation(server, neu, "§6" + c.name() + " liegt zu weit von eurem Gebiet entfernt, das Land bleibt bei " + halter.name + ". Die Staedte gehoeren euch.");
+            return;
+        }
         sperren(d, c);
         WeltkarteCommand.uebertragen(server, List.of(c.code()), neu, "mit allen Staedten eingenommen", log());
         // Die Stadtgebiete gehoeren jetzt ohnehin zum Land, Sonderzuweisungen aufraeumen
@@ -583,7 +592,7 @@ public final class EroberungService {
             CrownsData d = CrownsData.get(level.getServer());
             for (Besatzung b : d.besatzungen) {
                 if (b.pos.equals(e.getPos()) && b.dim.equals(level.dimension().location().toString())) {
-                    ZERSTOERT_VON.put(b.id, e.getPlayer() == null ? "" : e.getPlayer().getGameProfile().getName());
+                    b.zerstoertVon = e.getPlayer() == null ? "" : e.getPlayer().getGameProfile().getName();
                 }
             }
         }
@@ -595,7 +604,7 @@ public final class EroberungService {
             if (d.besatzungen.isEmpty()) return;
             String dim = level.dimension().location().toString();
             for (Besatzung b : d.besatzungen) {
-                if (b.dim.equals(dim) && e.getAffectedBlocks().contains(b.pos)) ZERSTOERT_VON.put(b.id, "einer Explosion");
+                if (b.dim.equals(dim) && e.getAffectedBlocks().contains(b.pos)) b.zerstoertVon = "einer Explosion";
             }
         }
     }

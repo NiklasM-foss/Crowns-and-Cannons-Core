@@ -313,9 +313,29 @@ public final class NationCommand {
             w.ende = TimeUtil.now();
             w.ergebnis = "Nation aufgeloest";
         }
-        d.nations.remove(n.key());
-        d.treasuries.remove(n.key());
-        d.claims.values().forEach(m -> m.values().removeIf(v -> v.equals(n.key())));
+        String key = n.key();
+        d.nations.remove(key);
+        d.treasuries.remove(key);
+        d.claims.values().forEach(m -> m.values().removeIf(v -> v.equals(key)));
+        // Staedte (samt Wappen), Besetzungen und Villager-Zaehler der Nation mit entfernen
+        for (de.niklasmetzger.crownscore.data.Stadt st : new java.util.ArrayList<>(d.staedte)) {
+            if (st.nation.equals(key)) {
+                d.staedte.remove(st);
+                de.niklasmetzger.crownscore.handel.WappenStore.loeschen(st);
+            }
+        }
+        for (de.niklasmetzger.crownscore.data.Besatzung b : new java.util.ArrayList<>(d.besatzungen)) {
+            if (b.angreifer.equals(key) || b.verteidiger.equals(key)) {
+                de.niklasmetzger.crownscore.world.EroberungService.abbrechen(ctx.getSource().getServer(), b, "eine der Nationen wurde aufgeloest.");
+            }
+        }
+        d.villagerGekauft.remove(key);
+        d.villagerNachfrage.remove(key);
+        try {
+            de.niklasmetzger.crownscore.flag.FlagStore.entfernen(n);
+        } catch (java.io.IOException e) {
+            de.niklasmetzger.crownscore.CrownsCore.LOGGER.warn("Flagge von {} nicht geloescht: {}", n.name, e.toString());
+        }
         d.setDirty();
         Msg.broadcast(ctx.getSource().getServer(), "Die Nation " + n.name + " wurde aufgeloest.");
         return 1;
@@ -366,11 +386,16 @@ public final class NationCommand {
         CrownsData d = CommandUtil.data(ctx);
         Nation n = CommandUtil.nation(ctx.getSource(), d, StringArgumentType.getString(ctx, "nation"));
         if (n == null) return 0;
-        String neu = StringArgumentType.getString(ctx, "neuerName").trim();
-        if (d.nation(neu) != null) {
+        String neu = StringArgumentType.getString(ctx, "neuerName").trim().replace("\u00a7", "");
+        if (neu.length() < 2 || neu.length() > 40) {
+            Msg.err(ctx.getSource(), "Name muss 2 bis 40 Zeichen haben.");
+            return 0;
+        }
+        if (d.nation(neu) != null || d.nations.containsKey(Nation.key(neu))) {
             Msg.err(ctx.getSource(), "Name schon vergeben.");
             return 0;
         }
+        String altName = n.name;
         String alt = n.key();
         String neuKey = Nation.key(neu);
         d.nations.remove(alt);
@@ -387,8 +412,30 @@ public final class NationCommand {
         d.colonies.values().forEach(c -> { if (c.nation.equals(alt)) c.nation = neuKey; });
         d.mails.forEach(m -> { if (m.anNation.equals(alt)) m.anNation = neuKey; if (m.vonNation.equals(alt)) m.vonNation = neuKey; });
         d.nations.values().forEach(x -> { if (x.wegsteinFreigaben.remove(alt)) x.wegsteinFreigaben.add(neuKey); });
+        d.mails.forEach(m -> { if (m.abgefangenVon.remove(alt)) m.abgefangenVon.add(neuKey); });
+        d.wars.forEach(w -> {
+            java.util.List<String> fv = new java.util.ArrayList<>(w.friedensvorschlag);
+            w.friedensvorschlag.clear();
+            for (String f : fv) w.friedensvorschlag.add(f.equals(alt) ? neuKey : f.endsWith(":" + alt) ? f.substring(0, f.length() - alt.length()) + neuKey : f);
+        });
+        d.staedte.forEach(st -> { if (st.nation.equals(alt)) st.nation = neuKey; });
+        d.besatzungen.forEach(b -> {
+            if (b.angreifer.equals(alt)) b.angreifer = neuKey;
+            if (b.verteidiger.equals(alt)) b.verteidiger = neuKey;
+        });
+        if (d.villagerGekauft.containsKey(alt)) d.villagerGekauft.put(neuKey, d.villagerGekauft.remove(alt));
+        if (d.villagerNachfrage.containsKey(alt)) d.villagerNachfrage.put(neuKey, d.villagerNachfrage.remove(alt));
+        d.elections.forEach(e -> {
+            if (alt.equals(e.nation)) e.nation = neuKey;
+            if (e.stimmen.containsKey(alt)) e.stimmen.put(neuKey, e.stimmen.remove(alt));
+        });
+        d.contracts.forEach(c -> { if (alt.equals(c.nation)) c.nation = neuKey; });
+        d.evidence.forEach(ev -> {
+            if (alt.equals(ev.taeterNation)) ev.taeterNation = neuKey;
+            if (alt.equals(ev.gebietNation)) ev.gebietNation = neuKey;
+        });
         d.setDirty();
-        Msg.broadcast(ctx.getSource().getServer(), "Die Nation " + d.anzeige(neuKey) + " hiess frueher " + alt + ".");
+        Msg.broadcast(ctx.getSource().getServer(), "Die Nation " + d.anzeige(neuKey) + " hiess frueher " + altName + ".");
         return 1;
     }
 }

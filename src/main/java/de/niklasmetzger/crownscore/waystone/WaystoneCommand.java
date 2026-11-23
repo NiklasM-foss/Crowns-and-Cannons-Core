@@ -50,6 +50,10 @@ public final class WaystoneCommand {
         if (!CommandUtil.beamter(ctx.getSource(), n, p)) return 0;
         Nation other = CommandUtil.nation(ctx.getSource(), d, StringArgumentType.getString(ctx, "nation"));
         if (other == null) return 0;
+        if (other == n) {
+            Msg.err(ctx.getSource(), "Eigene Wegsteine darf " + n.name + " immer benutzen, eine Freigabe ist nicht noetig.");
+            return 0;
+        }
         if (frei) {
             n.wegsteinFreigaben.add(other.key());
             Msg.ok(ctx.getSource(), other.name + " darf jetzt die Wegsteine von " + n.name + " benutzen.");

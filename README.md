@@ -257,7 +257,11 @@ Welche Knoten es gibt:
 | beliebige Forge-Knoten | Mods, die die Forge-PermissionAPI nutzen |
 
 Ohne Eintrag gilt die Rolle aus der Befehlsliste (Alle, Bürger, Beamte,
-Staatschef, Admin) beziehungsweise die normale OP-Prüfung. `true` gibt frei,
+Staatschef, Admin) beziehungsweise die normale OP-Prüfung. Ein Recht kann einen
+Befehl sperren oder sichtbar machen, ersetzt aber nicht die Rolle im Spiel: Wer
+`crownscore.krieg.erklaeren` bekommt, sieht den Befehl, Krieg erklären darf
+trotzdem nur der Staatschef. `crownscore.admin` wirkt nur, wenn es ausdrücklich
+gesetzt ist, `crownscore.*` oder `*` machen niemanden zum Admin. `true` gibt frei,
 `false` sperrt. Was jemand nicht nutzen darf, sieht er auch nicht in der
 Tab-Vervollständigung. Der Server schickt den Befehlsbaum bei jeder Rechte- oder
 Rollenänderung neu.

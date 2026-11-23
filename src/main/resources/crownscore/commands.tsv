@@ -2,6 +2,8 @@
 # Modulzeile:  @<schluessel> TAB <Titel> TAB <Kurzbeschreibung>
 # Befehlszeile: <Syntax> TAB <Rolle> TAB <Beschreibung>
 # Rollen: ALLE, BUERGER, BEAMTER, CHEF, ADMIN. Admins duerfen alles.
+# Rechte (crownscore.<befehl>) koennen einen Befehl sperren oder sichtbar machen, die Rolle wird
+# trotzdem geprueft: /krieg erklaeren bleibt z.B. immer dem Staatschef vorbehalten.
 # Rechteknoten: crownscore.<feste Woerter>, z.B. crownscore.nation.beitreten. Die Rolle gilt, solange kein Recht gesetzt ist.
 # Jeder Befehl im Spiel muss hier stehen, sonst sehen ihn alle.
 @cccore	Hilfe	Übersicht über alle Befehle der Mod.
@@ -86,7 +88,7 @@
 /staatskasse	BUERGER	Stand der eigenen Staatskasse.
 /staatskasse stand <Land>	ALLE	Stand der Staatskasse einer anderen Nation.
 /staatskasse einzahlen <Betrag>	BUERGER	Geld vom eigenen Konto in die Staatskasse zahlen.
-/staatskasse auszahlen <Betrag>	CHEF	Geld aus der Staatskasse auf das eigene Konto holen.
+/staatskasse auszahlen <Betrag>	CHEF	Geld aus der Staatskasse auf das eigene Konto holen. Nur was über den Schulden liegt, im Zahlungsverzug gesperrt.
 /staatskasse ueberweisen <Land> <Betrag>	CHEF	Geld an die Staatskasse einer anderen Nation überweisen.
 /staatskasse konto	ALLE	Eigener Kontostand.
 /staatskasse setzen <Land> <Betrag>	ADMIN	Staatskasse auf einen Betrag setzen.
@@ -104,7 +106,7 @@
 /kolonie expedition <Name> <herrscher|frei>	BEAMTER	Expedition anmelden. „herrscher“ für besetztes, „frei“ für unbesetztes Land.
 /kolonie weiter <Name>	BEAMTER	Nächste Ausbaustufe bezahlen.
 /kolonie aufgeben <Name>	CHEF	Kolonie aufgeben.
-/kolonie genehmigen <Name>	ADMIN	Kolonie durch die Behörde genehmigen.
+/kolonie genehmigen <Name>	ADMIN	Offenen Kolonieantrag durch die Behörde genehmigen.
 /kolonie ablehnen <Name> <Grund>	ADMIN	Kolonie mit Begründung ablehnen.
 /kolonie radius <Name> <Radius>	ADMIN	Radius einer Kolonie ändern.
 /kolonie gebuehr <Name> <Betrag>	ADMIN	Gebühr einer Kolonie ändern.
@@ -113,7 +115,7 @@
 /wegstein freigeben <Land>	BEAMTER	Einer Nation die eigenen Wegsteine öffnen.
 /wegstein entziehen <Land>	BEAMTER	Die Freigabe wieder entziehen.
 @wahl	Wahlen	Wahlen in einer Nation und Abstimmungen im Parlament.
-/wahl starten <Minuten> <amt true|false> <Kandidaten>	BUERGER	Wahl starten. Bei amt true wird der Sieger Staatschef. Starten darf der Staatschef, im Wahlmodus DIREKT jeder Bürger.
+/wahl starten <Minuten> <amt true|false> <Kandidaten>	BUERGER	Wahl starten. Bei amt true wird der Sieger Staatschef. Abstimmungen startet der Staatschef, im Wahlmodus DIREKT jeder Bürger. Wahlen des Staatschefs setzen nur Staatschef oder Beamte an, mindestens 24 Stunden (Config wahlen.amtMindestMinuten). Gezählt werden nur Stimmen aktueller Bürger.
 /wahl stimme <Kandidat>	BUERGER	Stimme abgeben.
 /wahl status	BUERGER	Stand der laufenden Wahl.
 /wahl abbrechen	ADMIN	Laufende Wahl abbrechen.
@@ -176,6 +178,7 @@
 /cccore perms user <Spieler> permission check <Knoten>	ADMIN	Prüfen, ob ein Recht greift und woher es kommt.
 /cccore perms user <Spieler> parent add|set|remove <Gruppe> [Dauer]	ADMIN	Spieler in eine Gruppe aufnehmen, nur in diese setzen oder herausnehmen.
 /cccore perms user <Spieler> meta setprefix|setsuffix <Text>	ADMIN	Eigenes Präfix oder Suffix, Farben mit &, zum Beispiel &c[König].
+/cccore perms user <Spieler> meta clear	ADMIN	Präfix und Suffix des Spielers entfernen.
 /cccore perms user <Spieler> promote|demote <Laufbahn>	ADMIN	Auf der Laufbahn eine Stufe hoch oder runter.
 /cccore perms group <Gruppe> info	ADMIN	Gewicht, Eltern, Präfix und Rechte einer Gruppe.
 /cccore perms group <Gruppe> permission set|unset|check <Knoten>	ADMIN	Rechte einer Gruppe, gleiche Optionen wie beim Spieler.
@@ -183,9 +186,11 @@
 /cccore perms group <Gruppe> setweight <Zahl>	ADMIN	Gewicht, das höhere gewinnt bei Widersprüchen und beim Präfix.
 /cccore perms group <Gruppe> setdisplayname <Name>	ADMIN	Anzeigename der Gruppe.
 /cccore perms group <Gruppe> meta setprefix|setsuffix <Text>	ADMIN	Präfix oder Suffix der Gruppe im Chat und in der Tabliste.
+/cccore perms group <Gruppe> meta clear	ADMIN	Präfix und Suffix der Gruppe entfernen.
 /cccore perms group <Gruppe> listmembers	ADMIN	Wer in der Gruppe ist.
 /cccore perms track <Laufbahn> info	ADMIN	Reihenfolge der Gruppen.
-/cccore perms track <Laufbahn> append|insert|remove <Gruppe>	ADMIN	Gruppe hinten anhängen, an einer Stelle einfügen oder entfernen.
+/cccore perms track <Laufbahn> append|remove <Gruppe>	ADMIN	Gruppe hinten anhängen oder entfernen.
+/cccore perms track <Laufbahn> insert <Gruppe> <Position>	ADMIN	Gruppe an einer Stelle einfügen (1 = ganz vorn).
 @flagge	Flaggen und Umhänge	Jeder Bürger trägt die Flagge seiner Nation als Umhang: eigene Flagge aus dem Browser oder die echte Landesflagge. Dieselbe Flagge liegt auf Xaero's World Map und Minimap über jedem Land der Nation.
 /nation flagge	BUERGER	Zeigt die Flagge deiner Nation. Der Staatschef bekommt den Link zur Upload-Seite.
 /nation flagge anwenden <Code>	CHEF	Übernimmt die im Browser hochgeladene Flagge. Den Code zeigt die Upload-Seite.

@@ -29,12 +29,8 @@ public class Scheduler {
         MinecraftServer server = ServerLifecycleHooks.getCurrentServer();
         if (server == null) return;
         tick++;
-        try {
-            de.niklasmetzger.crownscore.log.RollbackService.tick();
-            de.niklasmetzger.crownscore.world.WeltkarteCommand.tick(server);
-        } catch (Exception e) {
-            CrownsCore.LOGGER.error("Fehler im Rollback", e);
-        }
+        sicher("Rollback", de.niklasmetzger.crownscore.log.RollbackService::tick);
+        sicher("Kartenaufbau", () -> de.niklasmetzger.crownscore.world.WeltkarteCommand.tick(server));
         if (tick % 20 == 0) {
             // Jede Aufgabe einzeln, damit ein Fehler nicht alle folgenden stilllegt
             sicher("Anwesenheit", () -> PresenceTracker.everySecond(server));
@@ -48,15 +44,11 @@ public class Scheduler {
             sicher("Antraege", () -> de.niklasmetzger.crownscore.handel.AntragService.everySecond(server));
         }
         if (tick % 1200 == 0) {
-            try {
-                ActivityService.everyMinute(server);
-                ElectionService.everyMinute(server);
-                LoanService.everyMinute(server);
-                de.niklasmetzger.crownscore.handel.VillagerHandel.everyMinute(server);
-                de.niklasmetzger.crownscore.perms.PermissionManager.everyMinute();
-            } catch (Exception e) {
-                CrownsCore.LOGGER.error("Fehler in der Minutenaufgabe", e);
-            }
+            sicher("Aktivitaet", () -> ActivityService.everyMinute(server));
+            sicher("Wahlen", () -> ElectionService.everyMinute(server));
+            sicher("Darlehen", () -> LoanService.everyMinute(server));
+            sicher("Villager-Nachfrage", () -> de.niklasmetzger.crownscore.handel.VillagerHandel.everyMinute(server));
+            sicher("Rechte-Ablauf", de.niklasmetzger.crownscore.perms.PermissionManager::everyMinute);
         }
     }
 }

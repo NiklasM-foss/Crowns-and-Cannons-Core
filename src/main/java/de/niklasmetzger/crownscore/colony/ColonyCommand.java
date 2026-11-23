@@ -135,9 +135,20 @@ public final class ColonyCommand {
         if (n == null) return 0;
         if (!CommandUtil.beamter(ctx.getSource(), n, p)) return 0;
         String name = StringArgumentType.getString(ctx, "name").trim();
-        String typ = StringArgumentType.getString(ctx, "typ").toLowerCase(Locale.ROOT).startsWith("h") ? "HERRSCHER" : "FREI";
-        if (name.length() < 2 || d.colonies.containsKey(name.toLowerCase(Locale.ROOT))) {
-            Msg.err(ctx.getSource(), "Name ungueltig oder schon vergeben.");
+        String typArg = StringArgumentType.getString(ctx, "typ").toLowerCase(Locale.ROOT);
+        if (!typArg.equals("frei") && !typArg.equals("herrscher")) {
+            Msg.err(ctx.getSource(), "Typ muss frei oder herrscher sein.");
+            return 0;
+        }
+        String typ = typArg.equals("herrscher") ? "HERRSCHER" : "FREI";
+        if (name.length() < 2 || name.length() > 32 || !name.matches("[\\p{L}\\p{N}][\\p{L}\\p{N} '\\-]*")
+                || d.colonies.containsKey(name.toLowerCase(Locale.ROOT))) {
+            Msg.err(ctx.getSource(), "Name ungueltig (2 bis 32 Zeichen, Buchstaben, Ziffern, Leerzeichen, Bindestrich) oder schon vergeben.");
+            return 0;
+        }
+        if (p.serverLevel().getBiome(p.blockPosition()).is(net.minecraft.tags.BiomeTags.IS_OCEAN)
+                || p.serverLevel().getBiome(p.blockPosition()).is(net.minecraft.tags.BiomeTags.IS_DEEP_OCEAN)) {
+            Msg.err(ctx.getSource(), "Auf dem Meer gibt es keine Kolonie. Geh an Land.");
             return 0;
         }
         if (d.treasury(n.key()).imVerzug()) {
@@ -251,6 +262,10 @@ public final class ColonyCommand {
         CrownsData d = CommandUtil.data(ctx);
         Colony c = colony(ctx);
         if (c == null) return 0;
+        if (!c.antragOffen) {
+            Msg.err(ctx.getSource(), "Fuer \"" + c.name + "\" liegt kein offener Antrag vor. Erst wenn alle Stufen bezahlt sind, wird der Kolonialstatus beantragt.");
+            return 0;
+        }
         c.antragOffen = false;
         c.anerkannt = true;
         c.stufe = c.stufen().size();

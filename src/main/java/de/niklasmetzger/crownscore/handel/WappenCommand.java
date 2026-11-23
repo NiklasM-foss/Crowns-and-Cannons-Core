@@ -122,6 +122,10 @@ public final class WappenCommand {
                 if (pl != null) Msg.player(pl, "§cWappen nicht geladen: " + (err.getCause() != null ? err.getCause().getMessage() : err.getMessage()));
                 return;
             }
+            if (!de.niklasmetzger.crownscore.data.CrownsData.get(server).staedte.contains(s)) {
+                if (pl != null) Msg.player(pl, "§cDie Stadt " + s.name + " gibt es inzwischen nicht mehr, das Wappen wurde verworfen.");
+                return;
+            }
             boolean freigabe = CrownsConfig.UMHANG_FREIGABE.get();
             try {
                 WappenStore.einreichen(s, png, freigabe);

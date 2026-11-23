@@ -110,7 +110,14 @@ public final class DiscordWebhook {
                     .header("Content-Type", "application/json")
                     .POST(HttpRequest.BodyPublishers.ofString(json.toString(), StandardCharsets.UTF_8))
                     .build();
-            HttpResponse<String> res = client.send(req, HttpResponse.BodyHandlers.ofString());
+            HttpResponse<String> res;
+            try {
+                res = client.send(req, HttpResponse.BodyHandlers.ofString());
+            } catch (java.io.IOException first) {
+                // z.B. "Connection reset": einmal kurz warten und neu versuchen
+                Thread.sleep(2000);
+                res = client.send(req, HttpResponse.BodyHandlers.ofString());
+            }
             if (res.statusCode() == 429) {
                 Thread.sleep(2000);
                 client.send(req, HttpResponse.BodyHandlers.ofString());

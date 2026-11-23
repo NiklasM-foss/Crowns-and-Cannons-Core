@@ -44,6 +44,7 @@ public final class CrownsConfig {
     public static final ForgeConfigSpec.IntValue BERICHT_STUNDE;
 
     public static final ForgeConfigSpec.DoubleValue DARLEHEN_MAX;
+    public static final ForgeConfigSpec.IntValue WAHL_AMT_MINDEST_MINUTEN;
     public static final ForgeConfigSpec.DoubleValue DARLEHEN_ZINS_PROZENT;
     public static final ForgeConfigSpec.IntValue DARLEHEN_WOCHEN;
 
@@ -179,6 +180,11 @@ public final class CrownsConfig {
         AKTIV_WOCHENENDE_STUNDEN = b.comment("Mindeststunden am Wochenende (Samstag und Sonntag)").defineInRange("wochenendeStunden", 4.0, 0.0, 48.0);
         BERICHT_WOCHENTAG = b.comment("Wochentag des Berichts (MONDAY..SUNDAY)").define("berichtWochentag", "SUNDAY");
         BERICHT_STUNDE = b.comment("Stunde des Berichts (0-23)").defineInRange("berichtStunde", 21, 0, 23);
+        b.pop();
+
+        b.comment("Wahlen").push("wahlen");
+        WAHL_AMT_MINDEST_MINUTEN = b.comment("Mindestdauer einer Wahl des Staatschefs in Minuten (gegen Blitzwahlen in der Nacht)")
+                .defineInRange("amtMindestMinuten", 1440, 1, 20160);
         b.pop();
 
         b.comment("Darlehen der Zentralbank").push("darlehen");

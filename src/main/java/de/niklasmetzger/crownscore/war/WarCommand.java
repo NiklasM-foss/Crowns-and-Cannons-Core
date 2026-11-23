@@ -93,7 +93,13 @@ public final class WarCommand {
                     long rest = w.start + CrownsConfig.BLITZKRIEG_MINUTEN.get() * 60_000L - TimeUtil.now();
                     extra = " §e(Blitzkrieg, noch " + Math.max(0, rest / 60000) + " min fuer den ersten Angriff)";
                 }
-                if (!w.friedensvorschlag.isEmpty()) extra += " §a(Friedensangebot von " + d.anzeige(w.friedensvorschlag.iterator().next()) + ")";
+                String frieden = w.friedensvorschlag.stream().filter(f -> !f.startsWith("wechsel:")).findFirst().orElse(null);
+                if (frieden != null) extra += " §a(Friedensangebot von " + d.anzeige(frieden) + ")";
+                String wechsel = w.friedensvorschlag.stream().filter(f -> f.startsWith("wechsel:")).findFirst().orElse(null);
+                if (wechsel != null) {
+                    String[] t = wechsel.split(":", 3);
+                    if (t.length == 3) extra += " §e(" + d.anzeige(t[2]) + " schlaegt Wechsel zu " + t[1] + " vor)";
+                }
                 Msg.line(ctx.getSource(), " §c#" + w.id + " " + w.art.anzeige + ": §f" + d.anzeige(w.angreifer) + " gegen " + d.anzeige(w.verteidiger)
                         + " §7seit " + TimeUtil.fmtShort(w.start) + ", Grund: " + w.grund + extra);
             }

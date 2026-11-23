@@ -47,6 +47,7 @@ public final class WarService {
         e.zeit = w.start;
         e.typ = "KRIEG";
         e.taeterName = erklaertVon;
+        e.taeter = de.niklasmetzger.crownscore.util.Names.lookup(server, erklaertVon).orElse(null);
         e.taeterNation = angreifer.name;
         e.gebietNation = verteidiger.name;
         e.detail = art.anzeige + " erklaert. Grund: " + grund;

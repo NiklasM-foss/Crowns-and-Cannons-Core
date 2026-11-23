@@ -35,7 +35,21 @@ public final class FlagImages {
     public static BufferedImage decode(byte[] data) throws IOException {
         if (data == null || data.length == 0) throw new IOException("Leere Datei");
         if (data.length > MAX_BYTES) throw new IOException("Datei zu gross (hoechstens " + (MAX_BYTES >> 20) + " MB)");
-        BufferedImage img = ImageIO.read(new ByteArrayInputStream(data));
+        BufferedImage img;
+        try (javax.imageio.stream.ImageInputStream in = ImageIO.createImageInputStream(new ByteArrayInputStream(data))) {
+            java.util.Iterator<javax.imageio.ImageReader> readers = in == null ? null : ImageIO.getImageReaders(in);
+            if (readers == null || !readers.hasNext()) throw new IOException("Kein Bild, erlaubt sind PNG und JPG");
+            javax.imageio.ImageReader reader = readers.next();
+            try {
+                reader.setInput(in, true, true);
+                // Abmessungen aus dem Kopf lesen, bevor Speicher fuer die Pixel belegt wird (Dekompressionsbombe)
+                int w = reader.getWidth(0), h = reader.getHeight(0);
+                if (w > 8192 || h > 8192 || (long) w * h > 16_000_000L) throw new IOException("Bild zu gross (hoechstens 8192 Pixel pro Seite)");
+                img = reader.read(0);
+            } finally {
+                reader.dispose();
+            }
+        }
         if (img == null) throw new IOException("Kein Bild, erlaubt sind PNG und JPG");
         if (img.getWidth() < 8 || img.getHeight() < 8) throw new IOException("Bild zu klein (mindestens 8 x 8 Pixel)");
         if (img.getWidth() > 8192 || img.getHeight() > 8192) throw new IOException("Bild zu gross (hoechstens 8192 Pixel pro Seite)");

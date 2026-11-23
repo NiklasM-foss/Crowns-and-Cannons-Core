@@ -1,8 +1,29 @@
 # Changelog
 
-## 1.5.3 (in Arbeit)
+## 1.5.3
 
 - **Lizenz:** Crowns Core steht ab dieser Version unter der LGPL-3.0 (vorher „All Rights Reserved“).
+- **Wahlen:** Eine Wahl des Staatschefs setzen nur Staatschef oder Beamte an, sie dauert mindestens
+  24 Stunden (Config `wahlen.amtMindestMinuten`). Gezählt werden nur Stimmen aktueller Bürger.
+- **Staatskasse:** Geliehenes Geld lässt sich nicht privat auszahlen, im Zahlungsverzug ist die
+  Auszahlung gesperrt. `/staatskasse` zeigt Spielern nur noch die eigene Kasse.
+- **Eroberung:** Stammland-Schutz und Nachbar-Abstand gelten auch, wenn ein Land über seine Städte
+  fällt. Der Besatzungsblock darf nicht im eigenen Gebiet stehen. Sind die Verteidiger offline und
+  die Uhr steht, müssen auch die Angreifer nicht vor Ort warten. Die Kulanzzähler überstehen einen
+  Neustart. Abstände über die Datumsgrenze (Alaska, Russland, Fidschi) stimmen jetzt.
+- **Nationen umbenennen und löschen:** Städte, Besetzungen, Wahlen, Verträge, Akte und
+  Villager-Zähler ziehen mit bzw. werden mit aufgeräumt. Neue Namen brauchen 2 bis 40 Zeichen.
+- **Sicherheit:** Riesige Bilder werden vor dem Dekodieren abgelehnt. Der Entscheidungslink für
+  Stadtanträge geht nur in den Admin-Webhook. `crownscore.admin` wirkt nur ausdrücklich, nicht über
+  `crownscore.*`. Stadtanträge über die Karte erzeugen keine neue Welt mehr. Briefe haben eine
+  Wartezeit und eine Aufbewahrungsgrenze. Ablehnungsgründe aus dem Browser werden gesäubert.
+- **Kleinere Fehler:** Camping zählt nur vor echten Bases statt im ganzen fremden Land, Briefe im
+  Postfach nur für Staatschef und Beamte, `/modus afk 20:00` geht, `/stadt liste "Name"` geht,
+  Vorschläge für Nationen mit Umlaut, Kriegserklärungen stehen in der Akte, Kolonien prüfen Typ,
+  Name und Meer, `/kolonie genehmigen` nur bei offenem Antrag, keine Wegstein-Freigabe an sich
+  selbst, zwei schnelle Landwechsel landen beide auf der Karte, Discord-Meldungen werden bei
+  Verbindungsabbruch wiederholt, abgebrochene Abbau-Versuche landen nicht im Protokoll, jede
+  Minutenaufgabe läuft für sich.
 
 ## 1.5.2
 

@@ -189,7 +189,13 @@ public final class WorldMap {
         }
         int r = Math.max(1, abstand + 1);
         int[] b = bounds[ziel.index()];
-        int i0 = Math.max(0, b[0] - r), i1 = Math.min(width - 1, b[1] + r);
+        // Spalten laufen an der Datumsgrenze um (Alaska grenzt ueber die Beringstrasse an Russland)
+        int i0 = b[0] - r, i1 = b[1] + r;
+        boolean rund = i1 - i0 + 1 >= width;
+        if (rund) {
+            i0 = 0;
+            i1 = width - 1;
+        }
         int j0 = Math.max(0, b[2] - r), j1 = Math.min(height - 1, b[3] + r);
         int w = i1 - i0 + 1, h = j1 - j0 + 1;
         int[] dist = new int[w * h];
@@ -198,7 +204,7 @@ public final class WorldMap {
         int head = 0, tail = 0;
         for (int j = j0; j <= j1; j++) {
             for (int i = i0; i <= i1; i++) {
-                if (eigen[cells[j * width + i] & 0xFF]) {
+                if (eigen[cells[j * width + Math.floorMod(i, width)] & 0xFF]) {
                     int k = (j - j0) * w + (i - i0);
                     dist[k] = 0;
                     queue[tail++] = k;
@@ -209,11 +215,12 @@ public final class WorldMap {
         while (head < tail) {
             int k = queue[head++];
             int i = k % w, j = k / w;
-            if ((cells[(j + j0) * width + (i + i0)] & 0xFF) == zi) return true;
+            if ((cells[(j + j0) * width + Math.floorMod(i + i0, width)] & 0xFF) == zi) return true;
             if (dist[k] >= r) continue;
             int[][] nb = {{1, 0}, {-1, 0}, {0, 1}, {0, -1}};
             for (int[] d : nb) {
                 int ni = i + d[0], nj = j + d[1];
+                if (rund) ni = Math.floorMod(ni, w);
                 if (ni < 0 || nj < 0 || ni >= w || nj >= h) continue;
                 int nk = nj * w + ni;
                 if (dist[nk] >= 0) continue;

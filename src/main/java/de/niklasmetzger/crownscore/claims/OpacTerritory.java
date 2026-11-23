@@ -57,6 +57,9 @@ public final class OpacTerritory {
     }
 
     private static Job job;
+    private static int[] wartendRegion;
+    private static Mode wartendMode;
+    private static Consumer<String> wartendReport;
     private static final Map<String, String> SIGNATURES = new HashMap<>();
     private static int tickCounter;
 
@@ -194,7 +197,23 @@ public final class OpacTerritory {
 
     /** Startet den Abgleich der Claims, ganz oder fuer einen Chunkbereich. Liefert eine Fehlermeldung oder null. */
     public static String start(MinecraftServer server, Mode mode, int[] region, boolean quiet, Consumer<String> report) {
-        if (job != null) return "Die Laender werden gerade schon aktualisiert (" + status() + ").";
+        if (job != null) {
+            if (region == null || mode == Mode.AUS) {
+                return "Die Laender werden gerade schon aktualisiert (" + status() + ").";
+            }
+            // Gebiet merken und nach dem laufenden Durchgang mit frischen Daten nachholen
+            synchronized (OpacTerritory.class) {
+                if (wartendRegion == null) {
+                    wartendRegion = region.clone();
+                } else {
+                    wartendRegion = new int[]{Math.min(wartendRegion[0], region[0]), Math.max(wartendRegion[1], region[1]),
+                            Math.min(wartendRegion[2], region[2]), Math.max(wartendRegion[3], region[3])};
+                }
+                wartendMode = mode;
+                wartendReport = report;
+            }
+            return null;
+        }
         OpenPACServerAPI api = api(server);
         if (api == null) return "Open Parties and Claims ist nicht bereit.";
         CrownsData d = CrownsData.get(server);
@@ -332,7 +351,22 @@ public final class OpacTerritory {
             }
         }
         Job j = job;
-        if (j == null) return;
+        if (j == null) {
+            int[] r;
+            Mode m;
+            Consumer<String> rep;
+            synchronized (OpacTerritory.class) {
+                r = wartendRegion;
+                m = wartendMode;
+                rep = wartendReport;
+                wartendRegion = null;
+            }
+            if (r != null) {
+                String err = start(server, m, r, true, rep == null ? s -> {} : rep);
+                if (err != null && rep != null) rep.accept("Karte nicht nachgezogen: " + err);
+            }
+            return;
+        }
         OpenPACServerAPI api = api(server);
         if (api == null) return;
         IServerClaimsManagerAPI claims = api.getServerClaimsManager();

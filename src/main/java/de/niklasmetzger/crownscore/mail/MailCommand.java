@@ -7,6 +7,7 @@ import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import de.niklasmetzger.crownscore.claims.Claims;
 import de.niklasmetzger.crownscore.config.CrownsConfig;
+import de.niklasmetzger.crownscore.util.Perms;
 import de.niklasmetzger.crownscore.data.CrownsData;
 import de.niklasmetzger.crownscore.data.Mail;
 import de.niklasmetzger.crownscore.data.Nation;
@@ -52,6 +53,8 @@ public final class MailCommand {
                                 .executes(ctx -> gesendet(ctx, IntegerArgumentType.getInteger(ctx, "seite"))))));
     }
 
+    private static final java.util.Map<java.util.UUID, Long> LETZTER_BRIEF = new java.util.concurrent.ConcurrentHashMap<>();
+
     private static int senden(CommandContext<CommandSourceStack> ctx) throws CommandSyntaxException {
         ServerPlayer p = CommandUtil.player(ctx);
         CrownsData d = CommandUtil.data(ctx);
@@ -61,6 +64,11 @@ public final class MailCommand {
         Nation ziel = CommandUtil.nation(ctx.getSource(), d, StringArgumentType.getString(ctx, "nation"));
         if (ziel == null) return 0;
         String text = StringArgumentType.getString(ctx, "text").trim();
+        Long zuletzt = LETZTER_BRIEF.get(p.getUUID());
+        if (zuletzt != null && System.currentTimeMillis() - zuletzt < 20_000 && !Perms.isAdmin(ctx.getSource())) {
+            Msg.err(ctx.getSource(), "Die Post braucht etwas Zeit. Warte ein paar Sekunden bis zum naechsten Brief.");
+            return 0;
+        }
         if (text.length() > 800) {
             Msg.err(ctx.getSource(), "Ein Brief hat hoechstens 800 Zeichen. Fuer mehr nimm ein Buch.");
             return 0;
@@ -90,6 +98,15 @@ public final class MailCommand {
             if (ThreadLocalRandom.current().nextInt(100) < chance) m.abgefangenVon.add(spion);
         }
         d.mails.add(m);
+        LETZTER_BRIEF.put(p.getUUID(), System.currentTimeMillis());
+        // Aufbewahrung: hoechstens 500 Briefe pro Empfaenger-Nation, aelteste zuerst weg
+        long anzahl = d.mails.stream().filter(x -> x.anNation.equals(m.anNation)).count();
+        for (java.util.Iterator<Mail> it = d.mails.iterator(); anzahl > 500 && it.hasNext(); ) {
+            if (it.next().anNation.equals(m.anNation)) {
+                it.remove();
+                anzahl--;
+            }
+        }
         d.setDirty();
         Msg.ok(ctx.getSource(), "Brief #" + m.id + " an " + ziel.name + " geschickt.");
         Msg.nation(server, ziel, "§ePost aus " + own.name + " von " + m.vonName + ". Lesen: /post lesen");

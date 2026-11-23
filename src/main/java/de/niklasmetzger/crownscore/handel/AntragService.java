@@ -167,7 +167,7 @@ public final class AntragService {
         Stadt s = null;
         for (Stadt x : d.staedte) if (e.id().equals(x.antragId)) s = x;
         if (s == null || s.bestaetigt) return; // schon im Spiel entschieden
-        String admin = e.admin().isEmpty() ? "Admin (Browser)" : e.admin() + " (Browser)";
+        String admin = StadtService.sauber(e.admin(), 32).isEmpty() ? "Admin (Browser)" : StadtService.sauber(e.admin(), 32) + " (Browser)";
         String err = "annehmen".equals(e.entscheidung()) ? StadtService.annehmen(server, s.name, admin, false)
                 : StadtService.ablehnen(server, s.name, admin, e.grund(), false);
         if (err != null) CrownsCore.LOGGER.warn("Entscheidung aus dem Browser nicht angewendet: {}", err);

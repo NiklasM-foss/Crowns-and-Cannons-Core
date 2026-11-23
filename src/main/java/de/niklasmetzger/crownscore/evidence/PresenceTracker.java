@@ -47,7 +47,8 @@ public final class PresenceTracker {
             ServerLevel level = p.serverLevel();
             String own = d.nationKeyOf(p.getUUID());
             String in = Claims.nationAt(level, p.blockPosition());
-            String near = in != null ? in : Claims.nationNear(level, p.blockPosition());
+            // Camping zaehlt nur vor echten Bases (Claims, Stadtgebiete), nicht im ganzen fremden Land
+            String near = Claims.baseNear(level, p.blockPosition());
             boolean admin = Perms.isAdmin(p);
 
             // ---- Camping: in oder direkt neben fremdem Gebiet ----

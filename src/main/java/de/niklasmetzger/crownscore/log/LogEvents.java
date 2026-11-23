@@ -142,13 +142,13 @@ public class LogEvents {
 
     @SubscribeEvent(priority = EventPriority.LOWEST)
     public void onBreak(BlockEvent.BreakEvent event) {
-        if (!on() || !(event.getLevel() instanceof Level level)) return;
+        if (!on() || event.isCanceled() || !(event.getLevel() instanceof Level level)) return;
         breakWithHalves(level, event.getPlayer().getGameProfile().getName(), event.getPos(), event.getState());
     }
 
     @SubscribeEvent(priority = EventPriority.LOWEST)
     public void onPlace(BlockEvent.EntityPlaceEvent event) {
-        if (!on() || !(event.getLevel() instanceof Level level)) return;
+        if (!on() || event.isCanceled() || !(event.getLevel() instanceof Level level)) return;
         String user = userOf(event.getEntity());
         if (event instanceof BlockEvent.EntityMultiPlaceEvent multi) {
             for (BlockSnapshot snap : multi.getReplacedBlockSnapshots()) {

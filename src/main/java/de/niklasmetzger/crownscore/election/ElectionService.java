@@ -28,6 +28,20 @@ public final class ElectionService {
 
     public static void finish(MinecraftServer server, CrownsData d, Election e) {
         e.beendet = true;
+        // Nur Stimmen zaehlen, deren Waehler noch dazugehoeren (ausgetretene Buerger, aufgeloeste Nationen nicht)
+        if (e.parlament) {
+            e.stimmen.keySet().removeIf(k -> !d.nations.containsKey(k));
+        } else {
+            de.niklasmetzger.crownscore.data.Nation nat = d.nations.get(e.nation);
+            e.stimmen.keySet().removeIf(k -> {
+                try {
+                    return nat == null || !nat.mitglieder.containsKey(java.util.UUID.fromString(k));
+                } catch (IllegalArgumentException ex) {
+                    return true;
+                }
+            });
+        }
+        d.setDirty();
         Map<String, Integer> count = e.auszaehlung();
         int best = -1;
         List<String> winners = new ArrayList<>();
