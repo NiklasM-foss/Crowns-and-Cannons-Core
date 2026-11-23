@@ -958,7 +958,20 @@ public class SelfTest {
             PermissionManager.changed();
             CommandSourceStack sa = a.createCommandSourceStack();
             ModeService.refresh(a);
-            check("Platzhalter crownscore.cccore.admin.* gibt Zugriff", canUse(sa, "cccore", "admin", "lookup"), "");
+            check("Platzhalter crownscore.cccore.admin.* gibt KEINEN Admin-Befehl frei", !canUse(sa, "cccore", "admin", "lookup"), "");
+            // Gruppe mit hoeherem Gewicht verbietet per Platzhalter, niedrigere erlaubt genau: das Verbot gewinnt
+            PermData.Group sperre = new PermData.Group();
+            sperre.weight = 50;
+            sperre.permissions.add(new PermData.Node("crownscore.cccore.admin.*", false, 0, ""));
+            d.groups.put("cctest_sperre", sperre);
+            g.permissions.add(new PermData.Node("crownscore.cccore.admin.lookup", true, 0, ""));
+            ua.parents.add(new PermData.Parent("cctest_sperre", 0));
+            PermissionManager.changed();
+            check("Platzhalter-Verbot der hoeheren Gruppe schlaegt genaues Recht der niedrigeren", !canUse(sa, "cccore", "admin", "lookup"), "");
+            ua.parents.removeIf(x -> "cctest_sperre".equals(x.group));
+            d.groups.remove("cctest_sperre");
+            PermissionManager.changed();
+            check("Genauer Knoten crownscore.cccore.admin.lookup gibt Zugriff", canUse(sa, "cccore", "admin", "lookup"), "");
             check("Nation und Praefix im Anzeigenamen", a.getDisplayName().getString().replaceAll("§.", "").equals("[Testland Alpha] [Test] TestAlpha"), "\"" + a.getDisplayName().getString() + "\"");
             check("Forge-PermissionAPI nutzt crownscore:permissions",
                     "crownscore:permissions".equals(String.valueOf(PermissionAPI.getActivePermissionHandler())), String.valueOf(PermissionAPI.getActivePermissionHandler()));

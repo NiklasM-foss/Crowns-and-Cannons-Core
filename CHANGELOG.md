@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.5.8
+
+- **Eroberung:** Ein nachträglicher Claim, den die Verteidiger nicht abbauen können, beendet die Besetzung wieder:
+  Claimt die Angreiferseite, verfällt die Gebühr. Claimt ein Dritter, wird die Gebühr erstattet.
+- **Pack-Verwaltung:** keine Sperre für alle Adressen mehr (sie hätte auch den Admin ausgesperrt), dafür bei IPv6
+  höchstens 20 Fehlversuche pro /48. Gleichzeitige Anfragen können die Grenze nicht mehr überholen.
+
 ## 1.5.7
 
 - **Eroberung:** Ein nachträglicher Claim bricht eine Besetzung nur noch ab, wenn ihn die Angreifer gesetzt haben.
