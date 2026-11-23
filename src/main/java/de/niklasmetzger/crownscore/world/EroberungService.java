@@ -358,7 +358,7 @@ public final class EroberungService {
                 continue;
             }
             if (geladen && fremderClaim(level, d, b)) {
-                abbrechen(server, b, "auf dem Besatzungsblock liegt jetzt ein fremder Claim.");
+                abbrechen(server, b, "die Angreifer haben den Besatzungsblock eingeclaimt.");
                 continue;
             }
             if (aufgabe(server, d, b)) continue;
@@ -463,12 +463,16 @@ public final class EroberungService {
         return false;
     }
 
-    /** Liegt auf dem Block ein OPAC-Claim, der weder dem Staatskonto noch einem Mitglied der Verteidiger gehoert? */
+    /**
+     * Hat die Angreiferseite (Staatskonto oder Mitglied) den Block nachtraeglich eingeclaimt, sodass die Verteidiger ihn
+     * nicht mehr abbauen koennen? Claims der Verteidiger oder Dritter brechen die Besetzung nicht ab, sonst koennten die
+     * Verteidiger sie selbst ausloesen (Gebuehr weg).
+     */
     private static boolean fremderClaim(ServerLevel level, CrownsData d, Besatzung b) {
         java.util.UUID claimer = de.niklasmetzger.crownscore.claims.Claims.opacOwner(level, new net.minecraft.world.level.ChunkPos(b.pos));
         if (claimer == null) return false;
-        Nation v = d.nations.get(b.verteidiger);
-        return v != null && !claimer.equals(v.staat()) && !v.mitglieder.containsKey(claimer);
+        Nation a = d.nations.get(b.angreifer);
+        return a != null && (claimer.equals(a.staat()) || a.mitglieder.containsKey(claimer));
     }
 
     /** /nation aufgeben: Angreifer brechen ab, Verteidiger geben die Stadt bzw. das Land auf. */
@@ -532,7 +536,7 @@ public final class EroberungService {
             return;
         }
         if (geladen && fremderClaim(level, d, b)) {
-            abbrechen(server, b, "auf dem Besatzungsblock liegt jetzt ein fremder Claim.");
+            abbrechen(server, b, "die Angreifer haben den Besatzungsblock eingeclaimt.");
             return;
         }
         if (aufgabe(server, d, b)) return;

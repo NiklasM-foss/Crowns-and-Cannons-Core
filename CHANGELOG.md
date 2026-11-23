@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.5.7
+
+- **Eroberung:** Ein nachträglicher Claim bricht eine Besetzung nur noch ab, wenn ihn die Angreifer gesetzt haben.
+  Verteidiger können die Besetzung so nicht mehr selbst scheitern lassen.
+- **Rechte:** Admin-Befehle beachten die Gruppengewichte, ein höher gewichtetes Platzhalter-Verbot gewinnt. `*=false`
+  sperrt wieder auch Vanilla- und Mod-Befehle. Vorschläge mit `*` erscheinen schon beim Tippen ohne Anführungszeichen.
+- **Darlehen:** Teilzahlungen im Verzug runden ab, die Kasse wird nie negativ, ein abbezahltes Darlehen verschwindet sofort.
+- **Pack-Verwaltung:** Fehlversuche zählen bei IPv6 pro /64-Netz, dazu eine Obergrenze für alle Adressen zusammen.
+
 ## 1.5.6
 
 - **Rechte:** `*` gibt keine Vanilla- oder Mod-Befehle mehr frei (`command.<name>` nur ausdrücklich),

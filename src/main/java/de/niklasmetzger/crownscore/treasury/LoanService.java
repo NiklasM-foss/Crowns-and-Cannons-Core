@@ -52,14 +52,21 @@ public final class LoanService {
                 double faellig = Math.min(l.rate + offen, l.rest);
                 if (l.verzug && t.stand + 1e-9 < faellig && t.stand + 1e-9 >= Math.min(l.rate, l.rest)) {
                     // Teilzahlung: alles, was die Kasse hergibt, wird auf den Verzug angerechnet
-                    double z = Math.round(Math.min(t.stand, faellig) * 100) / 100.0;
+                    double z = Math.floor(Math.min(t.stand, faellig) * 100 + 1e-6) / 100.0;
                     t.stand -= z;
                     l.rest = Math.round((l.rest - z) * 100) / 100.0;
                     // die laufende Rate kommt als weitere offene Rate dazu, der gezahlte Betrag wird angerechnet
                     l.verzugRaten++;
                     l.verzugBezahlt = Math.round((l.verzugBezahlt + z) * 100) / 100.0;
                     l.naechsteRate += WOCHE;
-                    double fehlt = Math.max(0, l.rate * l.verzugRaten - l.verzugBezahlt);
+                    double fehlt = Math.min(l.rest, Math.max(0, l.rate * l.verzugRaten - l.verzugBezahlt));
+                    if (l.rest <= 0.004) {
+                        it.remove();
+                        Msg.broadcast(server, n.name + " hat Darlehen #" + l.id + " vollstaendig zurueckgezahlt.");
+                        DiscordWebhook.news(":bank: **" + n.name + "** hat das Darlehen Nr. " + l.id + " ueber " + Msg.money(l.betrag) + " zurueckgezahlt.");
+                        d.setDirty();
+                        continue;
+                    }
                     Msg.nation(server, n, "§eZentralbank: " + Msg.money(z) + " fuer Darlehen #" + l.id + " abgebucht, bis zum Ende des Verzugs fehlen " + Msg.money(fehlt) + ".");
                     if (fehlt <= 0.004) {
                         l.verzug = false;

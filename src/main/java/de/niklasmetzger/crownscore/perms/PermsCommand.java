@@ -47,9 +47,17 @@ public final class PermsCommand {
         for (ResourceKey<Level> k : c.getSource().getServer().levelKeys()) out.add(k.location().toString());
         return SharedSuggestionProvider.suggest(out, b);
     };
-    private static final SuggestionProvider<CommandSourceStack> NODES = (c, b) -> SharedSuggestionProvider.suggest(
-            List.of("crownscore.admin", "\"crownscore.*\"", "\"crownscore.cccore.admin.*\"", "\"crownscore.cccore.perms.*\"",
-                    "crownscore.krieg.erklaeren", "command.gamemode", "command.tp", "\"*\""), b);
+    private static final SuggestionProvider<CommandSourceStack> NODES = (c, b) -> {
+        // Knoten mit * brauchen Anfuehrungszeichen; verglichen wird ohne, damit "crownscore" auch "crownscore.*" vorschlaegt
+        String rest = b.getRemaining().toLowerCase(java.util.Locale.ROOT);
+        String ohne = rest.startsWith("\"") ? rest.substring(1) : rest;
+        for (String k : List.of("crownscore.admin", "crownscore.*", "crownscore.cccore.admin.*", "crownscore.cccore.perms.*",
+                "crownscore.krieg.erklaeren", "command.gamemode", "command.tp", "*")) {
+            if (!k.startsWith(ohne)) continue;
+            b.suggest(k.contains("*") || rest.startsWith("\"") ? "\"" + k + "\"" : k);
+        }
+        return b.buildFuture();
+    };
     private static final SuggestionProvider<CommandSourceStack> DURATIONS =
             (c, b) -> SharedSuggestionProvider.suggest(List.of("1h", "1d", "7d", "30d"), b);
 

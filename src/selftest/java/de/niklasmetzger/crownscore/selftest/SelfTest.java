@@ -141,6 +141,15 @@ public class SelfTest {
         steps.add(new Step(0, name, r));
     }
 
+    /** Mit LuckPerms haben Fake-Spieler keine Rechte-Daten (Capability fehlt): Schritt ueberspringen statt FAIL. */
+    private void stepOhneLp(String name, Runnable r) {
+        if (net.minecraftforge.fml.ModList.get().isLoaded("luckperms")) {
+            step(name, () -> LOG.info("[CCTEST] SKIP {} (LuckPerms geladen, Fake-Spieler haben dort keine Daten; ohne LuckPerms testen)", name));
+        } else {
+            step(name, r);
+        }
+    }
+
     private void stepWait(int ticks, String name, Runnable r) {
         steps.add(new Step(ticks, name, r));
     }
@@ -423,9 +432,12 @@ public class SelfTest {
             check("Besetzen: keine Besetzung mehr offen", d.besatzungen.isEmpty(), "");
         });
         stepUntil("Karte nach Besetzung", () -> !de.niklasmetzger.crownscore.claims.OpacTerritory.running(), 4000);
+        step("Jordanien zurueck", () -> {
+            de.niklasmetzger.crownscore.world.WeltkarteCommand.uebertragen(server, List.of("JOR"), nat("JOR"), null, LOG::info);
+        });
+        stepUntil("Karte nach Rueckgabe", () -> !de.niklasmetzger.crownscore.claims.OpacTerritory.running(), 4000);
         step("Zweite Besetzung, Block wird zerstoert", () -> {
             CrownsData d = CrownsData.get(server);
-            de.niklasmetzger.crownscore.world.WeltkarteCommand.uebertragen(server, List.of("JOR"), nat("JOR"), null, LOG::info);
             d.landSperre.clear();
             String err = de.niklasmetzger.crownscore.world.EroberungService.besetzen(a, nat("SAU"));
             check("Besetzen: zweite Besetzung beginnt", err == null, err);
@@ -907,7 +919,7 @@ public class SelfTest {
         });
 
         // ---- Befehlssichtbarkeit und Rechte ------------------------------
-        step("Sichtbarkeit nach Rolle", () -> {
+        stepOhneLp("Sichtbarkeit nach Rolle", () -> {
             CommandSourceStack sa = a.createCommandSourceStack();
             CommandSourceStack sb = b.createCommandSourceStack();
             CommandSourceStack console = server.createCommandSourceStack();
@@ -923,7 +935,7 @@ public class SelfTest {
             long alle = server.getCommands().getDispatcher().getRoot().getChildren().size();
             check("Befehlsbaum fuer Buerger gefiltert", sichtbar < alle, sichtbar + " von " + alle + " Wurzelbefehlen sichtbar");
         });
-        step("Recht schaltet Befehl frei", () -> {
+        stepOhneLp("Recht schaltet Befehl frei", () -> {
             CommandSourceStack sb = b.createCommandSourceStack();
             PermData.User u = PermissionManager.userOrCreate(B_ID, "TestBeta");
             u.permissions.add(new PermData.Node("crownscore.krieg.erklaeren", true, 0, ""));
@@ -934,7 +946,7 @@ public class SelfTest {
             check("Recht command.gamemode schaltet Vanilla-Befehl frei", canUse(sb, "gamemode"), "");
             check("Recht = false sperrt /krieg liste", !canUse(sb, "krieg", "liste"), "");
         });
-        step("Gruppen, Vererbung, Platzhalter, Praefix", () -> {
+        stepOhneLp("Gruppen, Vererbung, Platzhalter, Praefix", () -> {
             PermData d = PermissionManager.data();
             PermData.Group g = new PermData.Group();
             g.weight = 10;

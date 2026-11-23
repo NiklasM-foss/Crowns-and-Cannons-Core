@@ -10,6 +10,7 @@ Umgebung: PACK_PASSWORT (Admin-Seite), CF_API_KEY (CurseForge-Schnittstelle, opt
 """
 import hashlib
 import hmac
+import ipaddress
 import json
 import os
 import re
@@ -66,14 +67,23 @@ def _pfad_ok(pfad, kategorie):
     return len(teile) >= 2
 
 
-_FEHL = {}  # IP -> [Zeitpunkte der Fehlversuche]
+_FEHL = {}  # IP (IPv6: /64-Netz) -> [Zeitpunkte der Fehlversuche]
 _FEHL_MAX = 5
+_FEHL_GESAMT = 100  # hoechstens so viele Fehlversuche aller Adressen zusammen pro Fenster, danach Pause fuer alle
 _FEHL_FENSTER = 600
 _FEHL_LOCK = threading.Lock()
 
 
 def _ip(handler):
-    return (handler.headers.get("X-Real-IP") or handler.client_address[0] or "?").strip()
+    """Adresse des Besuchers; IPv6 wird auf das /64-Netz gekuerzt, das ein Anschluss komplett zur Verfuegung hat."""
+    roh = (handler.headers.get("X-Real-IP") or handler.client_address[0] or "?").strip()
+    try:
+        a = ipaddress.ip_address(roh)
+        if a.version == 6 and a.ipv4_mapped is None:
+            return str(ipaddress.ip_network(roh + "/64", strict=False))
+        return str(a.ipv4_mapped or a)
+    except ValueError:
+        return roh
 
 
 def _passwort_ok(handler):
@@ -86,14 +96,13 @@ def _passwort_ok(handler):
         liste = [t for t in _FEHL.get(ip, []) if jetzt - t < _FEHL_FENSTER]
         if liste:
             _FEHL[ip] = liste
-        if len(liste) >= _FEHL_MAX:
+        if len(liste) >= _FEHL_MAX or sum(len(v) for v in _FEHL.values()) >= _FEHL_GESAMT:
             return False
     k = handler.headers.get("X-Pack-Passwort", "")
     ok = bool(PASSWORT) and hmac.compare_digest(k.encode(), PASSWORT.encode())
     if not ok:
         with _FEHL_LOCK:
-            if len(_FEHL) < 50000 or ip in _FEHL:
-                _FEHL.setdefault(ip, []).append(jetzt)
+            _FEHL.setdefault(ip, []).append(jetzt)
     return ok
 
 

@@ -231,13 +231,31 @@ public final class PermissionManager {
         return out;
     }
 
+    /** Vollstaendige Platzhalter-Kette a.b.c, a.b.*, a.*, * (fuer Verbote). */
+    static List<String> kette(String node) {
+        List<String> out = new ArrayList<>();
+        out.add(node);
+        String n = node;
+        int i;
+        while ((i = n.lastIndexOf('.')) > 0) {
+            n = n.substring(0, i);
+            out.add(n + ".*");
+        }
+        if (!node.equals("*")) out.add("*");
+        return out;
+    }
+
     private static Node match(Holder h, String node, String dim, long now) {
         if (h == null) return null;
-        for (String c : candidates(node)) {
+        List<String> erlaubt = candidates(node);
+        for (String c : kette(node)) {
+            // Platzhalter, die dieses Recht nicht freigeben duerfen, wirken nur noch als Verbot
+            boolean nurVerbot = !erlaubt.contains(c);
             // Eintraege mit passender Dimension gehen vor allgemeinen
             for (int pass = 0; pass < 2; pass++) {
                 for (Node n : h.permissions) {
                     if (!n.active(now) || !norm(n.node).equals(c)) continue;
+                    if (nurVerbot && n.value) continue;
                     boolean ctx = n.dim != null && !n.dim.isEmpty();
                     if (pass == 0 && ctx && n.dim.equals(dim)) return n;
                     if (pass == 1 && !ctx) return n;
@@ -260,7 +278,10 @@ public final class PermissionManager {
         return new Result(Tri.UNDEFINED, "", "");
     }
 
-    /** Nur der genaue Knoten (ohne Platzhalter), Spieler vor Gruppen; UNDEFINED wenn nirgends gesetzt. */
+    /**
+     * Wie checkDetailed (Spieler vor Gruppen, nach Gewicht), aber ein Platzhalter gibt nichts frei: Der erste Halter mit
+     * Treffer entscheidet; ist es ein Platzhalter-Verbot, gilt FALSE, ein Platzhalter-TRUE wird uebersprungen.
+     */
     public static Tri exakt(UUID id, String node, String dim) {
         String nn = norm(node);
         long now = System.currentTimeMillis();
@@ -272,17 +293,10 @@ public final class PermissionManager {
             if (h != null) halter.add(h);
         }
         for (Holder h : halter) {
-            Node treffer = null;
-            for (Node x : h.permissions) {
-                if (!x.active(now) || !norm(x.node).equals(nn)) continue;
-                boolean ctx = x.dim != null && !x.dim.isEmpty();
-                if (ctx && x.dim.equals(dim)) {
-                    treffer = x;
-                    break;
-                }
-                if (!ctx && treffer == null) treffer = x;
-            }
-            if (treffer != null) return Tri.of(treffer.value);
+            Node treffer = match(h, nn, dim, now);
+            if (treffer == null) continue;
+            if (norm(treffer.node).equals(nn)) return Tri.of(treffer.value);
+            if (!treffer.value) return Tri.FALSE;
         }
         return Tri.UNDEFINED;
     }
