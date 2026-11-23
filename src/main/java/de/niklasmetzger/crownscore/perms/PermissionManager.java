@@ -303,6 +303,33 @@ public final class PermissionManager {
         return Tri.UNDEFINED;
     }
 
+    /**
+     * Nur genaue Eintraege (keine Platzhalter), Spieler vor Gruppen nach Gewicht, Dimension vor allgemein. Fuer Admins:
+     * Ein Platzhalter-Verbot wie *=false sperrt sie nicht aus, ein genaues Verbot bei irgendeinem Halter schon.
+     */
+    public static Tri nurGenau(UUID id, String node, String dim) {
+        String nn = norm(node);
+        long now = System.currentTimeMillis();
+        List<Holder> halter = new ArrayList<>();
+        User u = user(id);
+        if (u != null) halter.add(u);
+        for (String g : groupsOf(id)) {
+            Holder h = data.groups.get(g);
+            if (h != null) halter.add(h);
+        }
+        for (Holder h : halter) {
+            Node allgemein = null;
+            for (Node n : h.permissions) {
+                if (!n.active(now) || !norm(n.node).equals(nn)) continue;
+                boolean ctx = n.dim != null && !n.dim.isEmpty();
+                if (ctx && n.dim.equals(dim)) return Tri.of(n.value);
+                if (!ctx && allgemein == null) allgemein = n;
+            }
+            if (allgemein != null) return Tri.of(allgemein.value);
+        }
+        return Tri.UNDEFINED;
+    }
+
     public static Result checkGroup(String group, String node, String dim) {
         String nn = norm(node);
         long now = System.currentTimeMillis();

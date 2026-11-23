@@ -28,9 +28,11 @@ public final class CommandPermissionHook {
                 if (t == Tri.TRUE) return true;
                 if (t == Tri.FALSE) {
                     // Ein Platzhalter-Verbot (z.B. *=false in default) sperrt Admins nicht aus, nur ein genaues Verbot
+                    // (genaue Eintraege entscheiden auch dann, wenn ein Platzhalter-Verbot weiter oben steht)
                     if (!de.niklasmetzger.crownscore.util.Perms.isAdmin(p)) return false;
-                    String k = PermissionManager.checkDetailed(p.getUUID(), "command." + name, p.level().dimension().location().toString()).knoten();
-                    if (!k.endsWith("*")) return false;
+                    Tri g = PermissionManager.nurGenau(p.getUUID(), "command." + name, p.level().dimension().location().toString());
+                    if (g == Tri.FALSE) return false;
+                    if (g == Tri.TRUE) return true;
                 }
             }
             return original.test(src);

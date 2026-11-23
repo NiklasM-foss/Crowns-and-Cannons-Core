@@ -39,9 +39,18 @@ public final class Perms {
     /** Recht mit Rueckfall: ohne Eintrag entscheidet, ob der Spieler Admin ist. */
     public static boolean has(CommandSourceStack src, String node) {
         if (!(src.getEntity() instanceof ServerPlayer p)) return src.hasPermission(2);
-        Tri t = PermissionManager.check(p, node);
+        Tri t = adminOhnePlatzhalterVerbot(p, node, PermissionManager.check(p, node));
         if (t != Tri.UNDEFINED) return t == Tri.TRUE;
         return isAdmin(p);
+    }
+
+    /**
+     * Ein Platzhalter-Verbot (z.B. *=false in default) sperrt Admins nicht aus, sonst kaemen sie nicht einmal mehr an
+     * /cccore perms, um es zurueckzunehmen. Fuer Admins zaehlen dann nur genaue Eintraege, ohne solche gilt UNDEFINED.
+     */
+    private static Tri adminOhnePlatzhalterVerbot(ServerPlayer p, String node, Tri t) {
+        if (t != Tri.FALSE || node.equals(ADMIN_NODE) || !isAdmin(p)) return t;
+        return PermissionManager.nurGenau(p.getUUID(), node, p.level().dimension().location().toString());
     }
 
     /**
@@ -50,7 +59,7 @@ public final class Perms {
      */
     public static boolean allowed(CommandSourceStack src, String node, Role role) {
         if (!(src.getEntity() instanceof ServerPlayer p)) return true;
-        Tri t = PermissionManager.check(p, node);
+        Tri t = adminOhnePlatzhalterVerbot(p, node, PermissionManager.check(p, node));
         if (t == Tri.TRUE && role == Role.ADMIN && !isAdmin(p)) {
             // Admin-Befehle gibt nur der genaue Knoten frei, nie crownscore.* oder * (sonst Rechteausweitung)
             return PermissionManager.exakt(p.getUUID(), node, p.level().dimension().location().toString()) == Tri.TRUE;

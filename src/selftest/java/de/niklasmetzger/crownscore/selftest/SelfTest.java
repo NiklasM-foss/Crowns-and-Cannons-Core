@@ -979,6 +979,18 @@ public class SelfTest {
             String dimA = a.level().dimension().location().toString();
             check("*=false laesst crownscore.admin offen", PermissionManager.check(A_ID, de.niklasmetzger.crownscore.util.Perms.ADMIN_NODE, dimA) == PermissionManager.Tri.UNDEFINED, "");
             check("*=false sperrt fremde Befehle (command.msg)", PermissionManager.check(A_ID, "command.msg", dimA) == PermissionManager.Tri.FALSE, "");
+            // Ein Admin kommt trotz *=false weiter an /cccore perms (sonst nur noch ueber die Konsole zuruecknehmbar)
+            PermData.Node adminAn = new PermData.Node(de.niklasmetzger.crownscore.util.Perms.ADMIN_NODE, true, 0, "");
+            PermData.Node msgAus = new PermData.Node("command.msg", false, 0, "");
+            ua.permissions.add(adminAn);
+            PermissionManager.changed();
+            check("*=false sperrt Admin nicht aus /cccore perms aus", canUse(sa, "cccore", "perms", "listgroups"), "");
+            check("*=false: ohne genauen Eintrag UNDEFINED fuer Admin", PermissionManager.nurGenau(A_ID, "command.msg", dimA) == PermissionManager.Tri.UNDEFINED, "");
+            ua.permissions.add(msgAus);
+            PermissionManager.changed();
+            check("Genaues Verbot command.msg gilt auch fuer Admin", PermissionManager.nurGenau(A_ID, "command.msg", dimA) == PermissionManager.Tri.FALSE, "");
+            ua.permissions.remove(adminAn);
+            ua.permissions.remove(msgAus);
             g.permissions.remove(allesAus);
             PermissionManager.changed();
             check("Nation und Praefix im Anzeigenamen", a.getDisplayName().getString().replaceAll("§.", "").equals("[Testland Alpha] [Test] TestAlpha"), "\"" + a.getDisplayName().getString() + "\"");

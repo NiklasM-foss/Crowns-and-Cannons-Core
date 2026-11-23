@@ -273,6 +273,7 @@ public final class EroberungService {
     public static void abbrechen(MinecraftServer server, Besatzung b, String grund) {
         CrownsData d = CrownsData.get(server);
         if (!d.besatzungen.remove(b)) return;
+        ANGEHALTEN.remove(b.id);
         d.setDirty();
         b.zerstoertVon = null;
         ServerLevel level = level(server, b);
@@ -357,8 +358,11 @@ public final class EroberungService {
                 abbrechen(server, b, "der Besatzungsblock wurde zerstoert" + (wer == null ? "." : " (von " + wer + ")."));
                 continue;
             }
-            if (geladen && fremderClaim(server, level, d, b) != 0) continue;
-            if (aufgabe(server, d, b)) continue;
+            // Claim-Daten von OPAC gibt es auch fuer entladene Chunks, die Pause gilt deshalb immer
+            int fc = fremderClaim(server, level, d, b);
+            if (fc == 1) continue;
+            if (aufgabe(server, d, b, fc == 2)) continue;
+            if (fc == 2) continue; // angehalten: Angreifer muessen vor Ort bleiben, die Uhr steht
             if (CrownsConfig.EROBERUNG_VERTEIDIGER_ONLINE.get() && !online(server, d, b.verteidiger)) continue;
             b.rest--;
             d.setDirty();
@@ -379,6 +383,7 @@ public final class EroberungService {
     public static void erfolg(MinecraftServer server, Besatzung b, String wie) {
         CrownsData d = CrownsData.get(server);
         if (!d.besatzungen.remove(b)) return;
+        ANGEHALTEN.remove(b.id);
         d.setDirty();
         b.zerstoertVon = null;
         ServerLevel level = level(server, b);
@@ -420,7 +425,7 @@ public final class EroberungService {
     }
 
     /** Aufgeben pruefen. true = Besetzung ist damit erledigt (abgebrochen oder gewonnen). */
-    private static boolean aufgabe(MinecraftServer server, CrownsData d, Besatzung b) {
+    private static boolean aufgabe(MinecraftServer server, CrownsData d, Besatzung b, boolean angehalten) {
         int r = CrownsConfig.EROBERUNG_AUFGABE_RADIUS.get();
         if (r <= 0) return false;
         BlockPos m = mitte(d, b);
@@ -441,7 +446,8 @@ public final class EroberungService {
         } else {
             b.angreiferWeg = 0;
         }
-        if (online(server, d, b.verteidiger) && inDerNaehe(server, d, b.verteidiger, b.dim, m, r) == 0) {
+        // Waehrend der Pause koennen die Verteidiger den Block im fremden Claim nicht abbauen, ihre Kulanz steht
+        if (!angehalten && online(server, d, b.verteidiger) && inDerNaehe(server, d, b.verteidiger, b.dim, m, r) == 0) {
             int weg = ++b.verteidigerWeg;
             d.setDirty();
             int kulanz = CrownsConfig.EROBERUNG_VERTEIDIGER_KULANZ.get() * 60;
@@ -556,8 +562,10 @@ public final class EroberungService {
             abbrechen(server, b, "der Besatzungsblock wurde zerstoert" + (wer == null ? "." : " (von " + wer + ")."));
             return;
         }
-        if (geladen && fremderClaim(server, level, d, b) != 0) return;
-        if (aufgabe(server, d, b)) return;
+        int fc = fremderClaim(server, level, d, b);
+        if (fc == 1) return;
+        if (aufgabe(server, d, b, fc == 2)) return;
+        if (fc == 2) return; // angehalten: Angreifer muessen vor Ort bleiben, die Uhr steht
         if (CrownsConfig.EROBERUNG_VERTEIDIGER_ONLINE.get() && !online(server, d, b.verteidiger)) return;
         b.rest--;
         d.setDirty();

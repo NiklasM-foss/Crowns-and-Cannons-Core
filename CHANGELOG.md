@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.5.10
+
+- **Eroberung:** Die Pause durch den Claim eines Dritten gilt auch, wenn der Chunk gerade nicht geladen ist. Während
+  der Pause müssen die Angreifer vor Ort bleiben, sonst gilt die Besetzung wie sonst als aufgegeben.
+- **Rechte:** Ein Admin kommt trotz `*=false` weiter an `/cccore` und alle Mod-Befehle. Ein genaues Verbot gilt
+  für Admins auch dann, wenn darüber ein Platzhalter-Verbot steht.
+
 ## 1.5.9
 
 - **Eroberung:** Claimt ein Dritter den Besatzungsblock, hält die Besetzung an, bis der Claim weg ist (keine
