@@ -74,8 +74,16 @@ public final class ActivityCommand {
         java.nio.file.Path dat = ctx.getSource().getServer().getWorldPath(net.minecraft.world.level.storage.LevelResource.PLAYER_DATA_DIR)
                 .resolve(gp.getId() + ".dat");
         if (java.nio.file.Files.exists(dat)) return true;
-        Msg.err(ctx.getSource(), gp.getName() + " war noch nie auf diesem Server.");
+        Msg.err(ctx.getSource(), eingabe(ctx, "spieler", gp.getName()) + " war noch nie auf diesem Server.");
         return false;
+    }
+
+    /** Der Name so, wie er eingetippt wurde (der Profil-Cache schreibt unbekannte Namen klein). */
+    public static String eingabe(CommandContext<CommandSourceStack> ctx, String arg, String fallback) {
+        for (com.mojang.brigadier.context.ParsedCommandNode<CommandSourceStack> n : ctx.getNodes()) {
+            if (n.getNode().getName().equals(arg)) return n.getRange().get(ctx.getInput());
+        }
+        return fallback;
     }
 
     private static int bericht(CommandContext<CommandSourceStack> ctx) {

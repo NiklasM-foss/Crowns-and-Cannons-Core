@@ -996,6 +996,16 @@ public class SelfTest {
             check("Nation und Praefix im Anzeigenamen", a.getDisplayName().getString().replaceAll("§.", "").equals("[Testland Alpha] [Test] TestAlpha"), "\"" + a.getDisplayName().getString() + "\"");
             check("Forge-PermissionAPI nutzt crownscore:permissions",
                     "crownscore:permissions".equals(String.valueOf(PermissionAPI.getActivePermissionHandler())), String.valueOf(PermissionAPI.getActivePermissionHandler()));
+            // Pausenmeldung der Besetzung: Staatskonto-Claim nennt die Nation, kein UUID-Fragment
+            CrownsData dn = CrownsData.get(server);
+            de.niklasmetzger.crownscore.data.Nation nat = dn.nations.get(na.key());
+            String cn = de.niklasmetzger.crownscore.world.EroberungService.claimName(server, dn, nat.staat());
+            check("Besetzungspause nennt beim Staatskonto die Nation", cn.equals(dn.anzeige(na.key())), cn);
+            // Unbekannter Spieler: Name wie eingetippt, nicht kleingeschrieben
+            String eing = "aktivitaet Nichtexistent123";
+            var pr = server.getCommands().getDispatcher().parse(eing, server.createCommandSourceStack());
+            String en = de.niklasmetzger.crownscore.activity.ActivityCommand.eingabe(pr.getContext().build(eing), "spieler", "?");
+            check("Unbekannter Spieler: Name wie eingetippt", "Nichtexistent123".equals(en), en);
         });
 
         // ---- Aufraeumen --------------------------------------------------

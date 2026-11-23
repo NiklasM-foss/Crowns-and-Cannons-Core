@@ -496,12 +496,20 @@ public final class EroberungService {
         }
         if (ANGEHALTEN.add(b.id)) {
             String text = "Die Besetzung von " + d.anzeige(b.verteidiger) + " durch " + d.anzeige(b.angreifer)
-                    + " ist angehalten: Auf dem Besatzungsblock liegt jetzt der Claim von " + de.niklasmetzger.crownscore.util.Names.of(server, claimer)
+                    + " ist angehalten: Auf dem Besatzungsblock liegt jetzt der Claim von " + claimName(server, d, claimer)
                     + ". Sie laeuft weiter, sobald der Claim weg ist.";
             Msg.broadcast(server, "§e" + text);
             DiscordWebhook.kriegsnews(":pause_button: " + text);
         }
         return 2;
+    }
+
+    /** Name des Claim-Besitzers fuer Meldungen: bei einem Staatskonto die Nation, sonst der Spielername. */
+    public static String claimName(MinecraftServer server, CrownsData d, java.util.UUID claimer) {
+        for (java.util.Map.Entry<String, Nation> e : d.nations.entrySet()) {
+            if (claimer.equals(e.getValue().staat())) return d.anzeige(e.getKey());
+        }
+        return de.niklasmetzger.crownscore.util.Names.of(server, claimer);
     }
 
     /** /nation aufgeben: Angreifer brechen ab, Verteidiger geben die Stadt bzw. das Land auf. */

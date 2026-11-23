@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.5.12
+
+- **Eroberung:** Hält der Claim eines Staatskontos eine Besetzung an, nennt die Meldung jetzt die Nation statt einer
+  Kennung.
+- **Aktivität:** `/pause` und `/aktivitaet` mit einem unbekannten Namen zeigen den Namen so, wie er eingegeben wurde.
+
 ## 1.5.11
 
 - **Eroberung:** Während einer angehaltenen Besetzung bleibt auch die Kulanz der Verteidiger stehen. Bisher setzte
