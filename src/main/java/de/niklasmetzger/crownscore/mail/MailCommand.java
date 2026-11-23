@@ -109,7 +109,9 @@ public final class MailCommand {
         }
         d.setDirty();
         Msg.ok(ctx.getSource(), "Brief #" + m.id + " an " + ziel.name + " geschickt.");
-        Msg.nation(server, ziel, "§ePost aus " + own.name + " von " + m.vonName + ". Lesen: /post lesen");
+        for (ServerPlayer sp : server.getPlayerList().getPlayers()) {
+            if (ziel.isBeamter(sp.getUUID())) Msg.player(sp, "§ePost aus " + own.name + " von " + m.vonName + ". Lesen: /post lesen");
+        }
         for (String s : m.abgefangenVon) {
             Msg.nation(server, d.nations.get(s), "§dEure Agenten haben einen Brief von " + own.name + " an " + ziel.name + " abgefangen. /post abgefangen");
         }
@@ -135,6 +137,10 @@ public final class MailCommand {
         CrownsData d = CommandUtil.data(ctx);
         Nation own = CommandUtil.own(ctx.getSource(), d, p);
         if (own == null) return 0;
+        if (!own.isBeamter(p.getUUID())) {
+            Msg.err(ctx.getSource(), "Briefe an " + own.name + " lesen nur Staatschef und Beamte.");
+            return 0;
+        }
         List<Mail> list = new ArrayList<>();
         for (int i = d.mails.size() - 1; i >= 0; i--) {
             Mail m = d.mails.get(i);

@@ -113,6 +113,9 @@ public final class DiscordWebhook {
             HttpResponse<String> res;
             try {
                 res = client.send(req, HttpResponse.BodyHandlers.ofString());
+            } catch (java.net.http.HttpTimeoutException timeout) {
+                // Discord hat die Nachricht vielleicht schon angenommen: nicht doppelt posten
+                throw timeout;
             } catch (java.io.IOException first) {
                 // z.B. "Connection reset": einmal kurz warten und neu versuchen
                 Thread.sleep(2000);

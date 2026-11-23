@@ -120,8 +120,14 @@ public final class LoanCommand {
                 it.remove();
                 Msg.broadcast(ctx.getSource().getServer(), n.name + " hat Darlehen #" + l.id + " vollstaendig getilgt.");
             } else if (l.verzug) {
-                l.verzug = false;
-                l.verzugRaten = 0;
+                // Verzug endet erst, wenn die offenen Raten bezahlt sind, nicht mit einem Cent
+                l.verzugBezahlt = Math.round((l.verzugBezahlt + z) * 100) / 100.0;
+                double offen = l.rate * Math.max(1, l.verzugRaten);
+                if (l.verzugBezahlt + 0.004 >= offen) {
+                    l.verzug = false;
+                    l.verzugRaten = 0;
+                    l.verzugBezahlt = 0;
+                }
             }
         }
         d.setDirty();

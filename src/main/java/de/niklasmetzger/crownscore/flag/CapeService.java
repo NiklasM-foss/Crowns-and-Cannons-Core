@@ -71,11 +71,6 @@ public final class CapeService {
             try {
                 byte[] png = FlagImages.png(FlagImages.cape(javax.imageio.ImageIO.read(new ByteArrayInputStream(flagPng)), rechts));
                 String h = FlagImages.hash(png);
-                if (TEXTURES.size() > 1024) {
-                    TEXTURES.clear();
-                    BY_SOURCE.clear();
-                    synchronized (SOURCE_HASH) { SOURCE_HASH.clear(); }
-                }
                 TEXTURES.put(h, png);
                 return h;
             } catch (Exception e) {
@@ -119,6 +114,12 @@ public final class CapeService {
 
     /** Einmal pro Sekunde aus dem Scheduler. */
     public static void everySecond(MinecraftServer server) {
+        if (TEXTURES.size() > 1024) {
+            // zwischen zwei Durchlaeufen leeren, die Texturen entstehen bei Bedarf neu
+            TEXTURES.clear();
+            BY_SOURCE.clear();
+            synchronized (SOURCE_HASH) { SOURCE_HASH.clear(); }
+        }
         if (VIEWERS.isEmpty() && server.getPlayerList().getPlayers().stream().noneMatch(CcNetwork::present)) return;
         CrownsData d = CrownsData.get(server);
         Map<UUID, String> global = new HashMap<>();
@@ -163,7 +164,7 @@ public final class CapeService {
         return VIEWERS.size();
     }
 
-    public static class Events {
+    public static class UmhangEvents {
         @SubscribeEvent
         public void onLogout(PlayerEvent.PlayerLoggedOutEvent e) {
             VIEWERS.remove(e.getEntity().getUUID());

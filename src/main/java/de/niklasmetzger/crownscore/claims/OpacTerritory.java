@@ -57,9 +57,21 @@ public final class OpacTerritory {
     }
 
     private static Job job;
-    private static int[] wartendRegion;
-    private static Mode wartendMode;
-    private static Consumer<String> wartendReport;
+    /** Gebiete, die waehrend eines laufenden Abgleichs angefragt wurden: {int[] region, Mode, Consumer}. */
+    private static final java.util.ArrayDeque<Object[]> WARTEND = new java.util.ArrayDeque<>();
+    /** Staatskonten geloeschter Nationen: ihre Claims gelten noch als eigene, damit der Abgleich sie entfernt. */
+    private static final java.util.Set<UUID> EHEMALIG = java.util.concurrent.ConcurrentHashMap.newKeySet();
+
+    /** Nach /nation loeschen: Land und Claims des Staatskontos freigeben. */
+    public static void freigeben(MinecraftServer server, Nation n) {
+        CrownsData d = CrownsData.get(server);
+        if (d.karteModus.isEmpty() || d.karteModus.equals("AUS") || n.laender.isEmpty()) return;
+        EHEMALIG.add(n.staat());
+        int[] r = WorldMap.chunkBounds(new java.util.ArrayList<>(n.laender));
+        if (r == null) return;
+        String err = start(server, Mode.valueOf(d.karteModus), r, true, msg -> CrownsCore.LOGGER.info(msg));
+        if (err != null) CrownsCore.LOGGER.warn("Land von {} nicht freigegeben: {}", n.name, err);
+    }
     private static final Map<String, String> SIGNATURES = new HashMap<>();
     private static int tickCounter;
 
@@ -202,15 +214,8 @@ public final class OpacTerritory {
                 return "Die Laender werden gerade schon aktualisiert (" + status() + ").";
             }
             // Gebiet merken und nach dem laufenden Durchgang mit frischen Daten nachholen
-            synchronized (OpacTerritory.class) {
-                if (wartendRegion == null) {
-                    wartendRegion = region.clone();
-                } else {
-                    wartendRegion = new int[]{Math.min(wartendRegion[0], region[0]), Math.max(wartendRegion[1], region[1]),
-                            Math.min(wartendRegion[2], region[2]), Math.max(wartendRegion[3], region[3])};
-                }
-                wartendMode = mode;
-                wartendReport = report;
+            synchronized (WARTEND) {
+                if (WARTEND.size() < 200) WARTEND.add(new Object[]{region.clone(), mode, report});
             }
             return null;
         }
@@ -221,6 +226,7 @@ public final class OpacTerritory {
         j.mode = mode;
         j.report = report;
         j.quiet = quiet;
+        j.states.addAll(EHEMALIG);
         for (Nation n : d.nations.values()) {
             j.states.add(n.staat());
             if (mode == Mode.AUS) continue;
@@ -337,7 +343,11 @@ public final class OpacTerritory {
             minZ = Math.min(minZ, c.z - 1);
             maxZ = Math.max(maxZ, c.z + 1);
         }
-        if (job != null) return; // laeuft gerade ein grosser Abgleich, erfasst er die Aenderung ohnehin
+        if (job != null) {
+            // laeuft gerade ein Abgleich mit altem Stand: Gebiet hinten anstellen
+            start(server, mode, new int[]{minX, maxX, minZ, maxZ}, true, msg -> {});
+            return;
+        }
         start(server, mode, new int[]{minX, maxX, minZ, maxZ}, true, msg -> {});
         while (job != null) tick(server);
     }
@@ -352,17 +362,14 @@ public final class OpacTerritory {
         }
         Job j = job;
         if (j == null) {
-            int[] r;
-            Mode m;
-            Consumer<String> rep;
-            synchronized (OpacTerritory.class) {
-                r = wartendRegion;
-                m = wartendMode;
-                rep = wartendReport;
-                wartendRegion = null;
+            Object[] w;
+            synchronized (WARTEND) {
+                w = WARTEND.poll();
             }
-            if (r != null) {
-                String err = start(server, m, r, true, rep == null ? s -> {} : rep);
+            if (w != null) {
+                @SuppressWarnings("unchecked")
+                Consumer<String> rep = (Consumer<String>) w[2];
+                String err = start(server, (Mode) w[1], (int[]) w[0], true, rep == null ? s -> {} : rep);
                 if (err != null && rep != null) rep.accept("Karte nicht nachgezogen: " + err);
             }
             return;

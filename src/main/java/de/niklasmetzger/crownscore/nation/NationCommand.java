@@ -331,6 +331,25 @@ public final class NationCommand {
         }
         d.villagerGekauft.remove(key);
         d.villagerNachfrage.remove(key);
+        d.colonies.values().removeIf(c -> c.nation.equals(key));
+        d.visas.removeIf(v -> v.nation.equals(key));
+        d.contracts.removeIf(c -> key.equals(c.nation));
+        d.mails.removeIf(m -> m.anNation.equals(key) || m.vonNation.equals(key));
+        d.mails.forEach(m -> m.abgefangenVon.remove(key));
+        d.nations.values().forEach(x -> x.wegsteinFreigaben.remove(key));
+        d.elections.forEach(e -> {
+            if (!e.beendet && key.equals(e.nation)) {
+                e.beendet = true;
+                e.ergebnis = "Nation aufgeloest";
+            }
+        });
+        // Land und Claims des Staatskontos in OPAC freigeben (sonst bleiben sie als fremde Claims stehen)
+        de.niklasmetzger.crownscore.claims.OpacTerritory.freigeben(ctx.getSource().getServer(), n);
+        try {
+            if (de.niklasmetzger.crownscore.flag.FlagStore.wartend(n) != null) de.niklasmetzger.crownscore.flag.FlagStore.ablehnen(n);
+        } catch (Exception e) {
+            de.niklasmetzger.crownscore.CrownsCore.LOGGER.warn("Wartende Flagge von {} nicht entfernt: {}", n.name, e.toString());
+        }
         try {
             de.niklasmetzger.crownscore.flag.FlagStore.entfernen(n);
         } catch (java.io.IOException e) {
@@ -391,7 +410,20 @@ public final class NationCommand {
             Msg.err(ctx.getSource(), "Name muss 2 bis 40 Zeichen haben.");
             return 0;
         }
-        if (d.nation(neu) != null || d.nations.containsKey(Nation.key(neu))) {
+        if (Nation.key(neu).equals(n.key())) {
+            // nur Gross- und Kleinschreibung: Schluessel bleibt, nichts umzuziehen
+            String vorher = n.name;
+            n.name = neu;
+            d.evidence.forEach(ev -> {
+                if (vorher.equals(ev.taeterNation)) ev.taeterNation = neu;
+                if (vorher.equals(ev.gebietNation)) ev.gebietNation = neu;
+            });
+            d.setDirty();
+            Msg.ok(ctx.getSource(), "Schreibweise geaendert: " + vorher + " heisst jetzt " + neu + ".");
+            return 1;
+        }
+        Nation belegt = d.nation(neu);
+        if ((belegt != null && belegt != n) || d.nations.containsKey(Nation.key(neu))) {
             Msg.err(ctx.getSource(), "Name schon vergeben.");
             return 0;
         }
@@ -430,9 +462,10 @@ public final class NationCommand {
             if (e.stimmen.containsKey(alt)) e.stimmen.put(neuKey, e.stimmen.remove(alt));
         });
         d.contracts.forEach(c -> { if (alt.equals(c.nation)) c.nation = neuKey; });
+        // Die Akte fuehrt Anzeigenamen, nicht Schluessel
         d.evidence.forEach(ev -> {
-            if (alt.equals(ev.taeterNation)) ev.taeterNation = neuKey;
-            if (alt.equals(ev.gebietNation)) ev.gebietNation = neuKey;
+            if (altName.equals(ev.taeterNation)) ev.taeterNation = neu;
+            if (altName.equals(ev.gebietNation)) ev.gebietNation = neu;
         });
         d.setDirty();
         Msg.broadcast(ctx.getSource().getServer(), "Die Nation " + d.anzeige(neuKey) + " hiess frueher " + altName + ".");

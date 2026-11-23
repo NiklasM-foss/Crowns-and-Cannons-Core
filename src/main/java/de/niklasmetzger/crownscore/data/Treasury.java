@@ -51,6 +51,8 @@ public class Treasury {
         public double rest;
         public double rate;
         public double zinsProzent;
+        /** Im Verzug bisher getilgt, der Verzug endet bei der vollen offenen Rate. */
+        public double verzugBezahlt;
         public int wochen;
         public long aufgenommen;
         public long naechsteRate;
@@ -70,6 +72,7 @@ public class Treasury {
             t.putLong("naechsteRate", naechsteRate);
             t.putBoolean("verzug", verzug);
             t.putInt("verzugRaten", verzugRaten);
+            t.putDouble("verzugBezahlt", verzugBezahlt);
             return t;
         }
 
@@ -86,6 +89,7 @@ public class Treasury {
             l.naechsteRate = t.getLong("naechsteRate");
             l.verzug = t.getBoolean("verzug");
             l.verzugRaten = t.getInt("verzugRaten");
+            l.verzugBezahlt = t.getDouble("verzugBezahlt");
             return l;
         }
     }

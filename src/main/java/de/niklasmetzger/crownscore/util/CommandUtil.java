@@ -53,6 +53,7 @@ public final class CommandUtil {
 
     /** Nation nach Name oder Kuerzel, sonst Fehlermeldung und null. */
     public static Nation nation(CommandSourceStack src, CrownsData d, String arg) {
+        if (arg != null) arg = arg.trim().replaceAll("^\"(.*)\"$", "$1");
         Nation n = d.nation(arg);
         if (n == null) Msg.err(src, "Nation \"" + arg + "\" gibt es nicht. /nation liste zeigt alle.");
         return n;

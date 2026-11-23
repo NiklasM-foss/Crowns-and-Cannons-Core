@@ -259,7 +259,7 @@ public final class HandelCommand {
         return l.size();
     }
 
-    public static class Events {
+    public static class HandelEvents {
         @SubscribeEvent(priority = EventPriority.HIGHEST)
         public void onInteract(PlayerInteractEvent.EntityInteract e) {
             if (!e.getTarget().getTags().contains(TAG)) return;

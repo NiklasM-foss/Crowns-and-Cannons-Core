@@ -73,11 +73,11 @@ public class CrownsCore {
         MinecraftForge.EVENT_BUS.register(new LogEvents());
         MinecraftForge.EVENT_BUS.register(new Inspector());
         MinecraftForge.EVENT_BUS.register(new DisplayEvents());
-        MinecraftForge.EVENT_BUS.register(new de.niklasmetzger.crownscore.flag.CapeService.Events());
-        MinecraftForge.EVENT_BUS.register(new de.niklasmetzger.crownscore.world.EroberungService.Events());
-        MinecraftForge.EVENT_BUS.register(new de.niklasmetzger.crownscore.flag.MapFlagService.Events());
-        MinecraftForge.EVENT_BUS.register(new de.niklasmetzger.crownscore.handel.HandelCommand.Events());
-        MinecraftForge.EVENT_BUS.register(new de.niklasmetzger.crownscore.handel.Postfach.Events());
+        MinecraftForge.EVENT_BUS.register(new de.niklasmetzger.crownscore.flag.CapeService.UmhangEvents());
+        MinecraftForge.EVENT_BUS.register(new de.niklasmetzger.crownscore.world.EroberungService.EroberungEvents());
+        MinecraftForge.EVENT_BUS.register(new de.niklasmetzger.crownscore.flag.MapFlagService.KartenflaggenEvents());
+        MinecraftForge.EVENT_BUS.register(new de.niklasmetzger.crownscore.handel.HandelCommand.HandelEvents());
+        MinecraftForge.EVENT_BUS.register(new de.niklasmetzger.crownscore.handel.Postfach.PostfachEvents());
         de.niklasmetzger.crownscore.net.CcNetwork.init();
     }
 

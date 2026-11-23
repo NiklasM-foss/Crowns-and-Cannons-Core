@@ -193,8 +193,10 @@ public final class EroberungService {
         ServerLevel level = p.serverLevel();
         BlockPos pos = p.blockPosition();
         String hierGehoert = de.niklasmetzger.crownscore.claims.Claims.nationAt(level, pos);
-        if (wer.key().equals(hierGehoert)) {
-            return "Du stehst in eigenem Gebiet. Der Besatzungsblock muss im Gebiet der Verteidiger stehen.";
+        String sollGehoeren = stadt != null ? stadt.nation : (besitzer(d, c) == null ? null : besitzer(d, c).key());
+        if (sollGehoeren != null && !sollGehoeren.equals(hierGehoert)) {
+            return "Hier ist kein Gebiet von " + d.anzeige(sollGehoeren) + (hierGehoert == null ? "" : " (gehoert " + d.anzeige(hierGehoert) + ")")
+                    + ". Der Besatzungsblock muss im Gebiet der Verteidiger stehen.";
         }
         if (!level.getBlockState(pos).canBeReplaced()) pos = pos.above();
         if (!level.getBlockState(pos).canBeReplaced() || !level.getBlockState(pos.below()).isSolid()) {
@@ -585,7 +587,7 @@ public final class EroberungService {
                 !b.stadt.isEmpty() ? "die Stadt " + b.stadt : c == null ? b.land : c.name(), d.anzeige(b.verteidiger), b.pos.getX(), b.pos.getY(), b.pos.getZ(), TimeUtil.duration(b.rest * 1000L));
     }
 
-    public static class Events {
+    public static class EroberungEvents {
         @SubscribeEvent
         public void onBreak(BlockEvent.BreakEvent e) {
             if (!(e.getLevel() instanceof ServerLevel level)) return;

@@ -13,7 +13,8 @@ public interface Economy {
     /** Zieht den Betrag ab, false wenn nicht genug Geld da ist. */
     boolean withdraw(ServerPlayer player, double amount);
 
-    void deposit(ServerPlayer player, double amount);
+    /** Gutschrift, false wenn das Konto gerade nicht erreichbar ist (z.B. Spieler tot). */
+    boolean deposit(ServerPlayer player, double amount);
 
     String name();
 
@@ -61,10 +62,11 @@ public interface Economy {
         }
 
         @Override
-        public void deposit(ServerPlayer player, double amount) {
+        public boolean deposit(ServerPlayer player, double amount) {
             CrownsData d = CrownsData.get(player.server);
             d.wallet.merge(player.getUUID(), amount, Double::sum);
             d.setDirty();
+            return true;
         }
 
         @Override

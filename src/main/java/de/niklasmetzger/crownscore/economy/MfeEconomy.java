@@ -32,10 +32,14 @@ final class MfeEconomy implements Economy {
     }
 
     @Override
-    public void deposit(ServerPlayer player, double amount) {
-        MoneyforeveryoneModVariables.PlayerVariables v = vars(player);
+    public boolean deposit(ServerPlayer player, double amount) {
+        // Ohne Capability (Spieler tot oder gerade im Wechsel) waere die Gutschrift sonst still verloren
+        var cap = player.getCapability(MoneyforeveryoneModVariables.PLAYER_VARIABLES_CAPABILITY, null).resolve();
+        if (cap.isEmpty() || !player.isAlive()) return false;
+        MoneyforeveryoneModVariables.PlayerVariables v = cap.get();
         v.money += amount;
         v.syncPlayerVariables(player);
+        return true;
     }
 
     @Override

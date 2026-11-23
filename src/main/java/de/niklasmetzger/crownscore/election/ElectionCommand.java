@@ -41,7 +41,9 @@ public final class ElectionCommand {
                         .then(Commands.argument("kandidat", StringArgumentType.greedyString()).suggests(ElectionCommand::suggestOptions)
                                 .executes(ctx -> stimme(ctx, false))))
                 .then(Commands.literal("status").executes(ctx -> status(ctx, false)))
-                .then(Commands.literal("abbrechen").executes(ctx -> abbrechen(ctx, false))));
+                .then(Commands.literal("abbrechen").executes(ctx -> abbrechen(ctx, false, null))
+                        .then(Commands.argument("nation", StringArgumentType.string()).suggests(CommandUtil.NATIONS)
+                                .executes(ctx -> abbrechen(ctx, false, StringArgumentType.getString(ctx, "nation"))))));
         d.register(Commands.literal("abstimmung")
                 .then(Commands.literal("starten")
                         .then(Commands.argument("dauerMinuten", IntegerArgumentType.integer(1, 20160))
@@ -51,7 +53,7 @@ public final class ElectionCommand {
                 .then(Commands.literal("nein").executes(ctx -> parlamentStimme(ctx, "Nein")))
                 .then(Commands.literal("enthaltung").executes(ctx -> parlamentStimme(ctx, "Enthaltung")))
                 .then(Commands.literal("status").executes(ctx -> status(ctx, true)))
-                .then(Commands.literal("abbrechen").executes(ctx -> abbrechen(ctx, true))));
+                .then(Commands.literal("abbrechen").executes(ctx -> abbrechen(ctx, true, null))));
     }
 
     private static java.util.concurrent.CompletableFuture<com.mojang.brigadier.suggestion.Suggestions> suggestOptions(
@@ -103,6 +105,10 @@ public final class ElectionCommand {
         int dauer = IntegerArgumentType.getInteger(ctx, "dauerMinuten");
         if (amt && !admin && !n.isBeamter(p.getUUID())) {
             Msg.err(ctx.getSource(), "Eine Wahl des Staatschefs setzen nur Staatschef oder Beamte an.");
+            return 0;
+        }
+        if (!amt && !admin && !n.isBeamter(p.getUUID()) && dauer > 1440) {
+            Msg.err(ctx.getSource(), "Abstimmungen von Buergern dauern hoechstens 1440 Minuten (ein Tag).");
             return 0;
         }
         if (amt && !admin && dauer < CrownsConfig.WAHL_AMT_MINDEST_MINUTEN.get()) {
@@ -236,15 +242,23 @@ public final class ElectionCommand {
         return 1;
     }
 
-    private static int abbrechen(CommandContext<CommandSourceStack> ctx, boolean parlament) throws CommandSyntaxException {
+    private static int abbrechen(CommandContext<CommandSourceStack> ctx, boolean parlament, String nationArg) throws CommandSyntaxException {
         if (!CommandUtil.admin(ctx.getSource())) return 0;
         CrownsData d = CommandUtil.data(ctx);
         Election e;
         if (parlament) {
             e = active(d, null, true);
         } else {
-            ServerPlayer p = CommandUtil.player(ctx);
-            Nation n = CommandUtil.own(ctx.getSource(), d, p);
+            Nation n;
+            if (nationArg != null) {
+                n = CommandUtil.nation(ctx.getSource(), d, nationArg);
+            } else if (ctx.getSource().getEntity() instanceof ServerPlayer p) {
+                n = d.nationOf(p.getUUID());
+                if (n == null) Msg.err(ctx.getSource(), "Du gehoerst keiner Nation an. /wahl abbrechen <Nation>");
+            } else {
+                Msg.err(ctx.getSource(), "Von der Konsole: /wahl abbrechen <Nation>");
+                n = null;
+            }
             if (n == null) return 0;
             e = active(d, n.key(), false);
         }

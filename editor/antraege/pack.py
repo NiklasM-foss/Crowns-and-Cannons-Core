@@ -66,9 +66,33 @@ def _pfad_ok(pfad, kategorie):
     return len(teile) >= 2
 
 
+_FEHL = {}  # IP -> [Zeitpunkte der Fehlversuche]
+_FEHL_MAX = 5
+_FEHL_FENSTER = 600
+_FEHL_LOCK = threading.Lock()
+
+
+def _ip(handler):
+    return (handler.headers.get("X-Real-IP") or handler.client_address[0] or "?").strip()
+
+
 def _passwort_ok(handler):
+    """Passwort pruefen, nach 5 Fehlversuchen in 10 Minuten ist die IP fuer den Rest des Fensters gesperrt."""
+    ip = _ip(handler)
+    jetzt = time.time()
+    with _FEHL_LOCK:
+        liste = [t for t in _FEHL.get(ip, []) if jetzt - t < _FEHL_FENSTER]
+        _FEHL[ip] = liste
+        if len(liste) >= _FEHL_MAX:
+            return False
     k = handler.headers.get("X-Pack-Passwort", "")
-    return bool(PASSWORT) and hmac.compare_digest(k.encode(), PASSWORT.encode())
+    ok = bool(PASSWORT) and hmac.compare_digest(k.encode(), PASSWORT.encode())
+    if not ok:
+        with _FEHL_LOCK:
+            _FEHL.setdefault(ip, []).append(jetzt)
+            if len(_FEHL) > 10000:
+                _FEHL.clear()
+    return ok
 
 
 def _json(handler):

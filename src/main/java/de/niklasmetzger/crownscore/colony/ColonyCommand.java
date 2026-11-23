@@ -280,6 +280,10 @@ public final class ColonyCommand {
         CrownsData d = CommandUtil.data(ctx);
         Colony c = colony(ctx);
         if (c == null) return 0;
+        if (!c.antragOffen) {
+            Msg.err(ctx.getSource(), "Fuer \"" + c.name + "\" liegt kein offener Antrag vor.");
+            return 0;
+        }
         String grund = StringArgumentType.getString(ctx, "grund");
         c.antragOffen = false;
         c.notiz = "Abgelehnt am " + TimeUtil.fmtShort(TimeUtil.now()) + ": " + grund;

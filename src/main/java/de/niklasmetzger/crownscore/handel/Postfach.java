@@ -103,7 +103,7 @@ public final class Postfach {
         }
     }
 
-    public static class Events {
+    public static class PostfachEvents {
         @SubscribeEvent
         public void onLogin(PlayerEvent.PlayerLoggedInEvent e) {
             if (!(e.getEntity() instanceof ServerPlayer p)) return;

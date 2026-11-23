@@ -1,5 +1,21 @@
 # Changelog
 
+## 1.5.4
+
+- **Absturz beim Ausloggen behoben:** Seit 1.5.0 konnte jeder Logout den Server abstürzen lassen,
+  weil zwei interne Ereignisklassen gleich hießen.
+- **Geld:** Überweisungen an andere Nationen unterliegen derselben Grenze wie Auszahlungen
+  (geliehenes Geld bleibt in der Kasse). Ein Cent Tilgung hebt den Zahlungsverzug nicht mehr auf.
+  Gutschriften an tote Spieler gehen nicht mehr verloren.
+- **Nationen löschen** gibt Land und Claims in OPAC frei und räumt Kolonien, Visa, Verträge,
+  Briefe und Wahlen mit ab. Umbenennen zieht die Akte mit, nur die Schreibweise zu ändern geht.
+- **Eroberung:** Der Besatzungsblock muss im Gebiet der Verteidiger stehen.
+- **Karte:** Änderungen während eines laufenden Abgleichs werden nachgeholt.
+- **Kleinere Fehler:** `/post lesen` nur für Staatschef und Beamte, `/wahl abbrechen [Land]` für
+  Admins und Konsole, `/kolonie ablehnen` nur bei offenem Antrag, Abstimmungen von Bürgern
+  höchstens einen Tag, keine doppelten Discord-Meldungen bei Zeitüberschreitung, Vorschläge mit
+  Anführungszeichen funktionieren überall, Fehlversuche an der Pack-Verwaltung werden begrenzt.
+
 ## 1.5.3
 
 - **Lizenz:** Crowns Core steht ab dieser Version unter der LGPL-3.0 (vorher „All Rights Reserved“).

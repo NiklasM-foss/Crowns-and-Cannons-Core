@@ -114,7 +114,11 @@ public final class TreasuryCommand {
             Msg.err(ctx.getSource(), "Staatskasse nicht gedeckt. Stand: " + Msg.money(d.treasury(n.key()).stand));
             return 0;
         }
-        Economy.get().deposit(p, betrag);
+        if (!Economy.get().deposit(p, betrag)) {
+            TreasuryService.credit(d, n.key(), betrag);
+            Msg.err(ctx.getSource(), "Dein Konto ist gerade nicht erreichbar (z.B. nach dem Tod). Das Geld bleibt in der Staatskasse, versuch es gleich noch einmal.");
+            return 0;
+        }
         Msg.ok(ctx.getSource(), Msg.money(betrag) + " aus der Staatskasse entnommen. Stand: " + Msg.money(d.treasury(n.key()).stand));
         Msg.nation(ctx.getSource().getServer(), n, "§7Staatschef " + p.getGameProfile().getName() + " hat " + Msg.money(betrag) + " aus der Staatskasse entnommen.");
         return 1;
@@ -129,6 +133,21 @@ public final class TreasuryCommand {
         Nation ziel = CommandUtil.nation(ctx.getSource(), d, StringArgumentType.getString(ctx, "nation"));
         if (ziel == null) return 0;
         double betrag = Math.round(DoubleArgumentType.getDouble(ctx, "betrag") * 100) / 100.0;
+        Treasury kasse = d.treasury(n.key());
+        if (kasse.imVerzug()) {
+            Msg.err(ctx.getSource(), "Im Zahlungsverzug sind Ueberweisungen gesperrt. Erst die faellige Rate tilgen.");
+            return 0;
+        }
+        double frei = Math.max(0, kasse.stand - kasse.schulden());
+        if (betrag > frei + 1e-9) {
+            Msg.err(ctx.getSource(), "Geliehenes Geld bleibt in der Staatskasse. Ueberweisbar sind nur " + Msg.money(frei)
+                    + " (Stand " + Msg.money(kasse.stand) + " minus Schulden " + Msg.money(kasse.schulden()) + ").");
+            return 0;
+        }
+        if (ziel == n) {
+            Msg.err(ctx.getSource(), "Ueberweisung an die eigene Nation ist nicht moeglich.");
+            return 0;
+        }
         if (!TreasuryService.charge(d, n.key(), betrag)) {
             Msg.err(ctx.getSource(), "Staatskasse nicht gedeckt. Stand: " + Msg.money(d.treasury(n.key()).stand));
             return 0;
@@ -153,7 +172,10 @@ public final class TreasuryCommand {
         if (!CommandUtil.admin(ctx.getSource())) return 0;
         ServerPlayer target = EntityArgument.getPlayer(ctx, "spieler");
         double betrag = DoubleArgumentType.getDouble(ctx, "betrag");
-        Economy.get().deposit(target, betrag);
+        if (!Economy.get().deposit(target, betrag)) {
+            Msg.err(ctx.getSource(), "Das Konto von " + target.getGameProfile().getName() + " ist gerade nicht erreichbar (tot oder im Wechsel). Nichts gebucht, gleich noch einmal versuchen.");
+            return 0;
+        }
         Msg.ok(ctx.getSource(), Msg.money(betrag) + " an " + target.getGameProfile().getName() + " (" + Economy.get().name() + "). Konto: " + Msg.money(Economy.get().balance(target)));
         return 1;
     }
