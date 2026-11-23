@@ -64,8 +64,30 @@ public final class DuelManager {
 
     public static boolean cancel(ServerPlayer p) {
         boolean removed = DUELS.removeIf(d -> d.a.equals(p.getUUID()) || d.b.equals(p.getUUID()));
-        if (removed) Msg.broadcast(p.server, p.getGameProfile().getName() + " hat das Duell abgebrochen.");
-        return removed;
+        if (removed) {
+            Msg.broadcast(p.server, p.getGameProfile().getName() + " hat das Duell abgebrochen.");
+            return true;
+        }
+        // Offene Forderung zurueckziehen (als Herausforderer) oder ablehnen (als Herausgeforderter)
+        UUID an = null;
+        for (Map.Entry<UUID, UUID> e : REQUESTS.entrySet()) if (e.getValue().equals(p.getUUID())) an = e.getKey();
+        if (an != null) {
+            REQUESTS.remove(an);
+            REQUEST_TIME.remove(an);
+            Msg.player(p, "Herausforderung zurueckgezogen.");
+            ServerPlayer ziel = p.server.getPlayerList().getPlayer(an);
+            if (ziel != null) Msg.player(ziel, "§e" + p.getGameProfile().getName() + " hat die Herausforderung zurueckgezogen.");
+            return true;
+        }
+        UUID von = REQUESTS.remove(p.getUUID());
+        if (von != null) {
+            REQUEST_TIME.remove(p.getUUID());
+            Msg.player(p, "Herausforderung abgelehnt.");
+            ServerPlayer h = p.server.getPlayerList().getPlayer(von);
+            if (h != null) Msg.player(h, "§e" + p.getGameProfile().getName() + " lehnt das Duell ab.");
+            return true;
+        }
+        return false;
     }
 
     public static void onDeath(MinecraftServer server, UUID dead) {

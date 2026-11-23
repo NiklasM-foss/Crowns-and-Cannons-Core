@@ -88,6 +88,11 @@ public final class ModeService {
                 .put(ziel, TimeUtil.now() + CrownsConfig.MODUS_GRUND_MINUTEN.get() * 60_000L);
     }
 
+    /** Alle Gruende eines Angreifers vergessen (Selbsttest, damit er wiederholbar ist). */
+    public static void gruendeVergessen(UUID angreifer) {
+        GRUENDE.remove(angreifer);
+    }
+
     public static boolean hatGrund(UUID angreifer, UUID ziel) {
         Map<UUID, Long> m = GRUENDE.get(angreifer);
         if (m == null) return false;

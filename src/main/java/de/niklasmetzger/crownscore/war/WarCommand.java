@@ -95,8 +95,8 @@ public final class WarCommand {
                 }
                 String frieden = w.friedensvorschlag.stream().filter(f -> !f.startsWith("wechsel:")).findFirst().orElse(null);
                 if (frieden != null) extra += " §a(Friedensangebot von " + d.anzeige(frieden) + ")";
-                String wechsel = w.friedensvorschlag.stream().filter(f -> f.startsWith("wechsel:")).findFirst().orElse(null);
-                if (wechsel != null) {
+                for (String wechsel : w.friedensvorschlag) {
+                    if (!wechsel.startsWith("wechsel:")) continue;
                     String[] t = wechsel.split(":", 3);
                     if (t.length == 3) extra += " §e(" + d.anzeige(t[2]) + " schlaegt Wechsel zu " + t[1] + " vor)";
                 }
@@ -165,6 +165,10 @@ public final class WarCommand {
             return 0;
         }
         // Wechsel braucht beide Seiten: wir merken uns den Wunsch im Friedensvorschlag-Set mit Praefix.
+        if (w.art == art) {
+            Msg.err(ctx.getSource(), "Der Konflikt ist schon ein " + art.anzeige + ".");
+            return 0;
+        }
         String wunsch = "wechsel:" + art.name() + ":" + own.key();
         String gegenwunsch = "wechsel:" + art.name() + ":" + gegner.key();
         if (w.friedensvorschlag.contains(gegenwunsch) || ctx.getSource().hasPermission(2)) {

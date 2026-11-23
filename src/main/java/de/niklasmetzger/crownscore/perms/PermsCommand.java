@@ -82,7 +82,7 @@ public final class PermsCommand {
                         .executes(guard("createtrack", PermsCommand::createTrack))))
                 .then(Commands.literal("deletetrack").then(Commands.argument("track", StringArgumentType.word()).suggests(TRACKS)
                         .executes(guard("deletetrack", PermsCommand::deleteTrack))))
-                .then(Commands.literal("search").then(Commands.argument("knoten", StringArgumentType.word()).suggests(NODES)
+                .then(Commands.literal("search").then(Commands.argument("knoten", StringArgumentType.string()).suggests(NODES)
                         .executes(guard("search", PermsCommand::search))))
                 .then(Commands.literal("editor").executes(guard("editor", ctx -> WebEditor.open(ctx.getSource()))))
                 .then(Commands.literal("applyedits").then(Commands.argument("code", StringArgumentType.word())
@@ -142,7 +142,7 @@ public final class PermsCommand {
     /** permission set <knoten> [true|false] [dauer] [dimension], unset <knoten>, check <knoten>. */
     private static ArgumentBuilder<CommandSourceStack, ?> permissionBranch(String node, boolean user) {
         return Commands.literal("permission")
-                .then(Commands.literal("set").then(Commands.argument("knoten", StringArgumentType.word()).suggests(NODES)
+                .then(Commands.literal("set").then(Commands.argument("knoten", StringArgumentType.string()).suggests(NODES)
                         .executes(guard(node, ctx -> permSet(ctx, user, true, 0, "")))
                         .then(Commands.argument("wert", BoolArgumentType.bool())
                                 .executes(guard(node, ctx -> permSet(ctx, user, BoolArgumentType.getBool(ctx, "wert"), 0, "")))
@@ -151,9 +151,9 @@ public final class PermsCommand {
                                         .then(Commands.argument("dimension", StringArgumentType.greedyString()).suggests(DIMS)
                                                 .executes(guard(node, ctx -> permSet(ctx, user, BoolArgumentType.getBool(ctx, "wert"), duration(ctx),
                                                         StringArgumentType.getString(ctx, "dimension")))))))))
-                .then(Commands.literal("unset").then(Commands.argument("knoten", StringArgumentType.word()).suggests(NODES)
+                .then(Commands.literal("unset").then(Commands.argument("knoten", StringArgumentType.string()).suggests(NODES)
                         .executes(guard(node, ctx -> permUnset(ctx, user)))))
-                .then(Commands.literal("check").then(Commands.argument("knoten", StringArgumentType.word()).suggests(NODES)
+                .then(Commands.literal("check").then(Commands.argument("knoten", StringArgumentType.string()).suggests(NODES)
                         .executes(guard(node, ctx -> permCheck(ctx, user)))));
     }
 

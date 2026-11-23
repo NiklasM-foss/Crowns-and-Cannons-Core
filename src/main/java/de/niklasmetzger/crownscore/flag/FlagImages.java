@@ -44,7 +44,8 @@ public final class FlagImages {
                 reader.setInput(in, true, true);
                 // Abmessungen aus dem Kopf lesen, bevor Speicher fuer die Pixel belegt wird (Dekompressionsbombe)
                 int w = reader.getWidth(0), h = reader.getHeight(0);
-                if (w > 8192 || h > 8192 || (long) w * h > 16_000_000L) throw new IOException("Bild zu gross (hoechstens 8192 Pixel pro Seite)");
+                if (w > 8192 || h > 8192) throw new IOException("Bild zu gross (hoechstens 8192 Pixel pro Seite)");
+                if ((long) w * h > 16_000_000L) throw new IOException("Bild zu gross (hoechstens 16 Millionen Pixel, z.B. 4000 x 4000)");
                 img = reader.read(0);
             } finally {
                 reader.dispose();

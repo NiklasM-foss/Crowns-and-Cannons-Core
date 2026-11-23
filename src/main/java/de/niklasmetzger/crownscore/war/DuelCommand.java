@@ -46,7 +46,7 @@ public final class DuelCommand {
 
     private static int abbrechen(CommandContext<CommandSourceStack> ctx) throws CommandSyntaxException {
         ServerPlayer p = CommandUtil.player(ctx);
-        if (!DuelManager.cancel(p)) Msg.err(ctx.getSource(), "Du bist in keinem Duell.");
+        if (!DuelManager.cancel(p)) Msg.err(ctx.getSource(), "Du bist in keinem Duell und hast keine offene Herausforderung.");
         return 1;
     }
 }

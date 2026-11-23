@@ -796,6 +796,7 @@ public class SelfTest {
         });
         step("Krieg + beide RP: Angriff erlaubt", () -> check("Krieg + beide RP: Angriff erlaubt", !blocked(a, b), ""));
         step("Ziel im Farm-Modus: Angriff gesperrt", () -> {
+            ModeService.gruendeVergessen(a.getUUID()); // Reste eines frueheren Laufs
             ModeService.set(b, PlayerMode.FARM, 0);
             check("Ziel im Farm-Modus: Angriff gesperrt", blocked(a, b), "");
         });

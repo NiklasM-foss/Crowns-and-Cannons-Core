@@ -47,6 +47,7 @@ public final class ActivityCommand {
             if (!CommandUtil.admin(ctx.getSource())) return 0;
             id = gp.getId();
             name = gp.getName();
+            if (!bekannt(ctx, d, gp)) return 0;
         }
         ActivityRecord r = d.activity.get(id);
         long now = TimeUtil.now();
@@ -63,6 +64,16 @@ public final class ActivityCommand {
         }
         if (r != null && r.pauseBis > now) Msg.line(ctx.getSource(), " §ePause angemeldet bis " + TimeUtil.fmt(r.pauseBis));
         return 1;
+    }
+
+    /** Spieler war schon einmal auf dem Server (Profil-Cache oder Aktivitaet), sonst Fehlermeldung. */
+    private static boolean bekannt(CommandContext<CommandSourceStack> ctx, CrownsData d, GameProfile gp) {
+        if (d.activity.containsKey(gp.getId())) return true;
+        var cache = ctx.getSource().getServer().getProfileCache();
+        if (cache != null && cache.get(gp.getName()).filter(x -> x.getId().equals(gp.getId())).isPresent()) return true;
+        if (ctx.getSource().getServer().getPlayerList().getPlayer(gp.getId()) != null) return true;
+        Msg.err(ctx.getSource(), gp.getName() + " war noch nie auf diesem Server.");
+        return false;
     }
 
     private static int bericht(CommandContext<CommandSourceStack> ctx) {
@@ -82,6 +93,7 @@ public final class ActivityCommand {
         CrownsData d = CommandUtil.data(ctx);
         GameProfile gp = GameProfileArgument.getGameProfiles(ctx, "spieler").iterator().next();
         int tage = IntegerArgumentType.getInteger(ctx, "tage");
+        if (!bekannt(ctx, d, gp)) return 0;
         ActivityRecord r = d.activity.computeIfAbsent(gp.getId(), k -> new ActivityRecord());
         if (r.name.isEmpty()) r.name = gp.getName();
         r.pauseBis = tage == 0 ? 0 : TimeUtil.now() + tage * 86_400_000L;

@@ -51,6 +51,11 @@ public final class Perms {
     public static boolean allowed(CommandSourceStack src, String node, Role role) {
         if (!(src.getEntity() instanceof ServerPlayer p)) return true;
         Tri t = PermissionManager.check(p, node);
+        if (t == Tri.TRUE && role == Role.ADMIN && !isAdmin(p)) {
+            // Admin-Befehle gibt nur der genaue Knoten frei, nie crownscore.* oder * (sonst Rechteausweitung)
+            PermissionManager.Result r = PermissionManager.checkDetailed(p.getUUID(), node, p.level().dimension().location().toString());
+            return PermissionManager.norm(r.knoten()).equals(PermissionManager.norm(node));
+        }
         if (t != Tri.UNDEFINED) return t == Tri.TRUE;
         if (role == Role.ALLE) return true;
         if (isAdmin(p)) return true;

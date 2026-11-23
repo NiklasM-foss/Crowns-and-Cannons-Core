@@ -84,6 +84,10 @@ public final class EvidenceCommand {
             return 0;
         }
         int pages = CommandUtil.pages(list.size(), PAGE);
+        if (seite > pages) {
+            Msg.err(ctx.getSource(), titel + ": nur " + pages + " Seite(n).");
+            return 0;
+        }
         Msg.info(ctx.getSource(), titel + " (" + list.size() + " Eintraege, Seite " + seite + "/" + pages + "):");
         for (EvidenceEntry e : CommandUtil.page(list, seite, PAGE)) {
             Msg.line(ctx.getSource(), " §7" + e.zeile());
@@ -126,6 +130,13 @@ public final class EvidenceCommand {
         if (!CommandUtil.admin(ctx.getSource())) return 0;
         CrownsData d = CommandUtil.data(ctx);
         String typ = StringArgumentType.getString(ctx, "typ").toUpperCase();
+        java.util.Set<String> bekannt = new java.util.TreeSet<>();
+        d.evidence.forEach(e -> bekannt.add(e.typ));
+        java.util.List<String> moeglich = java.util.List.of("BLOCK_ABBAU", "BLOCK_SETZEN", "KISTE", "FEUER", "CAMPING", "EINREISE", "TOETUNG", "KRIEG", "ANGRIFFSGRUND");
+        if (!bekannt.contains(typ) && !moeglich.contains(typ)) {
+            Msg.err(ctx.getSource(), "Unbekannter Typ \"" + typ + "\". Moeglich: " + String.join(", ", moeglich));
+            return 0;
+        }
         return show(ctx, "Akte Typ " + typ, filter(d, e -> typ.equals(e.typ)), seite);
     }
 

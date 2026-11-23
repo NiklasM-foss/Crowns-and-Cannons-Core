@@ -1,5 +1,19 @@
 # Changelog
 
+## 1.5.5
+
+- **Rechte:** Admin-Befehle gibt nur der genaue Rechteknoten frei, nie `crownscore.*` oder `*`.
+  Platzhalter lassen sich per Befehl in Anführungszeichen setzen.
+- **Nation löschen** gibt jeden Claim des Staatskontos in OPAC sofort frei und löst die Party auf,
+  frühere Bürger sind frei für neue Nationen.
+- **Eroberung:** Der Besatzungsblock darf nicht in fremden Spieler-Claims stehen.
+- **Darlehen:** Tilgen bedient zuerst Darlehen im Verzug, die automatische Rate zieht offene Raten mit ein.
+- **Wahlen:** Staatschef und Beamte können Abstimmungen ihrer Nation abbrechen.
+- **Kleinere Fehler:** Duell-Forderungen lassen sich zurückziehen, alle Wechselwünsche erscheinen in
+  `/krieg liste`, `/akte` meldet unbekannte Typen und zu hohe Seiten, `/aktivitaet` und `/pause`
+  nur für bekannte Spieler, klarere Meldung bei zu großen Bildern, der Briefzähler beim Login zählt
+  nur für Staatschef und Beamte, die Pack-Verwaltung zählt Fehlversuche je echter IP.
+
 ## 1.5.4
 
 - **Absturz beim Ausloggen behoben:** Seit 1.5.0 konnte jeder Logout den Server abstürzen lassen,
