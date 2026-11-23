@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.5.13
+
+- Inhaltlich gleich wie 1.5.12, neue Nummer für die Veröffentlichung als Release auf CurseForge.
+
 ## 1.5.12
 
 - **Eroberung:** Hält der Claim eines Staatskontos eine Besetzung an, nennt die Meldung jetzt die Nation statt einer
