@@ -48,8 +48,8 @@ public final class PermsCommand {
         return SharedSuggestionProvider.suggest(out, b);
     };
     private static final SuggestionProvider<CommandSourceStack> NODES = (c, b) -> SharedSuggestionProvider.suggest(
-            List.of("crownscore.admin", "crownscore.*", "crownscore.cccore.admin.*", "crownscore.cccore.perms.*",
-                    "crownscore.krieg.erklaeren", "command.gamemode", "command.tp", "*"), b);
+            List.of("crownscore.admin", "\"crownscore.*\"", "\"crownscore.cccore.admin.*\"", "\"crownscore.cccore.perms.*\"",
+                    "crownscore.krieg.erklaeren", "command.gamemode", "command.tp", "\"*\""), b);
     private static final SuggestionProvider<CommandSourceStack> DURATIONS =
             (c, b) -> SharedSuggestionProvider.suggest(List.of("1h", "1d", "7d", "30d"), b);
 

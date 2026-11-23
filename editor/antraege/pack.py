@@ -81,17 +81,19 @@ def _passwort_ok(handler):
     ip = _ip(handler)
     jetzt = time.time()
     with _FEHL_LOCK:
+        for k in [k for k, v in _FEHL.items() if not v or jetzt - v[-1] >= _FEHL_FENSTER]:
+            del _FEHL[k]
         liste = [t for t in _FEHL.get(ip, []) if jetzt - t < _FEHL_FENSTER]
-        _FEHL[ip] = liste
+        if liste:
+            _FEHL[ip] = liste
         if len(liste) >= _FEHL_MAX:
             return False
     k = handler.headers.get("X-Pack-Passwort", "")
     ok = bool(PASSWORT) and hmac.compare_digest(k.encode(), PASSWORT.encode())
     if not ok:
         with _FEHL_LOCK:
-            _FEHL.setdefault(ip, []).append(jetzt)
-            if len(_FEHL) > 10000:
-                _FEHL.clear()
+            if len(_FEHL) < 50000 or ip in _FEHL:
+                _FEHL.setdefault(ip, []).append(jetzt)
     return ok
 
 

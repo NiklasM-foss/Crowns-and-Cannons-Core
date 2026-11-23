@@ -344,7 +344,11 @@ public final class NationCommand {
             }
         });
         // Land und Claims des Staatskontos in OPAC freigeben (sonst bleiben sie als fremde Claims stehen)
-        de.niklasmetzger.crownscore.claims.OpacTerritory.freigeben(ctx.getSource().getServer(), n);
+        try {
+            de.niklasmetzger.crownscore.claims.OpacTerritory.freigeben(ctx.getSource().getServer(), n);
+        } catch (Throwable t) {
+            de.niklasmetzger.crownscore.CrownsCore.LOGGER.warn("OPAC-Freigabe fuer {} fehlgeschlagen: {}", n.name, t.toString());
+        }
         try {
             if (de.niklasmetzger.crownscore.flag.FlagStore.wartend(n) != null) de.niklasmetzger.crownscore.flag.FlagStore.ablehnen(n);
         } catch (Exception e) {

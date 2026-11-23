@@ -113,7 +113,26 @@ public final class LoanCommand {
             return 0;
         }
         double rest = betrag;
-        // Darlehen im Verzug zuerst bedienen
+        // Erster Durchgang: jedes Darlehen im Verzug nur bis zu seiner offenen Rate
+        for (Treasury.Loan l : new ArrayList<>(t.darlehen)) {
+            if (!l.verzug || rest <= 0) continue;
+            double offen = Math.max(0, l.rate * Math.max(1, l.verzugRaten) - l.verzugBezahlt);
+            double z = Math.min(Math.min(rest, offen), l.rest);
+            if (z <= 0) continue;
+            l.rest = Math.round((l.rest - z) * 100) / 100.0;
+            l.verzugBezahlt = Math.round((l.verzugBezahlt + z) * 100) / 100.0;
+            rest = Math.round((rest - z) * 100) / 100.0;
+            if (l.verzugBezahlt + 0.004 >= l.rate * Math.max(1, l.verzugRaten)) {
+                l.verzug = false;
+                l.verzugRaten = 0;
+                l.verzugBezahlt = 0;
+            }
+            if (l.rest <= 0.004) {
+                t.darlehen.remove(l);
+                Msg.broadcast(ctx.getSource().getServer(), n.name + " hat Darlehen #" + l.id + " vollstaendig getilgt.");
+            }
+        }
+        // Zweiter Durchgang: Rest der Reihe nach
         List<Treasury.Loan> reihenfolge = new ArrayList<>(t.darlehen);
         reihenfolge.sort(java.util.Comparator.comparing((Treasury.Loan l) -> !l.verzug));
         var it = reihenfolge.iterator();
@@ -137,7 +156,10 @@ public final class LoanCommand {
             }
         }
         d.setDirty();
-        Msg.ok(ctx.getSource(), Msg.money(betrag) + " getilgt. Restschuld " + Msg.money(t.schulden()) + ".");
+        double nochOffen = 0;
+        for (Treasury.Loan l : t.darlehen) if (l.verzug) nochOffen += Math.max(0, l.rate * Math.max(1, l.verzugRaten) - l.verzugBezahlt);
+        Msg.ok(ctx.getSource(), Msg.money(betrag) + " getilgt. Restschuld " + Msg.money(t.schulden()) + "."
+                + (nochOffen > 0 ? " Bis zum Ende des Zahlungsverzugs fehlen noch " + Msg.money(nochOffen) + "." : ""));
         return 1;
     }
 }

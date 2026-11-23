@@ -69,9 +69,11 @@ public final class ActivityCommand {
     /** Spieler war schon einmal auf dem Server (Profil-Cache oder Aktivitaet), sonst Fehlermeldung. */
     private static boolean bekannt(CommandContext<CommandSourceStack> ctx, CrownsData d, GameProfile gp) {
         if (d.activity.containsKey(gp.getId())) return true;
-        var cache = ctx.getSource().getServer().getProfileCache();
-        if (cache != null && cache.get(gp.getName()).filter(x -> x.getId().equals(gp.getId())).isPresent()) return true;
         if (ctx.getSource().getServer().getPlayerList().getPlayer(gp.getId()) != null) return true;
+        // Der Profil-Cache kennt auch erfundene Namen (Offline-Modus), deshalb die Spielerdaten der Welt pruefen
+        java.nio.file.Path dat = ctx.getSource().getServer().getWorldPath(net.minecraft.world.level.storage.LevelResource.PLAYER_DATA_DIR)
+                .resolve(gp.getId() + ".dat");
+        if (java.nio.file.Files.exists(dat)) return true;
         Msg.err(ctx.getSource(), gp.getName() + " war noch nie auf diesem Server.");
         return false;
     }

@@ -65,9 +65,17 @@ public final class OpacTerritory {
      * Wirkt sofort und haengt nicht vom laufenden Abgleich ab, uebersteht also auch einen Neustart.
      */
     public static void freigeben(MinecraftServer server, Nation n) {
+        if (!net.minecraftforge.fml.ModList.get().isLoaded("openpartiesandclaims")) return;
+        UUID staat = n.staat();
+        // Ein laufender Abgleich hat das Staatskonto noch als Besitzer gemerkt: dort herausnehmen,
+        // sonst vergibt er die noch nicht erreichten Chunks wieder an das tote Konto
+        Job laufend = job;
+        if (laufend != null) {
+            laufend.ownerByCode.values().removeIf(staat::equals);
+            laufend.ownerByOverride.values().removeIf(staat::equals);
+        }
         OpenPACServerAPI api = api(server);
         if (api == null) return;
-        UUID staat = n.staat();
         int frei = 0;
         try {
             var info = api.getServerClaimsManager().getPlayerInfo(staat);

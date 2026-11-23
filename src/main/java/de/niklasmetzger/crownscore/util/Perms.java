@@ -53,8 +53,7 @@ public final class Perms {
         Tri t = PermissionManager.check(p, node);
         if (t == Tri.TRUE && role == Role.ADMIN && !isAdmin(p)) {
             // Admin-Befehle gibt nur der genaue Knoten frei, nie crownscore.* oder * (sonst Rechteausweitung)
-            PermissionManager.Result r = PermissionManager.checkDetailed(p.getUUID(), node, p.level().dimension().location().toString());
-            return PermissionManager.norm(r.knoten()).equals(PermissionManager.norm(node));
+            return PermissionManager.exakt(p.getUUID(), node, p.level().dimension().location().toString()) == Tri.TRUE;
         }
         if (t != Tri.UNDEFINED) return t == Tri.TRUE;
         if (role == Role.ALLE) return true;

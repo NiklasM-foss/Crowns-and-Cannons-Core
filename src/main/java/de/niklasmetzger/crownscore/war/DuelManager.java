@@ -55,6 +55,17 @@ public final class DuelManager {
             Msg.player(to, "§cDer Herausforderer ist nicht mehr online.");
             return false;
         }
+        if (busy(from) || busy(to.getUUID())) {
+            Msg.player(to, "§cEiner von euch ist schon in einem Duell.");
+            return false;
+        }
+        // alle weiteren offenen Forderungen von und an beide verfallen
+        UUID zu = to.getUUID();
+        REQUESTS.entrySet().removeIf(e -> {
+            boolean weg = e.getKey().equals(from) || e.getKey().equals(zu) || e.getValue().equals(from) || e.getValue().equals(zu);
+            if (weg) REQUEST_TIME.remove(e.getKey());
+            return weg;
+        });
         long ende = System.currentTimeMillis() + CrownsConfig.DUELL_MINUTEN.get() * 60_000L;
         DUELS.add(new Duel(from, to.getUUID(), ende));
         Msg.broadcast(to.server, "Duell: " + challenger.getGameProfile().getName() + " gegen " + to.getGameProfile().getName()
@@ -69,14 +80,16 @@ public final class DuelManager {
             return true;
         }
         // Offene Forderung zurueckziehen (als Herausforderer) oder ablehnen (als Herausgeforderter)
-        UUID an = null;
-        for (Map.Entry<UUID, UUID> e : REQUESTS.entrySet()) if (e.getValue().equals(p.getUUID())) an = e.getKey();
-        if (an != null) {
-            REQUESTS.remove(an);
-            REQUEST_TIME.remove(an);
-            Msg.player(p, "Herausforderung zurueckgezogen.");
-            ServerPlayer ziel = p.server.getPlayerList().getPlayer(an);
-            if (ziel != null) Msg.player(ziel, "§e" + p.getGameProfile().getName() + " hat die Herausforderung zurueckgezogen.");
+        List<UUID> an = new ArrayList<>();
+        for (Map.Entry<UUID, UUID> e : REQUESTS.entrySet()) if (e.getValue().equals(p.getUUID())) an.add(e.getKey());
+        if (!an.isEmpty()) {
+            for (UUID z : an) {
+                REQUESTS.remove(z);
+                REQUEST_TIME.remove(z);
+                ServerPlayer ziel = p.server.getPlayerList().getPlayer(z);
+                if (ziel != null) Msg.player(ziel, "§e" + p.getGameProfile().getName() + " hat die Herausforderung zurueckgezogen.");
+            }
+            Msg.player(p, an.size() == 1 ? "Herausforderung zurueckgezogen." : an.size() + " Herausforderungen zurueckgezogen.");
             return true;
         }
         UUID von = REQUESTS.remove(p.getUUID());

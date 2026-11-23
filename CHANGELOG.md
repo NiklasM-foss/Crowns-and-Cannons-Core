@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.5.6
+
+- **Rechte:** `*` gibt keine Vanilla- oder Mod-Befehle mehr frei (`command.<name>` nur ausdrücklich),
+  genau gesetzte Admin-Knoten wirken auch, wenn der Spieler zusätzlich einen Platzhalter hat.
+- **Nation löschen** funktioniert auch ohne Open Parties and Claims und verträgt einen laufenden Kartenabgleich.
+- **Eroberung:** Kommt später ein fremder Claim auf den Besatzungsblock, endet die Besetzung.
+- **Darlehen:** Tilgen beendet zuerst jeden Verzug und nennt den Restbetrag; die automatische Rate
+  bucht im Verzug ab, was da ist.
+- **Kleinere Fehler:** Duelle nur einzeln, Forderungen werden beim Annehmen bereinigt, `/aktivitaet`
+  und `/pause` erkennen erfundene Namen, Platzhalter-Vorschläge mit Anführungszeichen, die
+  Pack-Verwaltung erkennt die echte Besucher-IP hinter dem Cloudflare-Tunnel.
+
 ## 1.5.5
 
 - **Rechte:** Admin-Befehle gibt nur der genaue Rechteknoten frei, nie `crownscore.*` oder `*`.

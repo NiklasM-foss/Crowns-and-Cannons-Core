@@ -209,6 +209,18 @@ public final class PermissionManager {
         out.add(node);
         // Adminrechte nie ueber crownscore.* oder * vergeben, nur ausdruecklich
         if (node.equals(de.niklasmetzger.crownscore.util.Perms.ADMIN_NODE)) return out;
+        // Vanilla- und Mod-Befehle (command.<name>) nur ausdruecklich: sonst gibt * auch /op frei
+        if (node.startsWith("command.")) return out;
+        // Knoten fremder Mods: eigene Platzhalter (z.B. mod.*) ja, aber nie das globale *
+        if (!node.startsWith("crownscore.")) {
+            String m = node;
+            int k;
+            while ((k = m.lastIndexOf('.')) > 0) {
+                m = m.substring(0, k);
+                out.add(m + ".*");
+            }
+            return out;
+        }
         String n = node;
         int i;
         while ((i = n.lastIndexOf('.')) > 0) {
@@ -246,6 +258,33 @@ public final class PermissionManager {
             if (hit != null) return new Result(Tri.of(hit.value), "Gruppe " + g, hit.node);
         }
         return new Result(Tri.UNDEFINED, "", "");
+    }
+
+    /** Nur der genaue Knoten (ohne Platzhalter), Spieler vor Gruppen; UNDEFINED wenn nirgends gesetzt. */
+    public static Tri exakt(UUID id, String node, String dim) {
+        String nn = norm(node);
+        long now = System.currentTimeMillis();
+        List<Holder> halter = new ArrayList<>();
+        User u = user(id);
+        if (u != null) halter.add(u);
+        for (String g : groupsOf(id)) {
+            Holder h = data.groups.get(g);
+            if (h != null) halter.add(h);
+        }
+        for (Holder h : halter) {
+            Node treffer = null;
+            for (Node x : h.permissions) {
+                if (!x.active(now) || !norm(x.node).equals(nn)) continue;
+                boolean ctx = x.dim != null && !x.dim.isEmpty();
+                if (ctx && x.dim.equals(dim)) {
+                    treffer = x;
+                    break;
+                }
+                if (!ctx && treffer == null) treffer = x;
+            }
+            if (treffer != null) return Tri.of(treffer.value);
+        }
+        return Tri.UNDEFINED;
     }
 
     public static Result checkGroup(String group, String node, String dim) {

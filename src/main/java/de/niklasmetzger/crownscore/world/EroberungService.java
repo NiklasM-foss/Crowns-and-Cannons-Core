@@ -357,6 +357,10 @@ public final class EroberungService {
                 abbrechen(server, b, "der Besatzungsblock wurde zerstoert" + (wer == null ? "." : " (von " + wer + ")."));
                 continue;
             }
+            if (geladen && fremderClaim(level, d, b)) {
+                abbrechen(server, b, "auf dem Besatzungsblock liegt jetzt ein fremder Claim.");
+                continue;
+            }
             if (aufgabe(server, d, b)) continue;
             if (CrownsConfig.EROBERUNG_VERTEIDIGER_ONLINE.get() && !online(server, d, b.verteidiger)) continue;
             b.rest--;
@@ -459,6 +463,14 @@ public final class EroberungService {
         return false;
     }
 
+    /** Liegt auf dem Block ein OPAC-Claim, der weder dem Staatskonto noch einem Mitglied der Verteidiger gehoert? */
+    private static boolean fremderClaim(ServerLevel level, CrownsData d, Besatzung b) {
+        java.util.UUID claimer = de.niklasmetzger.crownscore.claims.Claims.opacOwner(level, new net.minecraft.world.level.ChunkPos(b.pos));
+        if (claimer == null) return false;
+        Nation v = d.nations.get(b.verteidiger);
+        return v != null && !claimer.equals(v.staat()) && !v.mitglieder.containsKey(claimer);
+    }
+
     /** /nation aufgeben: Angreifer brechen ab, Verteidiger geben die Stadt bzw. das Land auf. */
     public static String aufgeben(MinecraftServer server, ServerPlayer p, int nr) {
         CrownsData d = CrownsData.get(server);
@@ -517,6 +529,10 @@ public final class EroberungService {
             String wer = b.zerstoertVon;
             if (wer != null && wer.isEmpty()) wer = null;
             abbrechen(server, b, "der Besatzungsblock wurde zerstoert" + (wer == null ? "." : " (von " + wer + ")."));
+            return;
+        }
+        if (geladen && fremderClaim(level, d, b)) {
+            abbrechen(server, b, "auf dem Besatzungsblock liegt jetzt ein fremder Claim.");
             return;
         }
         if (aufgabe(server, d, b)) return;
