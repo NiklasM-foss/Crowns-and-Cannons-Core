@@ -87,6 +87,16 @@ public final class Claims {
      * Nation des eigenen Chunks, sonst die eines Nachbarchunks.
      * Damit zaehlt auch das Herumstehen direkt vor einer fremden Mauer.
      */
+    /** Besitzer des OPAC-Claims an dieser Stelle (Spieler oder Staatskonto), null = frei oder ohne OPAC. */
+    public static UUID opacOwner(ServerLevel level, ChunkPos chunk) {
+        if (!opacLoaded()) return null;
+        try {
+            return OpacBridge.ownerAt(level, chunk);
+        } catch (Throwable t) {
+            return null;
+        }
+    }
+
     public static String nationNear(ServerLevel level, BlockPos pos) {
         ChunkPos c = new ChunkPos(pos);
         String own = nationAt(level, c);

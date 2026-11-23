@@ -243,7 +243,25 @@ public final class ElectionCommand {
     }
 
     private static int abbrechen(CommandContext<CommandSourceStack> ctx, boolean parlament, String nationArg) throws CommandSyntaxException {
-        if (!CommandUtil.admin(ctx.getSource())) return 0;
+        if (!Perms.isAdmin(ctx.getSource())) {
+            // Chef und Beamte: nur Abstimmungen (keine Wahl des Staatschefs) der eigenen Nation
+            CrownsData dd = CommandUtil.data(ctx);
+            Nation eigen = ctx.getSource().getEntity() instanceof ServerPlayer sp ? dd.nationOf(sp.getUUID()) : null;
+            if (parlament || nationArg != null || eigen == null || !(ctx.getSource().getEntity() instanceof ServerPlayer sp2) || !eigen.isBeamter(sp2.getUUID())) {
+                Msg.err(ctx.getSource(), "Abbrechen duerfen Admins, und Staatschef oder Beamte bei Abstimmungen der eigenen Nation.");
+                return 0;
+            }
+            Election ab = active(dd, eigen.key(), false);
+            if (ab == null || ab.amt) {
+                Msg.err(ctx.getSource(), ab == null ? "Nichts zum Abbrechen." : "Eine Wahl des Staatschefs bricht nur die Spielleitung ab.");
+                return 0;
+            }
+            ab.beendet = true;
+            ab.ergebnis = "abgebrochen durch " + sp2.getGameProfile().getName();
+            dd.setDirty();
+            Msg.broadcast(ctx.getSource().getServer(), "Abstimmung \"" + ab.titel + "\" in " + eigen.name + " wurde von " + sp2.getGameProfile().getName() + " abgebrochen.");
+            return 1;
+        }
         CrownsData d = CommandUtil.data(ctx);
         Election e;
         if (parlament) {

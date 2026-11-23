@@ -73,7 +73,7 @@ public final class Postfach {
     public static int ungelesen(CrownsData d, ServerPlayer p) {
         int n = (int) d.nachrichten.stream().filter(m -> p.getUUID().equals(m.an) && !m.gelesen).count();
         Nation nat = d.nationOf(p.getUUID());
-        if (nat != null) n += briefe(d, nat).size();
+        if (nat != null && nat.isBeamter(p.getUUID())) n += briefe(d, nat).size();
         if (de.niklasmetzger.crownscore.util.Perms.isAdmin(p)) {
             n += StadtService.offen(d).size();
             n += (int) d.staedte.stream().filter(s -> WappenStore.wartend(s) != null).count();

@@ -1,5 +1,8 @@
 package de.niklasmetzger.crownscore.treasury;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.DoubleArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
@@ -110,14 +113,17 @@ public final class LoanCommand {
             return 0;
         }
         double rest = betrag;
-        var it = t.darlehen.iterator();
+        // Darlehen im Verzug zuerst bedienen
+        List<Treasury.Loan> reihenfolge = new ArrayList<>(t.darlehen);
+        reihenfolge.sort(java.util.Comparator.comparing((Treasury.Loan l) -> !l.verzug));
+        var it = reihenfolge.iterator();
         while (it.hasNext() && rest > 0) {
             Treasury.Loan l = it.next();
             double z = Math.min(rest, l.rest);
             l.rest = Math.round((l.rest - z) * 100) / 100.0;
             rest -= z;
             if (l.rest <= 0.004) {
-                it.remove();
+                t.darlehen.remove(l);
                 Msg.broadcast(ctx.getSource().getServer(), n.name + " hat Darlehen #" + l.id + " vollstaendig getilgt.");
             } else if (l.verzug) {
                 // Verzug endet erst, wenn die offenen Raten bezahlt sind, nicht mit einem Cent

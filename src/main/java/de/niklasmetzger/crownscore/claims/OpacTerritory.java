@@ -59,18 +59,41 @@ public final class OpacTerritory {
     private static Job job;
     /** Gebiete, die waehrend eines laufenden Abgleichs angefragt wurden: {int[] region, Mode, Consumer}. */
     private static final java.util.ArrayDeque<Object[]> WARTEND = new java.util.ArrayDeque<>();
-    /** Staatskonten geloeschter Nationen: ihre Claims gelten noch als eigene, damit der Abgleich sie entfernt. */
-    private static final java.util.Set<UUID> EHEMALIG = java.util.concurrent.ConcurrentHashMap.newKeySet();
-
-    /** Nach /nation loeschen: Land und Claims des Staatskontos freigeben. */
+    /**
+     * Nach /nation loeschen: jeden Claim des Staatskontos freigeben (in allen Dimensionen, auch eroberte Staedte
+     * und zugewiesene Chunks) und die Party aufloesen, damit fruehere Buerger frei fuer neue Nationen sind.
+     * Wirkt sofort und haengt nicht vom laufenden Abgleich ab, uebersteht also auch einen Neustart.
+     */
     public static void freigeben(MinecraftServer server, Nation n) {
-        CrownsData d = CrownsData.get(server);
-        if (d.karteModus.isEmpty() || d.karteModus.equals("AUS") || n.laender.isEmpty()) return;
-        EHEMALIG.add(n.staat());
-        int[] r = WorldMap.chunkBounds(new java.util.ArrayList<>(n.laender));
-        if (r == null) return;
-        String err = start(server, Mode.valueOf(d.karteModus), r, true, msg -> CrownsCore.LOGGER.info(msg));
-        if (err != null) CrownsCore.LOGGER.warn("Land von {} nicht freigegeben: {}", n.name, err);
+        OpenPACServerAPI api = api(server);
+        if (api == null) return;
+        UUID staat = n.staat();
+        int frei = 0;
+        try {
+            var info = api.getServerClaimsManager().getPlayerInfo(staat);
+            if (info != null) {
+                List<Object[]> chunks = new ArrayList<>();
+                info.getStream().forEach(dim -> dim.getValue().getStream().forEach(list -> list.getStream()
+                        .forEach(pos -> chunks.add(new Object[]{dim.getKey(), pos}))));
+                for (Object[] c : chunks) {
+                    ChunkPos pos = (ChunkPos) c[1];
+                    api.getServerClaimsManager().unclaim((ResourceLocation) c[0], pos.x, pos.z);
+                    frei++;
+                }
+            }
+        } catch (Throwable t) {
+            CrownsCore.LOGGER.warn("Claims von {} nicht vollstaendig freigegeben: {}", n.name, t.toString());
+        }
+        try {
+            IPartyManagerAPI pm = api.getPartyManager();
+            IServerPartyAPI party = n.partei == null ? null : pm.getPartyById(n.partei);
+            if (party == null) party = pm.getPartyByOwner(staat);
+            if (party != null) pm.removeParty(party);
+        } catch (Throwable t) {
+            CrownsCore.LOGGER.warn("Party von {} nicht aufgeloest: {}", n.name, t.toString());
+        }
+        SIGNATURES.remove(n.key());
+        CrownsCore.LOGGER.info("Nation {} geloescht: {} Claims freigegeben, Party aufgeloest", n.name, frei);
     }
     private static final Map<String, String> SIGNATURES = new HashMap<>();
     private static int tickCounter;
@@ -226,7 +249,6 @@ public final class OpacTerritory {
         j.mode = mode;
         j.report = report;
         j.quiet = quiet;
-        j.states.addAll(EHEMALIG);
         for (Nation n : d.nations.values()) {
             j.states.add(n.staat());
             if (mode == Mode.AUS) continue;

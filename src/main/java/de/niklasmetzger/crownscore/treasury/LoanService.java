@@ -47,12 +47,15 @@ public final class LoanService {
             while (it.hasNext()) {
                 Treasury.Loan l = it.next();
                 if (l.naechsteRate > now) continue;
-                double faellig = Math.min(l.rate, l.rest);
+                // Im Verzug sind die offenen Raten (abzueglich schon getilgter Betraege) mit faellig
+                double offen = l.verzug ? Math.max(0, l.rate * l.verzugRaten - l.verzugBezahlt) : 0;
+                double faellig = Math.min(l.rate + offen, l.rest);
                 if (t.stand + 1e-9 >= faellig) {
                     t.stand -= faellig;
                     l.rest = Math.round((l.rest - faellig) * 100) / 100.0;
                     l.verzug = false;
                     l.verzugRaten = 0;
+                    l.verzugBezahlt = 0;
                     l.naechsteRate += WOCHE;
                     Msg.nation(server, n, "§7Zentralbank: Rate " + Msg.money(faellig) + " fuer Darlehen #" + l.id + " abgebucht. Restschuld " + Msg.money(l.rest) + ".");
                     if (l.rest <= 0.004) {

@@ -198,6 +198,12 @@ public final class EroberungService {
             return "Hier ist kein Gebiet von " + d.anzeige(sollGehoeren) + (hierGehoert == null ? "" : " (gehoert " + d.anzeige(hierGehoert) + ")")
                     + ". Der Besatzungsblock muss im Gebiet der Verteidiger stehen.";
         }
+        // In einem Spieler-Claim (OPAC) koennten die Verteidiger den Block nicht abbauen: nur freies oder Staatsgebiet
+        java.util.UUID claimer = de.niklasmetzger.crownscore.claims.Claims.opacOwner(level, new net.minecraft.world.level.ChunkPos(pos));
+        if (claimer != null && sollGehoeren != null && d.nations.get(sollGehoeren) != null
+                && !claimer.equals(d.nations.get(sollGehoeren).staat()) && !d.nations.get(sollGehoeren).mitglieder.containsKey(claimer)) {
+            return "Hier liegt ein geschuetzter Claim, den die Verteidiger nicht abbauen koennten. Such dir eine andere Stelle.";
+        }
         if (!level.getBlockState(pos).canBeReplaced()) pos = pos.above();
         if (!level.getBlockState(pos).canBeReplaced() || !level.getBlockState(pos.below()).isSolid()) {
             return "Hier kann der Besatzungsblock nicht stehen. Stell dich auf festen Boden mit freiem Platz.";

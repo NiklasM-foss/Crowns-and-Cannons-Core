@@ -118,7 +118,8 @@
 /wahl starten <Minuten> <amt true|false> <Kandidaten>	BUERGER	Wahl starten. Bei amt true wird der Sieger Staatschef. Abstimmungen startet der Staatschef, im Wahlmodus DIREKT jeder Bürger. Wahlen des Staatschefs setzen nur Staatschef oder Beamte an, mindestens 24 Stunden (Config wahlen.amtMindestMinuten). Gezählt werden nur Stimmen aktueller Bürger.
 /wahl stimme <Kandidat>	BUERGER	Stimme abgeben.
 /wahl status	BUERGER	Stand der laufenden Wahl.
-/wahl abbrechen [Land]	ADMIN	Laufende Wahl abbrechen, ohne Land die der eigenen Nation (von der Konsole mit Land).
+/wahl abbrechen	BEAMTER	Laufende Abstimmung der eigenen Nation abbrechen (Staatschef und Beamte). Eine Wahl des Staatschefs bricht nur die Spielleitung ab.
+/wahl abbrechen <Land>	ADMIN	Laufende Wahl einer beliebigen Nation abbrechen, auch von der Konsole.
 /abstimmung starten <Minuten> <Titel>	CHEF	Resolution ins Parlament einbringen.
 /abstimmung ja	BEAMTER	Für die eigene Nation mit Ja stimmen.
 /abstimmung nein	BEAMTER	Für die eigene Nation mit Nein stimmen.
