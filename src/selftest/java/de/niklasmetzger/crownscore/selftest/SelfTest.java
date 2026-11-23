@@ -972,6 +972,15 @@ public class SelfTest {
             d.groups.remove("cctest_sperre");
             PermissionManager.changed();
             check("Genauer Knoten crownscore.cccore.admin.lookup gibt Zugriff", canUse(sa, "cccore", "admin", "lookup"), "");
+            // *=false in einer Gruppe entscheidet nie, ob jemand Admin ist (sonst waeren alle Admins ausgesperrt)
+            PermData.Node allesAus = new PermData.Node("*", false, 0, "");
+            g.permissions.add(allesAus);
+            PermissionManager.changed();
+            String dimA = a.level().dimension().location().toString();
+            check("*=false laesst crownscore.admin offen", PermissionManager.check(A_ID, de.niklasmetzger.crownscore.util.Perms.ADMIN_NODE, dimA) == PermissionManager.Tri.UNDEFINED, "");
+            check("*=false sperrt fremde Befehle (command.msg)", PermissionManager.check(A_ID, "command.msg", dimA) == PermissionManager.Tri.FALSE, "");
+            g.permissions.remove(allesAus);
+            PermissionManager.changed();
             check("Nation und Praefix im Anzeigenamen", a.getDisplayName().getString().replaceAll("§.", "").equals("[Testland Alpha] [Test] TestAlpha"), "\"" + a.getDisplayName().getString() + "\"");
             check("Forge-PermissionAPI nutzt crownscore:permissions",
                     "crownscore:permissions".equals(String.valueOf(PermissionAPI.getActivePermissionHandler())), String.valueOf(PermissionAPI.getActivePermissionHandler()));

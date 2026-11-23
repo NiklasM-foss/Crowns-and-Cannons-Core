@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.5.9
+
+- **Eroberung:** Claimt ein Dritter den Besatzungsblock, hält die Besetzung an, bis der Claim weg ist (keine
+  Erstattung mehr, die sich ausnutzen ließ). Claimen die Angreifer selbst, scheitert sie.
+- **Rechte:** Ein Platzhalter-Verbot wie `*=false` entscheidet nie, ob jemand Admin ist, und sperrt Admins nicht
+  aus Befehlen aus. Für alle anderen sperrt es Vanilla- und Mod-Befehle wie gewohnt.
+
 ## 1.5.8
 
 - **Eroberung:** Ein nachträglicher Claim, den die Verteidiger nicht abbauen können, beendet die Besetzung wieder:

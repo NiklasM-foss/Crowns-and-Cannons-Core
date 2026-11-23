@@ -26,7 +26,12 @@ public final class CommandPermissionHook {
             if (enabled() && src.getEntity() instanceof ServerPlayer p) {
                 Tri t = PermissionManager.check(p, "command." + name);
                 if (t == Tri.TRUE) return true;
-                if (t == Tri.FALSE) return false;
+                if (t == Tri.FALSE) {
+                    // Ein Platzhalter-Verbot (z.B. *=false in default) sperrt Admins nicht aus, nur ein genaues Verbot
+                    if (!de.niklasmetzger.crownscore.util.Perms.isAdmin(p)) return false;
+                    String k = PermissionManager.checkDetailed(p.getUUID(), "command." + name, p.level().dimension().location().toString()).knoten();
+                    if (!k.endsWith("*")) return false;
+                }
             }
             return original.test(src);
         }

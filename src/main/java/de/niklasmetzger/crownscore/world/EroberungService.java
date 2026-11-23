@@ -357,7 +357,7 @@ public final class EroberungService {
                 abbrechen(server, b, "der Besatzungsblock wurde zerstoert" + (wer == null ? "." : " (von " + wer + ")."));
                 continue;
             }
-            if (geladen && fremderClaim(server, level, d, b)) continue;
+            if (geladen && fremderClaim(server, level, d, b) != 0) continue;
             if (aufgabe(server, d, b)) continue;
             if (CrownsConfig.EROBERUNG_VERTEIDIGER_ONLINE.get() && !online(server, d, b.verteidiger)) continue;
             b.rest--;
@@ -460,27 +460,40 @@ public final class EroberungService {
         return false;
     }
 
+    /** Besetzungen, die wegen des Claims eines Dritten gerade angehalten sind (nur fuer die Meldungen). */
+    private static final java.util.Set<Integer> ANGEHALTEN = java.util.concurrent.ConcurrentHashMap.newKeySet();
+
     /**
      * Liegt auf dem Block jetzt ein Claim, den die Verteidiger nicht abbauen koennen (weder Staatskonto noch Mitglied der
-     * Verteidiger)? Dann endet die Besetzung: Hat die Angreiferseite selbst geclaimt, ist sie gescheitert und die Gebuehr
-     * verfaellt; bei einem Dritten (z.B. Verbuendeter einer Seite) wird abgebrochen und die Gebuehr erstattet, so
-     * gewinnt weder ein Strohmann der Angreifer noch ein Freund der Verteidiger etwas.
-     * @return true, wenn die Besetzung beendet wurde
+     * Verteidiger)? Claimt die Angreiferseite selbst, ist die Besetzung gescheitert (Gebuehr verfaellt). Claimt ein
+     * Dritter, haelt die Uhr an, bis der Claim weg ist: Weder ein Strohmann der Angreifer (keine Erstattung, kein
+     * Fortschritt) noch ein Freund der Verteidiger (kein Abbruch, keine verlorene Gebuehr) gewinnt dadurch etwas. Bei
+     * Streit entscheidet die Spielleitung, die Meldung geht deshalb auch in die Kriegsnachrichten.
+     * @return 0 weiter wie bisher, 1 beendet, 2 angehalten
      */
-    private static boolean fremderClaim(MinecraftServer server, ServerLevel level, CrownsData d, Besatzung b) {
+    private static int fremderClaim(MinecraftServer server, ServerLevel level, CrownsData d, Besatzung b) {
         java.util.UUID claimer = de.niklasmetzger.crownscore.claims.Claims.opacOwner(level, new net.minecraft.world.level.ChunkPos(b.pos));
-        if (claimer == null) return false;
         Nation v = d.nations.get(b.verteidiger);
-        if (v == null || claimer.equals(v.staat()) || v.mitglieder.containsKey(claimer)) return false;
+        if (claimer == null || v == null || claimer.equals(v.staat()) || v.mitglieder.containsKey(claimer)) {
+            if (ANGEHALTEN.remove(b.id)) {
+                Msg.broadcast(server, "§eDie Besetzung durch " + d.anzeige(b.angreifer) + " laeuft weiter, der fremde Claim ist weg.");
+            }
+            return 0;
+        }
         Nation a = d.nations.get(b.angreifer);
         if (a != null && (claimer.equals(a.staat()) || a.mitglieder.containsKey(claimer))) {
+            ANGEHALTEN.remove(b.id);
             abbrechen(server, b, "die Angreifer haben den Besatzungsblock eingeclaimt.");
-        } else {
-            if (a != null && b.gebuehr > 0) de.niklasmetzger.crownscore.treasury.TreasuryService.credit(d, a.key(), b.gebuehr);
-            abbrechen(server, b, "auf dem Besatzungsblock liegt jetzt der Claim eines Dritten, die Gebuehr von "
-                    + Msg.money(b.gebuehr) + " wurde erstattet.");
+            return 1;
         }
-        return true;
+        if (ANGEHALTEN.add(b.id)) {
+            String text = "Die Besetzung von " + d.anzeige(b.verteidiger) + " durch " + d.anzeige(b.angreifer)
+                    + " ist angehalten: Auf dem Besatzungsblock liegt jetzt der Claim von " + de.niklasmetzger.crownscore.util.Names.of(server, claimer)
+                    + ". Sie laeuft weiter, sobald der Claim weg ist.";
+            Msg.broadcast(server, "§e" + text);
+            DiscordWebhook.kriegsnews(":pause_button: " + text);
+        }
+        return 2;
     }
 
     /** /nation aufgeben: Angreifer brechen ab, Verteidiger geben die Stadt bzw. das Land auf. */
@@ -543,7 +556,7 @@ public final class EroberungService {
             abbrechen(server, b, "der Besatzungsblock wurde zerstoert" + (wer == null ? "." : " (von " + wer + ")."));
             return;
         }
-        if (geladen && fremderClaim(server, level, d, b)) return;
+        if (geladen && fremderClaim(server, level, d, b) != 0) return;
         if (aufgabe(server, d, b)) return;
         if (CrownsConfig.EROBERUNG_VERTEIDIGER_ONLINE.get() && !online(server, d, b.verteidiger)) return;
         b.rest--;

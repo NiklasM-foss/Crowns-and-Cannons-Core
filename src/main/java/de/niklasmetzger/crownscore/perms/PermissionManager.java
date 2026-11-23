@@ -235,6 +235,8 @@ public final class PermissionManager {
     static List<String> kette(String node) {
         List<String> out = new ArrayList<>();
         out.add(node);
+        // Ob jemand Admin ist, entscheidet nur der genaue Knoten (weder Platzhalter-Erlaubnis noch -Verbot)
+        if (node.equals(de.niklasmetzger.crownscore.util.Perms.ADMIN_NODE)) return out;
         String n = node;
         int i;
         while ((i = n.lastIndexOf('.')) > 0) {
