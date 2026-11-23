@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.5.11
+
+- **Eroberung:** Während einer angehaltenen Besetzung bleibt auch die Kulanz der Verteidiger stehen. Bisher setzte
+  ein kurzer fremder Claim sie zurück.
+
 ## 1.5.10
 
 - **Eroberung:** Die Pause durch den Claim eines Dritten gilt auch, wenn der Chunk gerade nicht geladen ist. Während

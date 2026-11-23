@@ -447,7 +447,9 @@ public final class EroberungService {
             b.angreiferWeg = 0;
         }
         // Waehrend der Pause koennen die Verteidiger den Block im fremden Claim nicht abbauen, ihre Kulanz steht
-        if (!angehalten && online(server, d, b.verteidiger) && inDerNaehe(server, d, b.verteidiger, b.dim, m, r) == 0) {
+        if (angehalten) {
+            // Zaehler bleibt stehen (weder hoch noch zurueck), sonst setzt ein kurzer fremder Claim die Kulanz zurueck
+        } else if (online(server, d, b.verteidiger) && inDerNaehe(server, d, b.verteidiger, b.dim, m, r) == 0) {
             int weg = ++b.verteidigerWeg;
             d.setDirty();
             int kulanz = CrownsConfig.EROBERUNG_VERTEIDIGER_KULANZ.get() * 60;
