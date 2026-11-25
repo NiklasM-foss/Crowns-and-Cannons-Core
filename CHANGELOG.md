@@ -1,5 +1,18 @@
 # Changelog
 
+## 1.6.0
+
+- **Verteidiger am Banner** (Vorschlag von JaydenQ08, Config `eroberung.verteidigerrecht`, standardmäßig an):
+  - Eine Besetzung beginnt nur, wenn jemand aus der angegriffenen Nation im RP online ist. Farm und AFK zählen wie offline.
+  - Steht ein Verteidiger im RP in 15 Blöcken um die Stelle (5 Blöcke nach oben und unten), kann sie nicht beginnen.
+  - Läuft sie, steht die Uhr, solange ein Verteidiger am Banner ist. Die Angreifer müssen ihn töten oder vertreiben.
+  - Ein Verteidiger, der im Kampfgebiet stirbt, blockiert diese Besetzung nicht mehr. Tötet er danach einen Angreifer, ist sie gescheitert.
+  - Gehen die Verteidiger nach dem Start offline, läuft die Uhr weiter (`nurWennVerteidigerOnline` gilt mit dem Verteidigerrecht nicht).
+  - Wird ein Verteidiger während der Besetzung mit `/kick` oder `/ban` vom Server genommen, steht die Uhr, bis er wieder online ist.
+  - `/nation besetzungen` zeigt, ob die Uhr gerade steht. Beide Seiten bekommen eine Meldung, wenn sie anhält oder weiterläuft.
+  - Neue Config-Werte: `verteidigerRadius` (15), `verteidigerHoehe` (5), `gefallenerBeendetMitKill` (an).
+- Neue Befehlsliste `docs/commandliste.html` mit Suche und Rollenfilter, README aktualisiert.
+
 ## 1.5.13
 
 - Inhaltlich gleich wie 1.5.12, neue Nummer für die Veröffentlichung als Release auf CurseForge.

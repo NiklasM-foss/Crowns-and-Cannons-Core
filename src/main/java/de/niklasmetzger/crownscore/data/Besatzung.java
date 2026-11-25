@@ -30,6 +30,10 @@ public class Besatzung {
     public int angreiferWeg, verteidigerWeg;
     /** Wer den Block zerstoert hat, solange der Chunk nicht geladen war; null = steht noch. */
     public String zerstoertVon;
+    /** Verteidiger, die waehrend dieser Besetzung gefallen sind und sie nicht mehr blockieren. */
+    public final java.util.Set<UUID> gefallen = new java.util.HashSet<>();
+    /** Verteidiger, die waehrend dieser Besetzung gekickt oder gebannt wurden und noch nicht zurueck sind. */
+    public final java.util.Set<UUID> gesperrt = new java.util.HashSet<>();
 
     public CompoundTag toNbt() {
         CompoundTag t = new CompoundTag();
@@ -49,6 +53,8 @@ public class Besatzung {
         t.putInt("angreiferWeg", angreiferWeg);
         t.putInt("verteidigerWeg", verteidigerWeg);
         if (zerstoertVon != null) t.putString("zerstoertVon", zerstoertVon);
+        t.put("gefallen", uuids(gefallen));
+        t.put("gesperrt", uuids(gesperrt));
         return t;
     }
 
@@ -70,6 +76,23 @@ public class Besatzung {
         b.angreiferWeg = t.getInt("angreiferWeg");
         b.verteidigerWeg = t.getInt("verteidigerWeg");
         b.zerstoertVon = t.contains("zerstoertVon") ? t.getString("zerstoertVon") : null;
+        leseUuids(t, "gefallen", b.gefallen);
+        leseUuids(t, "gesperrt", b.gesperrt);
         return b;
+    }
+
+    private static net.minecraft.nbt.ListTag uuids(java.util.Set<UUID> ids) {
+        net.minecraft.nbt.ListTag l = new net.minecraft.nbt.ListTag();
+        for (UUID id : ids) l.add(net.minecraft.nbt.StringTag.valueOf(id.toString()));
+        return l;
+    }
+
+    private static void leseUuids(CompoundTag t, String key, java.util.Set<UUID> ziel) {
+        for (net.minecraft.nbt.Tag x : t.getList(key, net.minecraft.nbt.Tag.TAG_STRING)) {
+            try {
+                ziel.add(UUID.fromString(x.getAsString()));
+            } catch (IllegalArgumentException ignored) {
+            }
+        }
     }
 }

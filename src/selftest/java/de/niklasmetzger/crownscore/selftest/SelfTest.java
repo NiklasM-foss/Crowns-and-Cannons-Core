@@ -341,8 +341,10 @@ public class SelfTest {
         double bpg = de.niklasmetzger.crownscore.world.WorldMap.blocksPerDegree();
         UUID jorBuerger = UUID.fromString("00000000-0000-0000-0000-0000000004a0");
         final boolean[] online = {de.niklasmetzger.crownscore.config.CrownsConfig.EROBERUNG_VERTEIDIGER_ONLINE.get()};
+        final boolean[] recht = {de.niklasmetzger.crownscore.config.CrownsConfig.EROBERUNG_VERTEIDIGERRECHT.get()};
         final long[] gegruendet = {0};
         final de.niklasmetzger.crownscore.data.War[] krieg = {null};
+        final FakePlayer[] verteidiger = {null};
         step("Vorbereitung", () -> {
             CrownsData d = CrownsData.get(server);
             Nation sau = nat("SAU"), yem = nat("YEM"), jor = nat("JOR");
@@ -414,6 +416,7 @@ public class SelfTest {
             int y = lvl.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z);
             a.setPos(x + 0.5, y, z + 0.5);
             de.niklasmetzger.crownscore.config.CrownsConfig.EROBERUNG_VERTEIDIGER_ONLINE.set(false);
+            de.niklasmetzger.crownscore.config.CrownsConfig.EROBERUNG_VERTEIDIGERRECHT.set(false);
             String err = de.niklasmetzger.crownscore.world.EroberungService.besetzen(a, nat("SAU"));
             check("Besetzen: Block gesetzt", err == null, err);
             CrownsData d = CrownsData.get(server);
@@ -455,10 +458,92 @@ public class SelfTest {
             int bx = (int) Math.floor(36.0 * bpg), bz = (int) Math.floor(-31.0 * bpg);
             lvl.setChunkForced(bx >> 4, bz >> 4, false);
         });
+        step("Verteidigerrecht: Start", () -> {
+            CrownsData d = CrownsData.get(server);
+            de.niklasmetzger.crownscore.config.CrownsConfig.EROBERUNG_VERTEIDIGERRECHT.set(true);
+            d.landSperre.clear();
+            de.niklasmetzger.crownscore.world.EroberungService.TEST_SPIELER.clear();
+            de.niklasmetzger.crownscore.world.EroberungService.TEST_SPIELER.add(a);
+            String err = de.niklasmetzger.crownscore.world.EroberungService.besetzen(a, nat("SAU"));
+            check("Verteidigerrecht: ohne Verteidiger im RP kein Start", err != null && err.contains("im RP online"), err);
+            verteidiger[0] = FakePlayerFactory.get(lvl, new GameProfile(jorBuerger, "Testbuerger_JOR"));
+            verteidiger[0].setPos(a.getX() + 2, a.getY(), a.getZ());
+            de.niklasmetzger.crownscore.world.EroberungService.TEST_SPIELER.add(verteidiger[0]);
+            err = de.niklasmetzger.crownscore.world.EroberungService.besetzen(a, nat("SAU"));
+            check("Verteidigerrecht: Verteidiger am Banner verhindert den Start", err != null && err.contains("verteidigt hier"), err);
+            verteidiger[0].setPos(a.getX() + 40, a.getY(), a.getZ());
+            err = de.niklasmetzger.crownscore.world.EroberungService.besetzen(a, nat("SAU"));
+            check("Verteidigerrecht: Verteidiger 40 Bloecke weg, Start geht", err == null, err);
+            var b = d.besatzungen.isEmpty() ? null : d.besatzungen.get(0);
+            if (b != null) {
+                b.rest = 1000;
+                verteidiger[0].setPos(b.pos.getX() + 3.5, b.pos.getY(), b.pos.getZ() + 3.5);
+            }
+        });
+        stepWait(60, "warten", () -> {});
+        step("Verteidigerrecht: Uhr steht am Banner", () -> {
+            CrownsData d = CrownsData.get(server);
+            var b = d.besatzungen.isEmpty() ? null : d.besatzungen.get(0);
+            check("Verteidigerrecht: Besetzung laeuft noch", b != null, "");
+            if (b == null) return;
+            check("Verteidigerrecht: Uhr steht, solange der Verteidiger am Banner ist", b.rest == 1000, "rest " + b.rest);
+            String g = de.niklasmetzger.crownscore.world.EroberungService.uhrGrund(server, d, b);
+            check("Verteidigerrecht: Grund nennt den Verteidiger", g != null && g.contains("Testbuerger_JOR"), g);
+            verteidiger[0].setPos(b.pos.getX() + 3.5, b.pos.getY() + 8, b.pos.getZ() + 3.5);
+            check("Verteidigerrecht: 8 Bloecke hoeher zaehlt nicht", de.niklasmetzger.crownscore.world.EroberungService.uhrGrund(server, d, b) == null, "");
+            verteidiger[0].setPos(b.pos.getX() + 3.5, b.pos.getY(), b.pos.getZ() + 3.5);
+            de.niklasmetzger.crownscore.world.EroberungService.tod(server, verteidiger[0], a);
+            check("Verteidigerrecht: gefallener Verteidiger ist vermerkt", b.gefallen.contains(jorBuerger), "");
+            check("Verteidigerrecht: gefallener Verteidiger blockiert nicht mehr", de.niklasmetzger.crownscore.world.EroberungService.uhrGrund(server, d, b) == null, "");
+        });
+        stepWait(60, "warten", () -> {});
+        step("Verteidigerrecht: Gefallener toetet Angreifer", () -> {
+            CrownsData d = CrownsData.get(server);
+            var b = d.besatzungen.isEmpty() ? null : d.besatzungen.get(0);
+            check("Verteidigerrecht: Uhr laeuft nach dem Tod weiter", b != null && b.rest < 1000, b == null ? "" : "rest " + b.rest);
+            de.niklasmetzger.crownscore.world.EroberungService.tod(server, a, verteidiger[0]);
+            check("Verteidigerrecht: Kill des Gefallenen beendet die Besetzung", d.besatzungen.isEmpty(), "");
+            check("Verteidigerrecht: Jordanien bleibt bei Jordanien", nat("JOR").laender.contains("JOR"), "");
+        });
+        step("Verteidigerrecht: Kick", () -> {
+            CrownsData d = CrownsData.get(server);
+            d.landSperre.clear();
+            verteidiger[0].setPos(a.getX() + 40, a.getY(), a.getZ());
+            String err = de.niklasmetzger.crownscore.world.EroberungService.besetzen(a, nat("SAU"));
+            check("Verteidigerrecht: neue Besetzung beginnt", err == null, err);
+            var b = d.besatzungen.isEmpty() ? null : d.besatzungen.get(0);
+            if (b == null) return;
+            check("Verteidigerrecht: neue Besetzung kennt keine Gefallenen", b.gefallen.isEmpty(), "");
+            b.rest = 1000;
+            de.niklasmetzger.crownscore.world.EroberungService.TEST_SPIELER.remove(verteidiger[0]);
+            de.niklasmetzger.crownscore.world.EroberungService.gesperrt(server, jorBuerger);
+        });
+        stepWait(60, "warten", () -> {});
+        step("Verteidigerrecht: Uhr steht nach Kick", () -> {
+            CrownsData d = CrownsData.get(server);
+            var b = d.besatzungen.isEmpty() ? null : d.besatzungen.get(0);
+            check("Verteidigerrecht: Besetzung laeuft nach Kick weiter", b != null, "");
+            if (b == null) return;
+            check("Verteidigerrecht: Uhr steht, solange der Gekickte weg ist", b.rest == 1000, "rest " + b.rest);
+            String g = de.niklasmetzger.crownscore.world.EroberungService.uhrGrund(server, d, b);
+            check("Verteidigerrecht: Grund nennt den Kick", g != null && g.contains("gekickt"), g);
+            de.niklasmetzger.crownscore.world.EroberungService.TEST_SPIELER.add(verteidiger[0]);
+        });
+        stepWait(60, "warten", () -> {});
+        step("Verteidigerrecht: zurueck", () -> {
+            CrownsData d = CrownsData.get(server);
+            var b = d.besatzungen.isEmpty() ? null : d.besatzungen.get(0);
+            check("Verteidigerrecht: Uhr laeuft, wenn er zurueck ist", b != null && b.rest < 1000 && b.gesperrt.isEmpty(), b == null ? "" : "rest " + b.rest);
+            if (b != null) de.niklasmetzger.crownscore.world.EroberungService.abbrechen(server, b, "Selbsttest");
+            de.niklasmetzger.crownscore.world.EroberungService.TEST_SPIELER.remove(verteidiger[0]);
+            de.niklasmetzger.crownscore.world.EroberungService.TEST_SPIELER.add(a);
+        });
         stepUntil("Karte", () -> !de.niklasmetzger.crownscore.claims.OpacTerritory.running(), 4000);
         step("Aufraeumen", () -> {
             CrownsData d = CrownsData.get(server);
             de.niklasmetzger.crownscore.config.CrownsConfig.EROBERUNG_VERTEIDIGER_ONLINE.set(online[0]);
+            de.niklasmetzger.crownscore.config.CrownsConfig.EROBERUNG_VERTEIDIGERRECHT.set(recht[0]);
+            de.niklasmetzger.crownscore.world.EroberungService.TEST_SPIELER.clear();
             if (krieg[0] != null) de.niklasmetzger.crownscore.war.WarService.end(server, krieg[0], "Selbsttest beendet", false);
             Nation sau = nat("SAU"), jor = nat("JOR");
             jor.mitglieder.remove(jorBuerger);
@@ -484,6 +569,7 @@ public class SelfTest {
         double bpg = de.niklasmetzger.crownscore.world.WorldMap.blocksPerDegree();
         UUID jorBuerger = UUID.fromString("00000000-0000-0000-0000-0000000004a0");
         final boolean[] online = {de.niklasmetzger.crownscore.config.CrownsConfig.EROBERUNG_VERTEIDIGER_ONLINE.get()};
+        final boolean[] recht = {de.niklasmetzger.crownscore.config.CrownsConfig.EROBERUNG_VERTEIDIGERRECHT.get()};
         final long[] gegruendet = {0};
         final de.niklasmetzger.crownscore.data.War[] krieg = {null};
         final List<BlockPos> gesetzt = new java.util.ArrayList<>();
@@ -603,6 +689,7 @@ public class SelfTest {
             int bx = s.pos.getX() + 3, bz = s.pos.getZ() - 3;
             a.setPos(bx + 0.5, lvl.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, bx, bz), bz + 0.5);
             de.niklasmetzger.crownscore.config.CrownsConfig.EROBERUNG_VERTEIDIGER_ONLINE.set(false);
+            de.niklasmetzger.crownscore.config.CrownsConfig.EROBERUNG_VERTEIDIGERRECHT.set(false);
             // eigenes Startgeld, die Suite darf nicht vom Stand frueherer Laeufe abhaengen
             de.niklasmetzger.crownscore.treasury.TreasuryService.credit(d, nat("SAU").key(), 1.0E6);
             String err = de.niklasmetzger.crownscore.world.EroberungService.besetzen(a, nat("SAU"));
@@ -624,6 +711,8 @@ public class SelfTest {
         step("Aufraeumen", () -> {
             CrownsData d = CrownsData.get(server);
             de.niklasmetzger.crownscore.config.CrownsConfig.EROBERUNG_VERTEIDIGER_ONLINE.set(online[0]);
+            de.niklasmetzger.crownscore.config.CrownsConfig.EROBERUNG_VERTEIDIGERRECHT.set(recht[0]);
+            de.niklasmetzger.crownscore.world.EroberungService.TEST_SPIELER.clear();
             if (krieg[0] != null) de.niklasmetzger.crownscore.war.WarService.end(server, krieg[0], "Selbsttest beendet", false);
             Nation sau = nat("SAU"), jor = nat("JOR");
             de.niklasmetzger.crownscore.world.WeltkarteCommand.uebertragen(server, List.of("JOR"), jor, null, LOG::info);

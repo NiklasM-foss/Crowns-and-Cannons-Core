@@ -162,6 +162,16 @@ der Vatikan sind dafür zu klein, die Antarktis ist ausgelassen.
   Stadtmitte, gilt die Besetzung nach `angreiferKulanzSekunden` als aufgegeben.
   Bleiben die Verteidiger fern, obwohl jemand von ihnen online ist, fällt die Stadt
   nach `verteidigerKulanzMinuten`. `/nation aufgeben` geht für beide Seiten.
+- **Verteidiger am Banner** (`verteidigerrecht`, Standard an): Beginnen geht nur, wenn
+  jemand aus der angegriffenen Nation im RP online ist, und nicht, solange ein
+  Verteidiger im RP in `verteidigerRadius` Blöcken (`verteidigerHoehe` nach oben und
+  unten) um die Stelle steht. Läuft die Besetzung, steht die Uhr, solange ein
+  Verteidiger dort ist. Wer im Kampfgebiet (`aufgabeRadius`) fällt, blockiert diese
+  Besetzung nicht mehr; tötet er danach einen Angreifer, ist sie gescheitert
+  (`gefallenerBeendetMitKill`). Nach dem Start läuft die Uhr auch weiter, wenn die
+  Verteidiger offline gehen. Wird einer von ihnen gekickt oder gebannt, steht sie, bis er
+  wieder online ist. Den Banner in die Hauptfestung oder das Rathaus zu stellen und sich
+  nicht einzumauern, regeln die Serverregeln.
 - **Fremde Claims:** Gesetzt wird nicht im eigenen Gebiet und nicht in fremden
   Spieler-Claims. Claimt nach dem Setzen ein Dritter den Block, hält die Besetzung an,
   bis der Claim weg ist (die Angreifer müssen in der Nähe bleiben, die Kulanz der
@@ -350,7 +360,8 @@ ersten Start mit Kommentaren erzeugt. Wichtig:
   `besatzungProChunk`, `haltezeitMinuten`, `nurWennVerteidigerOnline`,
   `schutzNeueNationTage`, `sperreNachEroberungTage`, `stammlandGeschuetzt`,
   `gleichzeitigeBesetzungen`, `besatzungsblock`, `aufgabeRadius`,
-  `angreiferKulanzSekunden`, `verteidigerKulanzMinuten`.
+  `angreiferKulanzSekunden`, `verteidigerKulanzMinuten`, `verteidigerrecht`,
+  `verteidigerRadius`, `verteidigerHoehe`, `gefallenerBeendetMitKill`.
 
 Spielstand in `world/data/crownscore.dat`, Blockprotokoll in
 `world/crownscore/protokoll.mv.db`, Rechte in `world/crownscore/permissions.json`,

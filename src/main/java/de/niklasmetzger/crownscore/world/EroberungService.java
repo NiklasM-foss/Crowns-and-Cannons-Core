@@ -208,6 +208,22 @@ public final class EroberungService {
         if (!level.getBlockState(pos).canBeReplaced() || !level.getBlockState(pos.below()).isSolid()) {
             return "Hier kann der Besatzungsblock nicht stehen. Stell dich auf festen Boden mit freiem Platz.";
         }
+        if (CrownsConfig.EROBERUNG_VERTEIDIGERRECHT.get() && sollGehoeren != null) {
+            String vName = d.anzeige(sollGehoeren);
+            if (!rpOnline(server, d, sollGehoeren)) {
+                return "Niemand aus " + vName + " ist gerade im RP online. Ohne Verteidiger kann nicht besetzt werden.";
+            }
+            List<String> amBanner = new ArrayList<>();
+            for (ServerPlayer v : spieler(server)) {
+                if (sollGehoeren.equals(d.nationKeyOf(v.getUUID())) && aktiv(v) && amBanner(v, level.dimension().location().toString(), pos)) {
+                    amBanner.add(v.getGameProfile().getName());
+                }
+            }
+            if (!amBanner.isEmpty()) {
+                return String.join(", ", amBanner) + " verteidigt hier (" + CrownsConfig.EROBERUNG_VERTEIDIGER_RADIUS.get()
+                        + " Bloecke). Solange ein Verteidiger am Banner steht, kann die Besetzung nicht beginnen.";
+            }
+        }
         double gebuehr = stadt != null ? CrownsConfig.EROBERUNG_GEBUEHR_GRUND.get()
                 + CrownsConfig.EROBERUNG_GEBUEHR_PRO_CHUNK.get() * de.niklasmetzger.crownscore.handel.StadtService.chunks(stadt).size() : besatzungsgebuehr(c);
         if (!de.niklasmetzger.crownscore.treasury.TreasuryService.charge(d, wer.key(), gebuehr)) {
@@ -242,7 +258,8 @@ public final class EroberungService {
                 wer.name + " hat einen Besatzungsblock bei " + wo + " gesetzt. Haelt er " + dauer + ", verliert ihr " + ziel + ". Zerstoert ihn!", null);
         DiscordWebhook.kriegsnews(":triangular_flag_on_post: **" + wer.name + " besetzt " + ziel + "** (" + verteidiger.name + ")\n"
                 + "Besatzungsblock bei " + wo + ", Haltezeit " + dauer
-                + (CrownsConfig.EROBERUNG_VERTEIDIGER_ONLINE.get() ? " (zaehlt nur, solange jemand aus " + verteidiger.name + " online ist)" : ""));
+                + (CrownsConfig.EROBERUNG_VERTEIDIGERRECHT.get() ? " (die Uhr steht, solange ein Verteidiger am Banner ist)"
+                : CrownsConfig.EROBERUNG_VERTEIDIGER_ONLINE.get() ? " (zaehlt nur, solange jemand aus " + verteidiger.name + " online ist)" : ""));
         CrownsCore.LOGGER.info("Besetzung {}: {} besetzt {} ({}) bei {}", b.id, wer.name, ziel, verteidiger.name, wo);
         return null;
     }
@@ -274,6 +291,7 @@ public final class EroberungService {
         CrownsData d = CrownsData.get(server);
         if (!d.besatzungen.remove(b)) return;
         ANGEHALTEN.remove(b.id);
+        UHR_STATUS.remove(b.id);
         d.setDirty();
         b.zerstoertVon = null;
         ServerLevel level = level(server, b);
@@ -311,10 +329,137 @@ public final class EroberungService {
     }
 
     private static boolean online(MinecraftServer server, CrownsData d, String nationKey) {
-        for (ServerPlayer p : server.getPlayerList().getPlayers()) {
+        for (ServerPlayer p : spieler(server)) {
             if (nationKey.equals(d.nationKeyOf(p.getUUID()))) return true;
         }
         return false;
+    }
+
+    /** Nur fuer den Selbsttest: Fake-Spieler, die als online gelten. */
+    public static final List<ServerPlayer> TEST_SPIELER = new java.util.concurrent.CopyOnWriteArrayList<>();
+
+    static List<ServerPlayer> spieler(MinecraftServer server) {
+        if (TEST_SPIELER.isEmpty()) return server.getPlayerList().getPlayers();
+        List<ServerPlayer> l = new ArrayList<>(server.getPlayerList().getPlayers());
+        l.addAll(TEST_SPIELER);
+        return l;
+    }
+
+    /** Zaehlt als Verteidiger: lebt, kein Zuschauer, im RP (Farm und AFK zaehlen wie offline). */
+    static boolean aktiv(ServerPlayer p) {
+        return p.isAlive() && !p.isSpectator()
+                && de.niklasmetzger.crownscore.mode.ModeService.mode(p.getUUID()) == de.niklasmetzger.crownscore.mode.PlayerMode.RP;
+    }
+
+    /** Ist jemand aus der Nation im RP online? */
+    static boolean rpOnline(MinecraftServer server, CrownsData d, String nationKey) {
+        for (ServerPlayer p : spieler(server)) {
+            if (nationKey.equals(d.nationKeyOf(p.getUUID())) && !p.isSpectator()
+                    && de.niklasmetzger.crownscore.mode.ModeService.mode(p.getUUID()) == de.niklasmetzger.crownscore.mode.PlayerMode.RP) return true;
+        }
+        return false;
+    }
+
+    /** Steht der Spieler im Verteidigerbereich um den Block (Radius waagerecht, Hoehe nach oben und unten)? */
+    static boolean amBanner(ServerPlayer p, String dim, BlockPos pos) {
+        if (!p.level().dimension().location().toString().equals(dim)) return false;
+        int r = CrownsConfig.EROBERUNG_VERTEIDIGER_RADIUS.get();
+        double dx = p.getX() - (pos.getX() + 0.5), dz = p.getZ() - (pos.getZ() + 0.5);
+        return dx * dx + dz * dz <= (double) r * r && Math.abs(p.getY() - pos.getY()) <= CrownsConfig.EROBERUNG_VERTEIDIGER_HOEHE.get() + 0.5;
+    }
+
+    /** Verteidiger, die gerade am Banner stehen und die Uhr anhalten. */
+    public static List<ServerPlayer> verteidigerAmBanner(MinecraftServer server, CrownsData d, Besatzung b) {
+        List<ServerPlayer> l = new ArrayList<>();
+        for (ServerPlayer p : spieler(server)) {
+            if (b.verteidiger.equals(d.nationKeyOf(p.getUUID())) && !b.gefallen.contains(p.getUUID()) && aktiv(p) && amBanner(p, b.dim, b.pos)) l.add(p);
+        }
+        return l;
+    }
+
+    /** Letzter gemeldeter Uhrzustand je Besetzung (nur fuer die Meldungen; "" laeuft, "banner", "gesperrt"). */
+    private static final Map<Integer, String> UHR_STATUS = new java.util.concurrent.ConcurrentHashMap<>();
+
+    /** Warum die Uhr gerade steht, oder null, wenn sie laeuft. */
+    public static String uhrGrund(MinecraftServer server, CrownsData d, Besatzung b) {
+        if (!CrownsConfig.EROBERUNG_VERTEIDIGERRECHT.get()) {
+            return CrownsConfig.EROBERUNG_VERTEIDIGER_ONLINE.get() && !online(server, d, b.verteidiger)
+                    ? "niemand aus " + d.anzeige(b.verteidiger) + " ist online" : null;
+        }
+        if (!b.gesperrt.isEmpty()) {
+            java.util.Set<java.util.UUID> on = new java.util.HashSet<>();
+            for (ServerPlayer p : spieler(server)) on.add(p.getUUID());
+            if (b.gesperrt.removeIf(id -> on.contains(id) || !b.verteidiger.equals(d.nationKeyOf(id)))) d.setDirty();
+            if (!b.gesperrt.isEmpty()) {
+                return "gekickt oder gebannt: " + String.join(", ", b.gesperrt.stream().map(id -> de.niklasmetzger.crownscore.util.Names.of(server, id)).toList());
+            }
+        }
+        List<ServerPlayer> am = verteidigerAmBanner(server, d, b);
+        if (!am.isEmpty()) return "Verteidiger am Banner: " + String.join(", ", am.stream().map(p -> p.getGameProfile().getName()).toList());
+        return null;
+    }
+
+    /** Steht die Uhr? Meldet einen Wechsel einmal an beide Seiten. */
+    private static boolean uhrSteht(MinecraftServer server, CrownsData d, Besatzung b, String ziel) {
+        String grund = uhrGrund(server, d, b);
+        if (CrownsConfig.EROBERUNG_VERTEIDIGERRECHT.get()) {
+            String neu = grund == null ? "" : grund.startsWith("Verteidiger") ? "banner" : "gesperrt";
+            String alt = UHR_STATUS.put(b.id, neu);
+            if (alt == null ? !neu.isEmpty() : !alt.equals(neu)) {
+                String text = grund == null ? "Die Uhr der Besetzung von " + ziel + " laeuft wieder."
+                        : "Die Uhr der Besetzung von " + ziel + " steht (" + grund + ").";
+                Nation a = d.nations.get(b.angreifer), v = d.nations.get(b.verteidiger);
+                if (a != null) Msg.nation(server, a, "§6" + text);
+                if (v != null) Msg.nation(server, v, "§e" + text);
+            }
+        }
+        return grund != null;
+    }
+
+    /** Ein Spieler ist gestorben: gefallene Verteidiger blockieren nicht mehr, toeten sie einen Angreifer, ist die Besetzung gescheitert. */
+    public static void tod(MinecraftServer server, ServerPlayer opfer, ServerPlayer taeter) {
+        if (!CrownsConfig.EROBERUNG_VERTEIDIGERRECHT.get()) return;
+        CrownsData d = CrownsData.get(server);
+        if (d.besatzungen.isEmpty()) return;
+        String opferNation = d.nationKeyOf(opfer.getUUID());
+        if (opferNation == null) return;
+        for (Besatzung b : new ArrayList<>(d.besatzungen)) {
+            if (!imKampfgebiet(d, b, opfer)) continue;
+            String ziel = !b.stadt.isEmpty() ? b.stadt : b.land;
+            if (opferNation.equals(b.verteidiger)) {
+                if (b.gefallen.add(opfer.getUUID())) {
+                    d.setDirty();
+                    opfer.sendSystemMessage(net.minecraft.network.chat.Component.literal("§cDu bist gefallen und blockierst die Besetzung von " + ziel + " nicht mehr."
+                            + (CrownsConfig.EROBERUNG_GEFALLENER_ABBRUCH.get() ? " Toetest du einen Angreifer, ist sie gescheitert." : "")));
+                }
+            } else if (opferNation.equals(b.angreifer) && taeter != null && CrownsConfig.EROBERUNG_GEFALLENER_ABBRUCH.get()
+                    && b.gefallen.contains(taeter.getUUID()) && b.verteidiger.equals(d.nationKeyOf(taeter.getUUID()))) {
+                abbrechen(server, b, taeter.getGameProfile().getName() + " ist gefallen, kam zurueck und hat " + opfer.getGameProfile().getName() + " getoetet.");
+            }
+        }
+    }
+
+    private static boolean imKampfgebiet(CrownsData d, Besatzung b, ServerPlayer p) {
+        if (!p.level().dimension().location().toString().equals(b.dim)) return false;
+        int r = CrownsConfig.EROBERUNG_AUFGABE_RADIUS.get();
+        if (r <= 0) return true;
+        BlockPos m = mitte(d, b);
+        double dx = p.getX() - m.getX(), dz = p.getZ() - m.getZ();
+        return dx * dx + dz * dz <= (double) r * r;
+    }
+
+    /** Ein Verteidiger wurde gekickt oder gebannt: die Uhr seiner Besetzungen steht, bis er wieder online ist. */
+    public static void gesperrt(MinecraftServer server, java.util.UUID id) {
+        if (!CrownsConfig.EROBERUNG_VERTEIDIGERRECHT.get()) return;
+        CrownsData d = CrownsData.get(server);
+        String n = d.nationKeyOf(id);
+        if (n == null) return;
+        for (Besatzung b : d.besatzungen) {
+            if (n.equals(b.verteidiger) && b.gesperrt.add(id)) {
+                d.setDirty();
+                CrownsCore.LOGGER.info("Besetzung {}: Verteidiger {} gekickt oder gebannt, Uhr steht bis zur Rueckkehr", b.id, id);
+            }
+        }
     }
 
     /** Aus dem Scheduler, einmal pro Sekunde. */
@@ -363,7 +508,7 @@ public final class EroberungService {
             if (fc == 1) continue;
             if (aufgabe(server, d, b, fc == 2)) continue;
             if (fc == 2) continue; // angehalten: Angreifer muessen vor Ort bleiben, die Uhr steht
-            if (CrownsConfig.EROBERUNG_VERTEIDIGER_ONLINE.get() && !online(server, d, b.verteidiger)) continue;
+            if (uhrSteht(server, d, b, c.name())) continue;
             b.rest--;
             d.setDirty();
             if (b.rest > 0) {
@@ -384,6 +529,7 @@ public final class EroberungService {
         CrownsData d = CrownsData.get(server);
         if (!d.besatzungen.remove(b)) return;
         ANGEHALTEN.remove(b.id);
+        UHR_STATUS.remove(b.id);
         d.setDirty();
         b.zerstoertVon = null;
         ServerLevel level = level(server, b);
@@ -415,7 +561,7 @@ public final class EroberungService {
 
     private static int inDerNaehe(MinecraftServer server, CrownsData d, String nationKey, String dim, BlockPos mitte, int r) {
         int n = 0;
-        for (ServerPlayer p : server.getPlayerList().getPlayers()) {
+        for (ServerPlayer p : spieler(server)) {
             if (!nationKey.equals(d.nationKeyOf(p.getUUID())) || p.isSpectator()) continue;
             if (!p.level().dimension().location().toString().equals(dim)) continue;
             double dx = p.getX() - mitte.getX(), dz = p.getZ() - mitte.getZ();
@@ -431,7 +577,10 @@ public final class EroberungService {
         BlockPos m = mitte(d, b);
         String ziel = !b.stadt.isEmpty() ? b.stadt : b.land;
         // Steht die Uhr (Verteidiger offline), muessen die Angreifer auch nicht vor Ort warten
-        boolean uhrLaeuft = !CrownsConfig.EROBERUNG_VERTEIDIGER_ONLINE.get() || online(server, d, b.verteidiger);
+        boolean recht = CrownsConfig.EROBERUNG_VERTEIDIGERRECHT.get();
+        // Mit Verteidigerrecht steht die Uhr ohne Kampf nur bei gekickten oder gebannten Verteidigern; am Banner wird gekaempft, da bleiben alle
+        boolean uhrLaeuft = recht ? b.gesperrt.isEmpty()
+                : !CrownsConfig.EROBERUNG_VERTEIDIGER_ONLINE.get() || online(server, d, b.verteidiger);
         if (!uhrLaeuft) {
             b.angreiferWeg = 0;
         } else if (inDerNaehe(server, d, b.angreifer, b.dim, m, r) == 0) {
@@ -447,9 +596,10 @@ public final class EroberungService {
             b.angreiferWeg = 0;
         }
         // Waehrend der Pause koennen die Verteidiger den Block im fremden Claim nicht abbauen, ihre Kulanz steht
-        if (angehalten) {
+        if (angehalten || recht && !b.gesperrt.isEmpty()) {
             // Zaehler bleibt stehen (weder hoch noch zurueck), sonst setzt ein kurzer fremder Claim die Kulanz zurueck
-        } else if (online(server, d, b.verteidiger) && inDerNaehe(server, d, b.verteidiger, b.dim, m, r) == 0) {
+        } else if ((recht ? rpOnline(server, d, b.verteidiger) : online(server, d, b.verteidiger))
+                && inDerNaehe(server, d, b.verteidiger, b.dim, m, r) == 0) {
             int weg = ++b.verteidigerWeg;
             d.setDirty();
             int kulanz = CrownsConfig.EROBERUNG_VERTEIDIGER_KULANZ.get() * 60;
@@ -576,7 +726,7 @@ public final class EroberungService {
         if (fc == 1) return;
         if (aufgabe(server, d, b, fc == 2)) return;
         if (fc == 2) return; // angehalten: Angreifer muessen vor Ort bleiben, die Uhr steht
-        if (CrownsConfig.EROBERUNG_VERTEIDIGER_ONLINE.get() && !online(server, d, b.verteidiger)) return;
+        if (uhrSteht(server, d, b, s.name)) return;
         b.rest--;
         d.setDirty();
         if (b.rest > 0) {
@@ -646,7 +796,12 @@ public final class EroberungService {
     public static String zeile(CrownsData d, Besatzung b) {
         Country c = WorldMap.byCode(b.land);
         return String.format(Locale.GERMANY, "Nr. %d: %s besetzt %s (%s), Block bei %d %d %d, noch %s", b.id, d.anzeige(b.angreifer),
-                !b.stadt.isEmpty() ? "die Stadt " + b.stadt : c == null ? b.land : c.name(), d.anzeige(b.verteidiger), b.pos.getX(), b.pos.getY(), b.pos.getZ(), TimeUtil.duration(b.rest * 1000L));
+                !b.stadt.isEmpty() ? "die Stadt " + b.stadt : c == null ? b.land : c.name(), d.anzeige(b.verteidiger), b.pos.getX(), b.pos.getY(), b.pos.getZ(), TimeUtil.duration(b.rest * 1000L))
+                + switch (UHR_STATUS.getOrDefault(b.id, "")) {
+                    case "banner" -> " (Uhr steht: Verteidiger am Banner)";
+                    case "gesperrt" -> " (Uhr steht: Verteidiger gekickt oder gebannt)";
+                    default -> "";
+                };
     }
 
     public static class EroberungEvents {
@@ -658,6 +813,37 @@ public final class EroberungService {
                 if (b.pos.equals(e.getPos()) && b.dim.equals(level.dimension().location().toString())) {
                     b.zerstoertVon = e.getPlayer() == null ? "" : e.getPlayer().getGameProfile().getName();
                 }
+            }
+        }
+
+        @SubscribeEvent
+        public void onDeath(net.minecraftforge.event.entity.living.LivingDeathEvent e) {
+            if (!(e.getEntity() instanceof ServerPlayer opfer) || opfer.getServer() == null) return;
+            ServerPlayer taeter = e.getSource().getEntity() instanceof ServerPlayer sp ? sp : null;
+            tod(opfer.getServer(), opfer, taeter);
+        }
+
+        /** /kick und /ban gegen Verteidiger halten deren Besetzungen an, bis sie wieder online sind. */
+        @SubscribeEvent
+        public void onCommand(net.minecraftforge.event.CommandEvent e) {
+            var pr = e.getParseResults();
+            var nodes = pr.getContext().getNodes();
+            if (nodes.isEmpty()) return;
+            String root = nodes.get(0).getNode().getName();
+            if (!root.equals("kick") && !root.equals("ban")) return;
+            MinecraftServer server = pr.getContext().getSource().getServer();
+            if (server == null || CrownsData.get(server).besatzungen.isEmpty()) return;
+            try {
+                var ctx = pr.getContext().build(pr.getReader().getString());
+                if (root.equals("kick")) {
+                    for (ServerPlayer p : net.minecraft.commands.arguments.EntityArgument.getPlayers(ctx, "targets")) gesperrt(server, p.getUUID());
+                } else {
+                    for (com.mojang.authlib.GameProfile gp : net.minecraft.commands.arguments.GameProfileArgument.getGameProfiles(ctx, "targets")) {
+                        if (gp.getId() != null) gesperrt(server, gp.getId());
+                    }
+                }
+            } catch (Exception ignored) {
+                // Ungueltiger Befehl: Minecraft meldet den Fehler selbst
             }
         }
 
