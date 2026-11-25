@@ -110,6 +110,9 @@ public class SelfTest {
         })).then(Commands.literal("staedte").executes(ctx -> {
             staedte(ctx.getSource().getServer());
             return 1;
+        })).then(Commands.literal("discord").executes(ctx -> {
+            discord(ctx.getSource().getServer());
+            return 1;
         })));
     }
 
@@ -590,6 +593,80 @@ public class SelfTest {
     }
 
     /** Staedte: Antrag, Bestaetigung, Villager-Haendler mit Grenze und Preis, Eroberung einer Stadt und damit des Landes. */
+    /** Discord-Bot ohne Verbindung: Befehlsliste, Verknuepfen, Speichern, Kartenbild. */
+    private void discord(MinecraftServer srv) {
+        server = srv;
+        lvl = srv.overworld();
+        pass = fail = 0;
+        steps.clear();
+        LOG.info("[CCTEST] START Discord");
+        if (a == null) a = FakePlayerFactory.get(lvl, new GameProfile(A_ID, "TestAlpha"));
+        step("Befehlsliste", () -> {
+            var defs = de.niklasmetzger.crownscore.discord.DiscordBot.befehlsListe();
+            check("Discord: 22 Befehle", defs.size() == 22, String.valueOf(defs.size()));
+            java.util.Set<String> namen = new java.util.HashSet<>();
+            for (var e : defs) {
+                var o = e.getAsJsonObject();
+                String n = o.get("name").getAsString();
+                namen.add(n);
+                check("Discord: Name " + n + " gueltig", n.matches("[a-z]{1,32}"), n);
+                check("Discord: Beschreibung " + n + " hoechstens 100 Zeichen", o.get("description").getAsString().length() <= 100, "");
+                if (o.has("options")) {
+                    boolean optional = false, ok = true;
+                    for (var x : o.getAsJsonArray("options")) {
+                        boolean pflicht = x.getAsJsonObject().get("required").getAsBoolean();
+                        if (pflicht && optional) ok = false;
+                        if (!pflicht) optional = true;
+                    }
+                    check("Discord: " + n + " Pflichtoptionen zuerst", ok, "");
+                }
+            }
+            check("Discord: Namen eindeutig", namen.size() == defs.size(), "");
+        });
+        step("Verknuepfen", () -> {
+            CrownsData d = CrownsData.get(server);
+            d.discord.remove("111111111111111111");
+            String err = de.niklasmetzger.crownscore.discord.DiscordBot.verknuepfen(server, a, "FALSCH");
+            check("Discord: falscher Code abgelehnt", err != null, err);
+            String code = de.niklasmetzger.crownscore.discord.DiscordBot.neuerCode("111111111111111111");
+            check("Discord: Code hat 6 Zeichen", code.length() == 6, code);
+            err = de.niklasmetzger.crownscore.discord.DiscordBot.verknuepfen(server, a, code.toLowerCase(java.util.Locale.ROOT));
+            check("Discord: Code verknuepft (auch klein geschrieben)", err == null && A_ID.equals(d.discord.get("111111111111111111")), err);
+            err = de.niklasmetzger.crownscore.discord.DiscordBot.verknuepfen(server, a, code);
+            check("Discord: Code nur einmal gueltig", err != null, err);
+            String zweiter = de.niklasmetzger.crownscore.discord.DiscordBot.neuerCode("222222222222222222");
+            de.niklasmetzger.crownscore.discord.DiscordBot.verknuepfen(server, a, zweiter);
+            check("Discord: Kontowechsel loest die alte Verknuepfung", !d.discord.containsKey("111111111111111111")
+                    && A_ID.equals(d.discord.get("222222222222222222")), String.valueOf(d.discord));
+        });
+        step("Speichern", () -> {
+            CrownsData d = CrownsData.get(server);
+            d.kontoStand.put(A_ID, new double[]{123.5, 42});
+            d.offeneZahlungen.put(A_ID, 7.0);
+            d.discordRollen.put("testnation", "333");
+            var neu = CrownsData.load(d.save(new net.minecraft.nbt.CompoundTag()));
+            check("Discord: Verknuepfung wird gespeichert", A_ID.equals(neu.discord.get("222222222222222222")), "");
+            check("Discord: Kontostand wird gespeichert", neu.kontoStand.containsKey(A_ID) && neu.kontoStand.get(A_ID)[0] == 123.5, "");
+            check("Discord: offene Zahlung wird gespeichert", Double.valueOf(7.0).equals(neu.offeneZahlungen.get(A_ID)), "");
+            check("Discord: Rolle wird gespeichert", "333".equals(neu.discordRollen.get("testnation")), "");
+            d.kontoStand.remove(A_ID);
+            d.offeneZahlungen.remove(A_ID);
+            d.discordRollen.remove("testnation");
+            check("Discord: trennen", de.niklasmetzger.crownscore.discord.DiscordBot.trennen(server, A_ID) && !d.discord.containsValue(A_ID), "");
+            d.setDirty();
+        });
+        step("Kartenbild", () -> {
+            try {
+                byte[] png = de.niklasmetzger.crownscore.discord.DiscordBot.kartenPng(server);
+                var img = javax.imageio.ImageIO.read(new java.io.ByteArrayInputStream(png));
+                check("Discord: Karte ist ein PNG mit 1600 Pixeln Breite", img != null && img.getWidth() == 1600, img == null ? "kein Bild" : img.getWidth() + "x" + img.getHeight());
+                check("Discord: Karte unter 8 MB", png.length < 8_000_000, png.length + " Bytes");
+            } catch (Exception e) {
+                check("Discord: Karte gezeichnet", false, e.toString());
+            }
+        });
+    }
+
     private void staedte(MinecraftServer srv) {
         server = srv;
         lvl = srv.overworld();

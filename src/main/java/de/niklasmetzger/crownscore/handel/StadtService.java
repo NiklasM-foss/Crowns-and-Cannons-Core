@@ -253,10 +253,11 @@ public final class StadtService {
             c.append(knopf("[Ablehnen]", "/cccore staedte ablehnen \"" + s.name + "\"", net.minecraft.ChatFormatting.RED));
             admin.sendSystemMessage(c);
         }
-        de.niklasmetzger.crownscore.discord.DiscordWebhook.antraege(":house: **Stadtantrag: " + s.name + "** (" + n.name + ")\n"
+        String antrag = ":house: **Stadtantrag: " + s.name + "** (" + n.name + ")\n"
                 + "Ort: " + wo + " (" + s.dim + "), " + s.betten + " Betten" + (s.glocke ? ", Glocke vorhanden" : "") + ", beantragt von " + von + "\n"
                 + (link.isEmpty() ? "" : "Im Browser entscheiden: <" + link + ">\n")
-                + "Im Spiel: /cccore staedte annehmen \"" + s.name + "\" oder ablehnen \"" + s.name + "\" <Grund>, oder im /postfach");
+                + "Im Spiel: /cccore staedte annehmen \"" + s.name + "\" oder ablehnen \"" + s.name + "\" <Grund>, oder im /postfach";
+        if (!de.niklasmetzger.crownscore.discord.DiscordBot.stadtAntrag(antrag, s.name)) de.niklasmetzger.crownscore.discord.DiscordWebhook.antraege(antrag);
     }
 
     private static net.minecraft.network.chat.Component knopf(String text, String cmd, net.minecraft.ChatFormatting farbe) {

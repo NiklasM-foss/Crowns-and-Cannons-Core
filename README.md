@@ -324,6 +324,59 @@ Forge-Permission-Handler ein (`permissionHandler` in `forge-server.toml`), sofer
 dort noch der Standard steht. Ein anderer Handler wie LuckPerms wird nicht
 überschrieben.
 
+## Discord-Bot (`[discordbot]`)
+
+Ein eigener Bot mit Token, kein Webhook. Er läuft im Server mit, braucht keine
+zusätzliche Bibliothek und ist ausgeschaltet, bis `aktiv`, `token` und `server`
+gesetzt sind. Ist für eine Meldungsart ein Kanal gesetzt (`kanalKriegsnews`,
+`kanalNews`, `kanalAktivitaet`, `kanalGericht`, `kanalAntraege`), schreibt der Bot
+dorthin, sonst gilt wie bisher der Webhook.
+
+**Einrichten:** Im Discord Developer Portal eine Application mit Bot anlegen, den
+Token in `token` eintragen (nie in Chats oder Repos). Für die Chat-Brücke den
+*Message Content Intent* einschalten. Den Bot mit den Scopes `bot` und
+`applications.commands` und den Rechten *Rollen verwalten*, *Spitznamen verwalten*,
+*Nachrichten senden* und *Dateien anhängen* einladen und seine Rolle über die
+Nationsrollen schieben. Server- und Kanal-IDs gibt es im Entwicklermodus per
+Rechtsklick. Nach Änderungen an der Config `/discord neustart`.
+
+**Verknüpfen:** Im Discord `/verknuepfen`, dann im Spiel `/discord verknuepfen <Code>`.
+
+**Befehle im Discord**
+
+| Befehl | Wer | Was |
+|---|---|---|
+| `/verknuepfen` | alle | Code zum Verknüpfen |
+| `/ingamezeit [spieler]` | alle (andere: Admins) | Spielzeit diese und letzte Woche, Werktage und Wochenende |
+| `/online` | alle | Wer gerade auf dem Server ist |
+| `/pause <tage> <grund>` | alle | Pause selbst anmelden (höchstens `pauseMaxTage`), Grund geht in den Aktivitätskanal |
+| `/konto` | alle | Kontostand (offline: Stand beim letzten Ausloggen) |
+| `/postfach` | Staatschef, Beamte | Ungelesene Briefe der Nation |
+| `/nation <name>` | alle | Staatschef, Beamte, Bürger, Städte, Länder, Staatskasse, Kriege |
+| `/kriege`, `/besetzungen` | alle | Laufende Kriege und Besetzungen |
+| `/staedte [nation]` | alle | Anerkannte Städte |
+| `/wahlen` | alle | Laufende Wahlen, abstimmen per Knopf |
+| `/vertrag <nr>` | alle | Hinterlegten Vertrag lesen |
+| `/karte` | alle | Weltkarte als Bild, dazu `karteLink` |
+| `/wochenbericht [letzte]` | Admins | Aktivitätsbericht in den Kanal |
+| `/antraege` | Admins | Offene Stadtanträge mit Knöpfen |
+| `/akte <spieler>` | Admins | Beweisakte |
+| `/kick`, `/ban`, `/say` | Admins | Ohne Einloggen |
+| `/befehl <befehl>` | Admins | Beliebiger Serverbefehl mit Ausgabe |
+| `/geld <spieler> <betrag>` | Admins | Geld geben oder abziehen, offline wird beim Einloggen gebucht |
+| `/staatskasse <nation> <betrag>` | Admins | Staatskasse setzen |
+
+Admin ist, wer die Discord-Rolle `adminRolle` hat oder dessen verknüpftes
+Minecraft-Konto OP oder in `allgemein.admins` ist.
+
+**Automatisch:** Stadtanträge kommen mit Knöpfen Annehmen/Ablehnen in den
+Antragskanal. Bei einer Besetzung bekommen die verknüpften Verteidiger eine DM.
+Jede Nation bekommt eine Discord-Rolle (dazu `rolleStaatschef` und `rolleBeamte`),
+der Discord-Name wird zu `[Kürzel] Spielername`. Am `erinnerungTag` um
+`erinnerungStunde` Uhr bekommt jeder eine DM, dem noch Spielzeit fehlt. Die
+Chat-Brücke spiegelt Chat, Ein- und Ausloggen in `kanalChat` und Nachrichten von
+dort ins Spiel.
+
 ## Anbindungen (alle optional)
 
 | Mod | Wofür | Wenn sie fehlt |

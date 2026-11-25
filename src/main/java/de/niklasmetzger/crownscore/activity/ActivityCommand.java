@@ -62,7 +62,8 @@ public final class ActivityCommand {
             String status = (ges >= minWoche * 3600 && we >= minWe * 3600) ? "§aerfuellt" : "§coffen";
             Msg.line(ctx.getSource(), " §7" + w + ": §f" + Msg.hours(ges) + " gesamt, " + Msg.hours(we) + " Wochenende " + status);
         }
-        if (r != null && r.pauseBis > now) Msg.line(ctx.getSource(), " §ePause angemeldet bis " + TimeUtil.fmt(r.pauseBis));
+        if (r != null && r.pauseBis > now) Msg.line(ctx.getSource(), " §ePause angemeldet bis " + TimeUtil.fmt(r.pauseBis)
+                + (r.pauseGrund.isBlank() ? "" : " (" + r.pauseGrund + ")"));
         return 1;
     }
 
@@ -107,6 +108,7 @@ public final class ActivityCommand {
         ActivityRecord r = d.activity.computeIfAbsent(gp.getId(), k -> new ActivityRecord());
         if (r.name.isEmpty()) r.name = gp.getName();
         r.pauseBis = tage == 0 ? 0 : TimeUtil.now() + tage * 86_400_000L;
+        r.pauseGrund = "";
         d.setDirty();
         Msg.ok(ctx.getSource(), tage == 0 ? "Pause von " + gp.getName() + " beendet."
                 : gp.getName() + " ist bis " + TimeUtil.fmt(r.pauseBis) + " von der Aktivitaetsregel befreit.");

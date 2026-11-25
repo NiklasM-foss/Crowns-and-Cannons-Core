@@ -100,7 +100,7 @@ public final class ActivityService {
             Nation n = d.nationOf(e.getKey());
             String label = e.getValue() + (n == null ? "" : " (" + n.kuerzel + ")");
             if (r != null && r.pauseBis > now) {
-                pause.add(label + " bis " + TimeUtil.fmtShort(r.pauseBis));
+                pause.add(label + " bis " + TimeUtil.fmtShort(r.pauseBis) + (r.pauseGrund.isBlank() ? "" : ": " + r.pauseGrund));
                 continue;
             }
             long ges = r == null ? 0 : r.gesamt(week);

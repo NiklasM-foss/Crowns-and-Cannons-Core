@@ -80,6 +80,11 @@
 /akte neueste [Seite]	ADMIN	Die neuesten Einträge.
 /akte export <Spieler> [Anzahl]	ADMIN	Akte eines Spielers an den Gerichtskanal schicken.
 /akte loeschen <Spieler>	ADMIN	Alle Einträge eines Spielers löschen.
+@discord	Discord	Der Discord-Bot verbindet Discord und Minecraft: Befehle im Discord (/ingamezeit, /nation, /wahlen und mehr), Besetzungsalarm per DM, Rollen je Nation, Chat-Brücke. Dafür einmal das Konto verknüpfen.
+/discord	ALLE	Zeigt, ob der Bot läuft und ob dein Konto verknüpft ist.
+/discord verknuepfen <Code>	ALLE	Verknüpft dein Konto mit Discord. Den Code gibt dir der Bot im Discord mit /verknuepfen.
+/discord trennen	ALLE	Löst die Verknüpfung mit Discord.
+/discord neustart	ADMIN	Startet den Bot neu und liest dabei die Config [discordbot] neu ein.
 @aktivitaet	Aktivität	Spielzeit pro Woche und am Wochenende (Regel 7.2 und 7.3).
 /aktivitaet	ALLE	Eigene Spielzeit dieser und letzter Woche.
 /aktivitaet <Spieler>	ADMIN	Spielzeit eines anderen Spielers.

@@ -49,6 +49,7 @@ public class Scheduler {
             sicher("Darlehen", () -> LoanService.everyMinute(server));
             sicher("Villager-Nachfrage", () -> de.niklasmetzger.crownscore.handel.VillagerHandel.everyMinute(server));
             sicher("Rechte-Ablauf", de.niklasmetzger.crownscore.perms.PermissionManager::everyMinute);
+            sicher("Discord-Bot", () -> de.niklasmetzger.crownscore.discord.DiscordBot.everyMinute(server));
         }
     }
 }

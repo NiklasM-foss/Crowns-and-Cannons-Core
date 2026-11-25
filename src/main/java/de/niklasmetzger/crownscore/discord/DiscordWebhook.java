@@ -47,18 +47,22 @@ public final class DiscordWebhook {
     }
 
     public static void kriegsnews(String text) {
+        if (DiscordBot.kanal(CrownsConfig.BOT_KANAL_KRIEGSNEWS.get(), text)) return;
         send(CrownsConfig.WEBHOOK_KRIEGSNEWS.get(), text);
     }
 
     public static void gericht(String text) {
+        if (DiscordBot.kanal(CrownsConfig.BOT_KANAL_GERICHT.get(), text)) return;
         send(CrownsConfig.WEBHOOK_GERICHT.get(), text);
     }
 
     public static void aktivitaet(String text) {
+        if (DiscordBot.kanal(CrownsConfig.BOT_KANAL_AKTIVITAET.get(), text)) return;
         send(CrownsConfig.WEBHOOK_AKTIVITAET.get(), text);
     }
 
     public static void news(String text) {
+        if (DiscordBot.kanal(DiscordBot.newsKanal(), text)) return;
         String url = CrownsConfig.WEBHOOK_NEWS.get();
         if (url == null || url.isBlank()) url = CrownsConfig.WEBHOOK_KRIEGSNEWS.get();
         send(url, text);
@@ -66,6 +70,7 @@ public final class DiscordWebhook {
 
     /** Antraege an die Admins, sonst News-Kanal. */
     public static void antraege(String text) {
+        if (DiscordBot.kanal(DiscordBot.antragsKanal(), text)) return;
         String url = CrownsConfig.WEBHOOK_ANTRAEGE.get();
         if (url == null || url.isBlank()) {
             news(text);

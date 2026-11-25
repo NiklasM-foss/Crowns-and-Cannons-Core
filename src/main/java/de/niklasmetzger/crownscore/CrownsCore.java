@@ -78,6 +78,7 @@ public class CrownsCore {
         MinecraftForge.EVENT_BUS.register(new de.niklasmetzger.crownscore.flag.MapFlagService.KartenflaggenEvents());
         MinecraftForge.EVENT_BUS.register(new de.niklasmetzger.crownscore.handel.HandelCommand.HandelEvents());
         MinecraftForge.EVENT_BUS.register(new de.niklasmetzger.crownscore.handel.Postfach.PostfachEvents());
+        MinecraftForge.EVENT_BUS.register(new de.niklasmetzger.crownscore.discord.DiscordBot.BotEvents());
         de.niklasmetzger.crownscore.net.CcNetwork.init();
     }
 
@@ -105,6 +106,7 @@ public class CrownsCore {
         de.niklasmetzger.crownscore.world.EroberungCommand.register(d);
         de.niklasmetzger.crownscore.handel.HandelCommand.register(d);
         de.niklasmetzger.crownscore.handel.WappenCommand.register(d);
+        de.niklasmetzger.crownscore.discord.DiscordCommand.register(d);
     }
 
     /** Nach allen Mods: eigene Befehle nach Rolle ausblenden, alle Befehle ueber command.<name> steuerbar machen. */
@@ -134,6 +136,7 @@ public class CrownsCore {
         CrownsData data = CrownsData.get(event.getServer());
         Economy.init();
         DiscordWebhook.start();
+        de.niklasmetzger.crownscore.discord.DiscordBot.start(event.getServer());
         LogDatabase.open(event.getServer());
         de.niklasmetzger.crownscore.flag.CapeService.reset();
         de.niklasmetzger.crownscore.flag.MapFlagService.reset();
@@ -151,6 +154,7 @@ public class CrownsCore {
     @SubscribeEvent
     public void onServerStopping(ServerStoppingEvent event) {
         CrownsData.get(event.getServer()).setDirty();
+        de.niklasmetzger.crownscore.discord.DiscordBot.stop();
         DiscordWebhook.shutdown();
         LogDatabase.close();
         PermissionManager.save();

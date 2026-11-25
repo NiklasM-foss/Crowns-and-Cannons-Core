@@ -57,6 +57,15 @@ public class CrownsData extends SavedData {
     public int nextNachrichtId = 1;
     /** Laendercode -> Zeitpunkt (ms), bis zu dem das Land nicht erneut eingenommen werden kann. */
     public final Map<String, Long> landSperre = new HashMap<>();
+    /** Discord-Konto (ID) zu Minecraft-Konto. */
+    public final Map<String, UUID> discord = new HashMap<>();
+    /** Discord-Rolle (ID) je Nation. */
+    public final Map<String, String> discordRollen = new HashMap<>();
+    /** Zuletzt gesehener Kontostand je Spieler und wann. */
+    public final Map<UUID, double[]> kontoStand = new HashMap<>();
+    /** Gutschriften, die beim naechsten Einloggen gebucht werden. */
+    public final Map<UUID, Double> offeneZahlungen = new HashMap<>();
+    public String letzteErinnerung = "";
 
     public static CrownsData get(MinecraftServer server) {
         return server.overworld().getDataStorage().computeIfAbsent(CrownsData::load, CrownsData::new, NAME);
@@ -191,6 +200,24 @@ public class CrownsData extends SavedData {
         t.put("villagerNachfrage", vn);
         t.put("nachrichten", list(nachrichten, Nachricht::toNbt));
         t.putInt("nextNachrichtId", nextNachrichtId);
+        CompoundTag dc = new CompoundTag();
+        for (Map.Entry<String, UUID> e : discord.entrySet()) dc.putUUID(e.getKey(), e.getValue());
+        t.put("discord", dc);
+        CompoundTag dr = new CompoundTag();
+        for (Map.Entry<String, String> e : discordRollen.entrySet()) dr.putString(e.getKey(), e.getValue());
+        t.put("discordRollen", dr);
+        CompoundTag ks = new CompoundTag();
+        for (Map.Entry<UUID, double[]> e : kontoStand.entrySet()) {
+            CompoundTag k = new CompoundTag();
+            k.putDouble("stand", e.getValue()[0]);
+            k.putDouble("zeit", e.getValue()[1]);
+            ks.put(e.getKey().toString(), k);
+        }
+        t.put("kontoStand", ks);
+        CompoundTag oz = new CompoundTag();
+        for (Map.Entry<UUID, Double> e : offeneZahlungen.entrySet()) oz.putDouble(e.getKey().toString(), e.getValue());
+        t.put("offeneZahlungen", oz);
+        t.putString("letzteErinnerung", letzteErinnerung);
         return t;
     }
 
@@ -253,6 +280,26 @@ public class CrownsData extends SavedData {
         for (String k : vn.getAllKeys()) d.villagerNachfrage.put(k, vn.getDouble(k));
         for (CompoundTag c : compounds(t, "nachrichten")) d.nachrichten.add(Nachricht.fromNbt(c));
         d.nextNachrichtId = Math.max(1, t.getInt("nextNachrichtId"));
+        CompoundTag dc = t.getCompound("discord");
+        for (String k : dc.getAllKeys()) if (dc.hasUUID(k)) d.discord.put(k, dc.getUUID(k));
+        CompoundTag dr = t.getCompound("discordRollen");
+        for (String k : dr.getAllKeys()) d.discordRollen.put(k, dr.getString(k));
+        CompoundTag ks = t.getCompound("kontoStand");
+        for (String k : ks.getAllKeys()) {
+            try {
+                CompoundTag e = ks.getCompound(k);
+                d.kontoStand.put(UUID.fromString(k), new double[]{e.getDouble("stand"), e.getDouble("zeit")});
+            } catch (IllegalArgumentException ignored) {
+            }
+        }
+        CompoundTag oz = t.getCompound("offeneZahlungen");
+        for (String k : oz.getAllKeys()) {
+            try {
+                d.offeneZahlungen.put(UUID.fromString(k), oz.getDouble(k));
+            } catch (IllegalArgumentException ignored) {
+            }
+        }
+        d.letzteErinnerung = t.getString("letzteErinnerung");
         return d;
     }
 

@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.8.0
+
+- **Discord-Bot** (Wunschliste von Ghast0607, Config `[discordbot]`, standardmäßig aus): ein eigener Bot mit Token statt Webhooks.
+  - Für alle: `/verknuepfen`, `/ingamezeit` (Werktage und Wochenende), `/online`, `/pause` mit Grund, `/konto`, `/postfach`, `/nation`, `/kriege`, `/besetzungen`, `/staedte`, `/wahlen` mit Abstimmen per Knopf, `/vertrag`, `/karte` als Bild.
+  - Für Admins: `/ingamezeit <spieler>`, `/wochenbericht`, `/antraege` und Stadtanträge mit Knöpfen, `/akte`, `/kick`, `/ban`, `/say`, `/befehl`, `/geld`, `/staatskasse`.
+  - Automatisch: Besetzungsalarm per DM, Discord-Rolle je Nation plus Staatschef und Beamte, Name `[Kürzel] Spielername`, Erinnerung freitags, wenn Spielzeit fehlt, Chat-Brücke in beide Richtungen.
+  - Meldungen (Kriegsnews, Aktivität, Anträge usw.) gehen über den Bot, sobald ein Kanal gesetzt ist, sonst wie bisher über den Webhook.
+  - Im Spiel: `/discord`, `/discord verknuepfen <Code>`, `/discord trennen`, `/discord neustart`.
+- `/aktivitaet` und der Wochenbericht zeigen den Grund einer Pause.
+
 ## 1.7.0
 
 - **Kampf am Hauptbanner** (Antworten von JaydenQ08, gilt mit `eroberung.verteidigerrecht`):

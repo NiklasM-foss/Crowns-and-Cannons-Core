@@ -287,6 +287,8 @@ public final class EroberungService {
             String killText = CrownsConfig.EROBERUNG_KILL_ABBRUCH.get() ? " Toetet ihr einen Angreifer, ist die Besetzung gescheitert." : "";
             Msg.nation(server, verteidiger, "§c§lAlarm: §c" + wer.name + " greift " + ziel + " an, gekaempft wird bei " + wo + ". " + fristText
                     + "Steht ihr am Banner, steht die Uhr.");
+            de.niklasmetzger.crownscore.discord.DiscordBot.besetzungsAlarm(server, verteidiger, "**Alarm:** " + wer.name + " greift " + ziel
+                    + " an, gekaempft wird bei " + wo + ". " + fristText + "Steht ihr am Banner, steht die Uhr.");
             de.niklasmetzger.crownscore.handel.Postfach.nation(server, verteidiger, "Alarm: " + ziel + " wird angegriffen",
                     wer.name + " greift " + ziel + " an, gekaempft wird bei " + wo + ". " + fristText
                             + "Solange einer von euch am Banner steht, steht die Uhr." + killText, null);
@@ -298,6 +300,8 @@ public final class EroberungService {
         Msg.broadcast(server, "§c" + wer.name + " besetzt " + ziel + " (" + verteidiger.name + ")! Der Besatzungsblock steht bei " + wo
                 + ". Haelt er " + dauer + ", gehoert " + ziel + " " + wer.name + ".");
         Msg.nation(server, verteidiger, "§c§lAlarm: §c" + wer.name + " besetzt " + ziel + ". Zerstoert den Besatzungsblock bei " + wo + "!");
+        de.niklasmetzger.crownscore.discord.DiscordBot.besetzungsAlarm(server, verteidiger, "**Alarm:** " + wer.name + " besetzt " + ziel
+                + ". Zerstoert den Besatzungsblock bei " + wo + "!");
         de.niklasmetzger.crownscore.handel.Postfach.nation(server, verteidiger, "Alarm: " + ziel + " wird besetzt",
                 wer.name + " hat einen Besatzungsblock bei " + wo + " gesetzt. Haelt er " + dauer + ", verliert ihr " + ziel + ". Zerstoert ihn!", null);
         DiscordWebhook.kriegsnews(":triangular_flag_on_post: **" + wer.name + " besetzt " + ziel + "** (" + verteidiger.name + ")\n"

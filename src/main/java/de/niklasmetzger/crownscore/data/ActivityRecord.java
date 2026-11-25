@@ -11,6 +11,7 @@ public class ActivityRecord {
     /** Wochenschluessel zu {Werktagsekunden, Wochenendsekunden}. */
     public final Map<String, long[]> wochen = new LinkedHashMap<>();
     public long pauseBis;
+    public String pauseGrund = "";
     public long zuletztOnline;
 
     public long[] woche(String key) {
@@ -31,6 +32,7 @@ public class ActivityRecord {
         CompoundTag t = new CompoundTag();
         t.putString("name", name);
         t.putLong("pauseBis", pauseBis);
+        t.putString("pauseGrund", pauseGrund);
         t.putLong("zuletztOnline", zuletztOnline);
         CompoundTag w = new CompoundTag();
         for (Map.Entry<String, long[]> e : wochen.entrySet()) {
@@ -44,6 +46,7 @@ public class ActivityRecord {
         ActivityRecord r = new ActivityRecord();
         r.name = t.getString("name");
         r.pauseBis = t.getLong("pauseBis");
+        r.pauseGrund = t.getString("pauseGrund");
         r.zuletztOnline = t.getLong("zuletztOnline");
         CompoundTag w = t.getCompound("wochen");
         for (String k : w.getAllKeys()) {

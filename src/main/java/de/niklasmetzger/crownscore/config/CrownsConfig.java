@@ -13,6 +13,27 @@ public final class CrownsConfig {
     public static final ForgeConfigSpec.ConfigValue<String> WEBHOOK_AKTIVITAET;
     public static final ForgeConfigSpec.ConfigValue<String> WEBHOOK_NEWS;
     public static final ForgeConfigSpec.ConfigValue<String> WEBHOOK_ANTRAEGE;
+    public static final ForgeConfigSpec.BooleanValue BOT_AKTIV;
+    public static final ForgeConfigSpec.ConfigValue<String> BOT_TOKEN;
+    public static final ForgeConfigSpec.ConfigValue<String> BOT_GUILD;
+    public static final ForgeConfigSpec.ConfigValue<String> BOT_KANAL_KRIEGSNEWS;
+    public static final ForgeConfigSpec.ConfigValue<String> BOT_KANAL_GERICHT;
+    public static final ForgeConfigSpec.ConfigValue<String> BOT_KANAL_AKTIVITAET;
+    public static final ForgeConfigSpec.ConfigValue<String> BOT_KANAL_NEWS;
+    public static final ForgeConfigSpec.ConfigValue<String> BOT_KANAL_ANTRAEGE;
+    public static final ForgeConfigSpec.ConfigValue<String> BOT_KANAL_CHAT;
+    public static final ForgeConfigSpec.ConfigValue<String> BOT_ADMIN_ROLLE;
+    public static final ForgeConfigSpec.BooleanValue BOT_ROLLEN;
+    public static final ForgeConfigSpec.ConfigValue<String> BOT_ROLLE_CHEF;
+    public static final ForgeConfigSpec.ConfigValue<String> BOT_ROLLE_BEAMTE;
+    public static final ForgeConfigSpec.BooleanValue BOT_NAMEN;
+    public static final ForgeConfigSpec.BooleanValue BOT_ALARM;
+    public static final ForgeConfigSpec.BooleanValue BOT_ERINNERUNG;
+    public static final ForgeConfigSpec.ConfigValue<String> BOT_ERINNERUNG_TAG;
+    public static final ForgeConfigSpec.IntValue BOT_ERINNERUNG_STUNDE;
+    public static final ForgeConfigSpec.BooleanValue BOT_CHAT;
+    public static final ForgeConfigSpec.IntValue BOT_PAUSE_MAX;
+    public static final ForgeConfigSpec.ConfigValue<String> BOT_KARTE_LINK;
     public static final ForgeConfigSpec.ConfigValue<String> ANTRAG_URL;
     public static final ForgeConfigSpec.ConfigValue<String> ANTRAG_SCHLUESSEL;
     public static final ForgeConfigSpec.ConfigValue<List<? extends String>> ADMINS;
@@ -143,6 +164,34 @@ public final class CrownsConfig {
         WEBHOOK_AKTIVITAET = b.comment("Woechentlicher Aktivitaetsbericht").define("aktivitaet", "");
         WEBHOOK_NEWS = b.comment("Allgemeine Meldungen (Wahlen, Kolonien, Darlehen). Leer = Kriegsnews-Webhook").define("news", "");
         WEBHOOK_ANTRAEGE = b.comment("Antraege an die Admins (Stadtgruendungen). Leer = News-Webhook").define("antraege", "");
+        b.pop();
+
+        b.comment("Discord-Bot: Slash-Befehle, Knoepfe, DMs, Rollen und Chat-Bruecke. Der Bot braucht im Developer Portal den",
+                "Message Content Intent (nur fuer die Chat-Bruecke) und auf dem Server die Rechte Rollen verwalten, Spitznamen verwalten,",
+                "Nachrichten senden, Dateien anhaengen. Seine Rolle muss ueber den Nationsrollen stehen. Kanaele und Rollen als Discord-ID.",
+                "Ist ein Kanal hier gesetzt, schreibt der Bot dorthin statt des Webhooks.").push("discordbot");
+        BOT_AKTIV = b.comment("Bot einschalten").define("aktiv", false);
+        BOT_TOKEN = b.comment("Bot-Token aus dem Developer Portal (geheim halten, nie in Chats oder Repos)").define("token", "");
+        BOT_GUILD = b.comment("ID des Discord-Servers").define("server", "");
+        BOT_KANAL_KRIEGSNEWS = b.comment("Kanal fuer Kriegsnachrichten").define("kanalKriegsnews", "");
+        BOT_KANAL_GERICHT = b.comment("Kanal fuer Akten und Vertraege").define("kanalGericht", "");
+        BOT_KANAL_AKTIVITAET = b.comment("Kanal fuer den Wochenbericht und Pausen").define("kanalAktivitaet", "");
+        BOT_KANAL_NEWS = b.comment("Kanal fuer allgemeine Meldungen, leer = Kriegsnachrichten").define("kanalNews", "");
+        BOT_KANAL_ANTRAEGE = b.comment("Kanal fuer Stadtantraege mit Knoepfen (nur Admins sollten ihn sehen), leer = News").define("kanalAntraege", "");
+        BOT_KANAL_CHAT = b.comment("Kanal der Chat-Bruecke Minecraft <-> Discord").define("kanalChat", "");
+        BOT_ADMIN_ROLLE = b.comment("Discord-Rolle, deren Mitglieder Admin-Befehle nutzen duerfen. Sonst zaehlt das verknuepfte Minecraft-Konto (OP oder allgemein.admins)")
+                .define("adminRolle", "");
+        BOT_ROLLEN = b.comment("Jede Nation bekommt eine Discord-Rolle, dazu Rollen fuer Staatschefs und Beamte").define("nationsRollen", true);
+        BOT_ROLLE_CHEF = b.comment("Name der Rolle fuer Staatschefs (wird angelegt, wenn es sie nicht gibt)").define("rolleStaatschef", "Staatschef");
+        BOT_ROLLE_BEAMTE = b.comment("Name der Rolle fuer Beamte").define("rolleBeamte", "Beamter");
+        BOT_NAMEN = b.comment("Discord-Name wird zu [Kuerzel] Spielername").define("namenSetzen", true);
+        BOT_ALARM = b.comment("Besetzungsalarm per DM an die verknuepften Verteidiger").define("besetzungsalarm", true);
+        BOT_ERINNERUNG = b.comment("Erinnerung per DM, wenn die Spielzeit der Woche noch fehlt").define("erinnerung", true);
+        BOT_ERINNERUNG_TAG = b.comment("Wochentag der Erinnerung (MONDAY bis SUNDAY)").define("erinnerungTag", "FRIDAY");
+        BOT_ERINNERUNG_STUNDE = b.comment("Stunde der Erinnerung").defineInRange("erinnerungStunde", 18, 0, 23);
+        BOT_CHAT = b.comment("Chat-Bruecke einschalten (braucht kanalChat)").define("chatBruecke", true);
+        BOT_PAUSE_MAX = b.comment("So viele Tage Pause darf sich ein Spieler per /pause im Discord selbst anmelden").defineInRange("pauseMaxTage", 14, 1, 365);
+        BOT_KARTE_LINK = b.comment("Link zur Online-Karte fuer /karte (leer = nur das Bild)").define("karteLink", "");
         b.pop();
 
         b.comment("Allgemein").push("allgemein");
