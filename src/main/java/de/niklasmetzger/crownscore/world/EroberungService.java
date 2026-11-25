@@ -192,23 +192,47 @@ public final class EroberungService {
         }
         ServerLevel level = p.serverLevel();
         BlockPos pos = p.blockPosition();
-        String hierGehoert = de.niklasmetzger.crownscore.claims.Claims.nationAt(level, pos);
         String sollGehoeren = stadt != null ? stadt.nation : (besitzer(d, c) == null ? null : besitzer(d, c).key());
-        if (sollGehoeren != null && !sollGehoeren.equals(hierGehoert)) {
-            return "Hier ist kein Gebiet von " + d.anzeige(sollGehoeren) + (hierGehoert == null ? "" : " (gehoert " + d.anzeige(hierGehoert) + ")")
-                    + ". Der Besatzungsblock muss im Gebiet der Verteidiger stehen.";
+        // Verteidigerrecht: kein Block, gekaempft wird am Hauptbanner der Stadt bzw. hier (Land ohne Staedte)
+        boolean recht = CrownsConfig.EROBERUNG_VERTEIDIGERRECHT.get() && sollGehoeren != null;
+        if (recht && stadt != null) {
+            pos = stadt.bannerPos();
+            // Abgebaut oder nach einer Aenderung von stadtGebiet ausserhalb: dann zaehlt die Stadtmitte
+            boolean bannerGilt = stadt.banner != null && level.getBlockState(stadt.banner).is(net.minecraft.tags.BlockTags.BANNERS)
+                    && de.niklasmetzger.crownscore.handel.StadtService.chunks(stadt).contains(new net.minecraft.world.level.ChunkPos(stadt.banner));
+            if (!bannerGilt) pos = stadt.pos;
+            if (!amBanner(p, stadt.dim, pos)) {
+                return "Gekaempft wird " + (bannerGilt ? "am Hauptbanner" : "an der Stadtmitte") + " von " + stadt.name + " bei "
+                        + pos.getX() + " " + pos.getY() + " " + pos.getZ() + ". Stell dich dorthin (" + CrownsConfig.EROBERUNG_VERTEIDIGER_RADIUS.get()
+                        + " Bloecke, " + CrownsConfig.EROBERUNG_VERTEIDIGER_HOEHE.get() + " nach oben und unten).";
+            }
+        } else {
+            String hierGehoert = de.niklasmetzger.crownscore.claims.Claims.nationAt(level, pos);
+            if (sollGehoeren != null && !sollGehoeren.equals(hierGehoert)) {
+                return "Hier ist kein Gebiet von " + d.anzeige(sollGehoeren) + (hierGehoert == null ? "" : " (gehoert " + d.anzeige(hierGehoert) + ")")
+                        + (recht ? ". Die Besetzung muss im Gebiet der Verteidiger beginnen." : ". Der Besatzungsblock muss im Gebiet der Verteidiger stehen.");
+            }
         }
-        // In einem Spieler-Claim (OPAC) koennten die Verteidiger den Block nicht abbauen: nur freies oder Staatsgebiet
-        java.util.UUID claimer = de.niklasmetzger.crownscore.claims.Claims.opacOwner(level, new net.minecraft.world.level.ChunkPos(pos));
-        if (claimer != null && sollGehoeren != null && d.nations.get(sollGehoeren) != null
-                && !claimer.equals(d.nations.get(sollGehoeren).staat()) && !d.nations.get(sollGehoeren).mitglieder.containsKey(claimer)) {
-            return "Hier liegt ein geschuetzter Claim, den die Verteidiger nicht abbauen koennten. Such dir eine andere Stelle.";
+        if (recht && stadt == null) {
+            java.util.UUID claimer = de.niklasmetzger.crownscore.claims.Claims.opacOwner(level, new net.minecraft.world.level.ChunkPos(pos));
+            Nation vn = d.nations.get(sollGehoeren);
+            if (claimer != null && vn != null && !claimer.equals(vn.staat()) && !vn.mitglieder.containsKey(claimer)) {
+                return "Hier liegt ein fremder Spieler-Claim, in dem die Verteidiger euch womoeglich nicht angreifen koennten. Such dir eine andere Stelle.";
+            }
         }
-        if (!level.getBlockState(pos).canBeReplaced()) pos = pos.above();
-        if (!level.getBlockState(pos).canBeReplaced() || !level.getBlockState(pos.below()).isSolid()) {
-            return "Hier kann der Besatzungsblock nicht stehen. Stell dich auf festen Boden mit freiem Platz.";
+        if (!recht) {
+            // In einem Spieler-Claim (OPAC) koennten die Verteidiger den Block nicht abbauen: nur freies oder Staatsgebiet
+            java.util.UUID claimer = de.niklasmetzger.crownscore.claims.Claims.opacOwner(level, new net.minecraft.world.level.ChunkPos(pos));
+            if (claimer != null && sollGehoeren != null && d.nations.get(sollGehoeren) != null
+                    && !claimer.equals(d.nations.get(sollGehoeren).staat()) && !d.nations.get(sollGehoeren).mitglieder.containsKey(claimer)) {
+                return "Hier liegt ein geschuetzter Claim, den die Verteidiger nicht abbauen koennten. Such dir eine andere Stelle.";
+            }
+            if (!level.getBlockState(pos).canBeReplaced()) pos = pos.above();
+            if (!level.getBlockState(pos).canBeReplaced() || !level.getBlockState(pos.below()).isSolid()) {
+                return "Hier kann der Besatzungsblock nicht stehen. Stell dich auf festen Boden mit freiem Platz.";
+            }
         }
-        if (CrownsConfig.EROBERUNG_VERTEIDIGERRECHT.get() && sollGehoeren != null) {
+        if (recht) {
             String vName = d.anzeige(sollGehoeren);
             if (!rpOnline(server, d, sollGehoeren)) {
                 return "Niemand aus " + vName + " ist gerade im RP online. Ohne Verteidiger kann nicht besetzt werden.";
@@ -230,8 +254,9 @@ public final class EroberungService {
             return "Die Besatzungsgebuehr von " + Msg.money(gebuehr) + " ist nicht in der Staatskasse.";
         }
         Nation verteidiger = stadt != null ? d.nations.get(stadt.nation) : besitzer(d, c);
-        level.setBlockAndUpdate(pos, block().defaultBlockState());
+        if (!recht) level.setBlockAndUpdate(pos, block().defaultBlockState());
         Besatzung b = new Besatzung();
+        b.block = !recht;
         b.id = d.nextBesatzungId++;
         b.angreifer = wer.key();
         b.verteidiger = verteidiger.key();
@@ -246,11 +271,30 @@ public final class EroberungService {
         int[] start = angriffsStart(d, wer, stadt != null ? stadt.pos : pos);
         b.vonX = start[0];
         b.vonZ = start[1];
+        if (recht && CrownsConfig.EROBERUNG_AUFGABE_RADIUS.get() > 0) b.anreise = anreise(server, d, b.verteidiger, b.dim, pos);
         d.besatzungen.add(b);
         d.setDirty();
         String wo = pos.getX() + " " + pos.getY() + " " + pos.getZ();
         String dauer = TimeUtil.duration(b.rest * 1000L);
         String ziel = stadt != null ? "die Stadt " + stadt.name : c.name();
+        if (recht) {
+            String anreise = TimeUtil.duration(b.anreise * 1000L);
+            String kulanz = TimeUtil.duration(CrownsConfig.EROBERUNG_VERTEIDIGER_KULANZ.get() * 60_000L);
+            Msg.broadcast(server, "§c" + wer.name + " greift " + ziel + " an (" + verteidiger.name + ")! Gekaempft wird bei " + wo
+                    + ". Halten die Angreifer dort " + dauer + " durch, gehoert " + ziel + " " + wer.name + ".");
+            boolean frist = CrownsConfig.EROBERUNG_AUFGABE_RADIUS.get() > 0;
+            String fristText = frist ? "Ihr habt " + anreise + " Anreise, danach geht " + ziel + " nach " + kulanz + " ohne Verteidiger verloren. " : "";
+            String killText = CrownsConfig.EROBERUNG_KILL_ABBRUCH.get() ? " Toetet ihr einen Angreifer, ist die Besetzung gescheitert." : "";
+            Msg.nation(server, verteidiger, "§c§lAlarm: §c" + wer.name + " greift " + ziel + " an, gekaempft wird bei " + wo + ". " + fristText
+                    + "Steht ihr am Banner, steht die Uhr.");
+            de.niklasmetzger.crownscore.handel.Postfach.nation(server, verteidiger, "Alarm: " + ziel + " wird angegriffen",
+                    wer.name + " greift " + ziel + " an, gekaempft wird bei " + wo + ". " + fristText
+                            + "Solange einer von euch am Banner steht, steht die Uhr." + killText, null);
+            DiscordWebhook.kriegsnews(":triangular_flag_on_post: **" + wer.name + " greift " + ziel + " an** (" + verteidiger.name + ")\n"
+                    + "Kampf bei " + wo + ", Haltezeit " + dauer + " (die Uhr steht, solange ein Verteidiger am Banner ist)");
+            CrownsCore.LOGGER.info("Besetzung {}: {} greift {} ({}) bei {} an, Anreise {} s", b.id, wer.name, ziel, verteidiger.name, wo, b.anreise);
+            return null;
+        }
         Msg.broadcast(server, "§c" + wer.name + " besetzt " + ziel + " (" + verteidiger.name + ")! Der Besatzungsblock steht bei " + wo
                 + ". Haelt er " + dauer + ", gehoert " + ziel + " " + wer.name + ".");
         Msg.nation(server, verteidiger, "§c§lAlarm: §c" + wer.name + " besetzt " + ziel + ". Zerstoert den Besatzungsblock bei " + wo + "!");
@@ -258,8 +302,7 @@ public final class EroberungService {
                 wer.name + " hat einen Besatzungsblock bei " + wo + " gesetzt. Haelt er " + dauer + ", verliert ihr " + ziel + ". Zerstoert ihn!", null);
         DiscordWebhook.kriegsnews(":triangular_flag_on_post: **" + wer.name + " besetzt " + ziel + "** (" + verteidiger.name + ")\n"
                 + "Besatzungsblock bei " + wo + ", Haltezeit " + dauer
-                + (CrownsConfig.EROBERUNG_VERTEIDIGERRECHT.get() ? " (die Uhr steht, solange ein Verteidiger am Banner ist)"
-                : CrownsConfig.EROBERUNG_VERTEIDIGER_ONLINE.get() ? " (zaehlt nur, solange jemand aus " + verteidiger.name + " online ist)" : ""));
+                + (CrownsConfig.EROBERUNG_VERTEIDIGER_ONLINE.get() ? " (zaehlt nur, solange jemand aus " + verteidiger.name + " online ist)" : ""));
         CrownsCore.LOGGER.info("Besetzung {}: {} besetzt {} ({}) bei {}", b.id, wer.name, ziel, verteidiger.name, wo);
         return null;
     }
@@ -295,7 +338,7 @@ public final class EroberungService {
         d.setDirty();
         b.zerstoertVon = null;
         ServerLevel level = level(server, b);
-        if (level != null && level.getChunkAt(b.pos) != null && level.getBlockState(b.pos).is(block())) {
+        if (b.block && level != null && level.getChunkAt(b.pos) != null && level.getBlockState(b.pos).is(block())) {
             level.removeBlock(b.pos, false);
         }
         Country c = WorldMap.byCode(b.land);
@@ -381,8 +424,13 @@ public final class EroberungService {
     private static final Map<Integer, String> UHR_STATUS = new java.util.concurrent.ConcurrentHashMap<>();
 
     /** Warum die Uhr gerade steht, oder null, wenn sie laeuft. */
+    /** Gilt das Verteidigerrecht fuer diese Besetzung? Ohne Block immer, sonst nach Config. */
+    static boolean recht(Besatzung b) {
+        return !b.block || CrownsConfig.EROBERUNG_VERTEIDIGERRECHT.get();
+    }
+
     public static String uhrGrund(MinecraftServer server, CrownsData d, Besatzung b) {
-        if (!CrownsConfig.EROBERUNG_VERTEIDIGERRECHT.get()) {
+        if (!recht(b)) {
             return CrownsConfig.EROBERUNG_VERTEIDIGER_ONLINE.get() && !online(server, d, b.verteidiger)
                     ? "niemand aus " + d.anzeige(b.verteidiger) + " ist online" : null;
         }
@@ -402,7 +450,7 @@ public final class EroberungService {
     /** Steht die Uhr? Meldet einen Wechsel einmal an beide Seiten. */
     private static boolean uhrSteht(MinecraftServer server, CrownsData d, Besatzung b, String ziel) {
         String grund = uhrGrund(server, d, b);
-        if (CrownsConfig.EROBERUNG_VERTEIDIGERRECHT.get()) {
+        if (recht(b)) {
             String neu = grund == null ? "" : grund.startsWith("Verteidiger") ? "banner" : "gesperrt";
             String alt = UHR_STATUS.put(b.id, neu);
             if (alt == null ? !neu.isEmpty() : !alt.equals(neu)) {
@@ -418,23 +466,24 @@ public final class EroberungService {
 
     /** Ein Spieler ist gestorben: gefallene Verteidiger blockieren nicht mehr, toeten sie einen Angreifer, ist die Besetzung gescheitert. */
     public static void tod(MinecraftServer server, ServerPlayer opfer, ServerPlayer taeter) {
-        if (!CrownsConfig.EROBERUNG_VERTEIDIGERRECHT.get()) return;
         CrownsData d = CrownsData.get(server);
         if (d.besatzungen.isEmpty()) return;
         String opferNation = d.nationKeyOf(opfer.getUUID());
         if (opferNation == null) return;
         for (Besatzung b : new ArrayList<>(d.besatzungen)) {
-            if (!imKampfgebiet(d, b, opfer)) continue;
+            if (!recht(b) || !imKampfgebiet(d, b, opfer)) continue;
             String ziel = !b.stadt.isEmpty() ? b.stadt : b.land;
             if (opferNation.equals(b.verteidiger)) {
                 if (b.gefallen.add(opfer.getUUID())) {
                     d.setDirty();
                     opfer.sendSystemMessage(net.minecraft.network.chat.Component.literal("§cDu bist gefallen und blockierst die Besetzung von " + ziel + " nicht mehr."
-                            + (CrownsConfig.EROBERUNG_GEFALLENER_ABBRUCH.get() ? " Toetest du einen Angreifer, ist sie gescheitert." : "")));
+                            + (CrownsConfig.EROBERUNG_KILL_ABBRUCH.get() ? " Toetest du einen Angreifer, ist sie gescheitert." : "")));
                 }
-            } else if (opferNation.equals(b.angreifer) && taeter != null && CrownsConfig.EROBERUNG_GEFALLENER_ABBRUCH.get()
-                    && b.gefallen.contains(taeter.getUUID()) && b.verteidiger.equals(d.nationKeyOf(taeter.getUUID()))) {
-                abbrechen(server, b, taeter.getGameProfile().getName() + " ist gefallen, kam zurueck und hat " + opfer.getGameProfile().getName() + " getoetet.");
+            } else if (opferNation.equals(b.angreifer) && taeter != null && CrownsConfig.EROBERUNG_KILL_ABBRUCH.get()
+                    && b.verteidiger.equals(d.nationKeyOf(taeter.getUUID()))
+                    && de.niklasmetzger.crownscore.mode.ModeService.mode(taeter.getUUID()) == de.niklasmetzger.crownscore.mode.PlayerMode.RP) {
+                abbrechen(server, b, taeter.getGameProfile().getName() + (b.gefallen.contains(taeter.getUUID()) ? " ist gefallen, kam zurueck und hat " : " hat ")
+                        + opfer.getGameProfile().getName() + " getoetet.");
             }
         }
     }
@@ -450,12 +499,11 @@ public final class EroberungService {
 
     /** Ein Verteidiger wurde gekickt oder gebannt: die Uhr seiner Besetzungen steht, bis er wieder online ist. */
     public static void gesperrt(MinecraftServer server, java.util.UUID id) {
-        if (!CrownsConfig.EROBERUNG_VERTEIDIGERRECHT.get()) return;
         CrownsData d = CrownsData.get(server);
         String n = d.nationKeyOf(id);
         if (n == null) return;
         for (Besatzung b : d.besatzungen) {
-            if (n.equals(b.verteidiger) && b.gesperrt.add(id)) {
+            if (recht(b) && n.equals(b.verteidiger) && b.gesperrt.add(id)) {
                 d.setDirty();
                 CrownsCore.LOGGER.info("Besetzung {}: Verteidiger {} gekickt oder gebannt, Uhr steht bis zur Rueckkehr", b.id, id);
             }
@@ -494,18 +542,21 @@ public final class EroberungService {
                 abbrechen(server, b, "die Dimension gibt es nicht mehr.");
                 continue;
             }
-            boolean geladen = level.isLoaded(b.pos);
-            boolean steht = geladen && level.getBlockState(b.pos).is(block());
-            if (steht) b.zerstoertVon = null; // Abbauen wurde verhindert (z.B. Bauschutz)
-            if (geladen ? !steht : b.zerstoertVon != null) {
-                String wer = b.zerstoertVon;
-                if (wer != null && wer.isEmpty()) wer = null;
-                abbrechen(server, b, "der Besatzungsblock wurde zerstoert" + (wer == null ? "." : " (von " + wer + ")."));
-                continue;
+            int fc = 0;
+            if (b.block) {
+                boolean geladen = level.isLoaded(b.pos);
+                boolean steht = geladen && level.getBlockState(b.pos).is(block());
+                if (steht) b.zerstoertVon = null; // Abbauen wurde verhindert (z.B. Bauschutz)
+                if (geladen ? !steht : b.zerstoertVon != null) {
+                    String wer = b.zerstoertVon;
+                    if (wer != null && wer.isEmpty()) wer = null;
+                    abbrechen(server, b, "der Besatzungsblock wurde zerstoert" + (wer == null ? "." : " (von " + wer + ")."));
+                    continue;
+                }
+                // Claim-Daten von OPAC gibt es auch fuer entladene Chunks, die Pause gilt deshalb immer
+                fc = fremderClaim(server, level, d, b);
+                if (fc == 1) continue;
             }
-            // Claim-Daten von OPAC gibt es auch fuer entladene Chunks, die Pause gilt deshalb immer
-            int fc = fremderClaim(server, level, d, b);
-            if (fc == 1) continue;
             if (aufgabe(server, d, b, fc == 2)) continue;
             if (fc == 2) continue; // angehalten: Angreifer muessen vor Ort bleiben, die Uhr steht
             if (uhrSteht(server, d, b, c.name())) continue;
@@ -513,8 +564,7 @@ public final class EroberungService {
             d.setDirty();
             if (b.rest > 0) {
                 if (b.rest % 900 == 0) {
-                    String text = "Besetzung von " + c.name() + ": noch " + TimeUtil.duration(b.rest * 1000L) + ", Block bei "
-                            + b.pos.getX() + " " + b.pos.getY() + " " + b.pos.getZ() + ".";
+                    String text = "Besetzung von " + c.name() + ": noch " + TimeUtil.duration(b.rest * 1000L) + ", " + ort(b) + ".";
                     Msg.nation(server, angreifer, "§6" + text);
                     Msg.nation(server, verteidiger, "§c" + text);
                 }
@@ -533,7 +583,7 @@ public final class EroberungService {
         d.setDirty();
         b.zerstoertVon = null;
         ServerLevel level = level(server, b);
-        if (level != null && level.getChunkAt(b.pos) != null && level.getBlockState(b.pos).is(block())) level.removeBlock(b.pos, false);
+        if (b.block && level != null && level.getChunkAt(b.pos) != null && level.getBlockState(b.pos).is(block())) level.removeBlock(b.pos, false);
         Nation angreifer = d.nations.get(b.angreifer), verteidiger = d.nations.get(b.verteidiger);
         if (angreifer == null || verteidiger == null) return;
         if (!b.stadt.isEmpty()) {
@@ -552,6 +602,7 @@ public final class EroberungService {
 
     /** Mitte, um die herum die Anwesenheit zaehlt: Stadtmitte oder Besatzungsblock. */
     static BlockPos mitte(CrownsData d, Besatzung b) {
+        if (!b.block) return b.pos;
         if (!b.stadt.isEmpty()) {
             de.niklasmetzger.crownscore.data.Stadt s = de.niklasmetzger.crownscore.handel.StadtService.byName(d, b.stadt);
             if (s != null) return s.pos;
@@ -573,31 +624,41 @@ public final class EroberungService {
     /** Aufgeben pruefen. true = Besetzung ist damit erledigt (abgebrochen oder gewonnen). */
     private static boolean aufgabe(MinecraftServer server, CrownsData d, Besatzung b, boolean angehalten) {
         int r = CrownsConfig.EROBERUNG_AUFGABE_RADIUS.get();
-        if (r <= 0) return false;
+        // Ohne Block (Verteidigerrecht) muessen die Angreifer am Banner bleiben, das gilt auch ohne aufgabeRadius
+        boolean bannerPflicht = !b.block;
+        if (r <= 0 && !bannerPflicht) return false;
         BlockPos m = mitte(d, b);
         String ziel = !b.stadt.isEmpty() ? b.stadt : b.land;
         // Steht die Uhr (Verteidiger offline), muessen die Angreifer auch nicht vor Ort warten
-        boolean recht = CrownsConfig.EROBERUNG_VERTEIDIGERRECHT.get();
+        boolean recht = recht(b);
         // Mit Verteidigerrecht steht die Uhr ohne Kampf nur bei gekickten oder gebannten Verteidigern; am Banner wird gekaempft, da bleiben alle
         boolean uhrLaeuft = recht ? b.gesperrt.isEmpty()
                 : !CrownsConfig.EROBERUNG_VERTEIDIGER_ONLINE.get() || online(server, d, b.verteidiger);
         if (!uhrLaeuft) {
             b.angreiferWeg = 0;
-        } else if (inDerNaehe(server, d, b.angreifer, b.dim, m, r) == 0) {
+        } else if (bannerPflicht ? angreiferAmBanner(server, d, b) == 0 : inDerNaehe(server, d, b.angreifer, b.dim, m, r) == 0) {
             int weg = ++b.angreiferWeg;
             d.setDirty();
-            if (weg == 1) Msg.nation(server, d.nations.get(b.angreifer), "§eNiemand von euch ist mehr in " + r + " Bloecken um " + ziel
-                    + ". Kommt zurueck, sonst gilt die Besetzung in " + CrownsConfig.EROBERUNG_ANGREIFER_KULANZ.get() + " Sekunden als aufgegeben.");
-            if (weg >= CrownsConfig.EROBERUNG_ANGREIFER_KULANZ.get()) {
-                abbrechen(server, b, "die Angreifer haben aufgegeben (niemand mehr in " + r + " Bloecken).");
+            int kulanz = bannerPflicht ? CrownsConfig.EROBERUNG_ANGREIFER_BANNER.get() : CrownsConfig.EROBERUNG_ANGREIFER_KULANZ.get();
+            if (weg == 1) Msg.nation(server, d.nations.get(b.angreifer), bannerPflicht
+                    ? "§eNiemand von euch steht mehr am Banner von " + ziel + ". Kommt in " + kulanz + " Sekunden zurueck, sonst ist die Besetzung gescheitert."
+                    : "§eNiemand von euch ist mehr in " + r + " Bloecken um " + ziel + ". Kommt zurueck, sonst gilt die Besetzung in " + kulanz + " Sekunden als aufgegeben.");
+            if (weg >= kulanz) {
+                abbrechen(server, b, bannerPflicht ? "die Angreifer haben den Banner verlassen." : "die Angreifer haben aufgegeben (niemand mehr in " + r + " Bloecken).");
                 return true;
             }
         } else {
             b.angreiferWeg = 0;
         }
+        if (r <= 0) return false;
         // Waehrend der Pause koennen die Verteidiger den Block im fremden Claim nicht abbauen, ihre Kulanz steht
         if (angehalten || recht && !b.gesperrt.isEmpty()) {
             // Zaehler bleibt stehen (weder hoch noch zurueck), sonst setzt ein kurzer fremder Claim die Kulanz zurueck
+        } else if (b.anreise > 0) {
+            // Anreise der Verteidiger: die Kulanz beginnt erst danach, wer ankommt, beendet die Anreise
+            b.anreise = verteidigerAngekommen(server, d, b, m, r) ? 0 : b.anreise - 1;
+            b.verteidigerWeg = 0;
+            d.setDirty();
         } else if ((recht ? rpOnline(server, d, b.verteidiger) : online(server, d, b.verteidiger))
                 && inDerNaehe(server, d, b.verteidiger, b.dim, m, r) == 0) {
             int weg = ++b.verteidigerWeg;
@@ -713,17 +774,20 @@ public final class EroberungService {
             abbrechen(server, b, "die Dimension gibt es nicht mehr.");
             return;
         }
-        boolean geladen = level.isLoaded(b.pos);
-        boolean steht = geladen && level.getBlockState(b.pos).is(block());
-        if (steht) b.zerstoertVon = null;
-        if (geladen ? !steht : b.zerstoertVon != null) {
-            String wer = b.zerstoertVon;
-            if (wer != null && wer.isEmpty()) wer = null;
-            abbrechen(server, b, "der Besatzungsblock wurde zerstoert" + (wer == null ? "." : " (von " + wer + ")."));
-            return;
+        int fc = 0;
+        if (b.block) {
+            boolean geladen = level.isLoaded(b.pos);
+            boolean steht = geladen && level.getBlockState(b.pos).is(block());
+            if (steht) b.zerstoertVon = null;
+            if (geladen ? !steht : b.zerstoertVon != null) {
+                String wer = b.zerstoertVon;
+                if (wer != null && wer.isEmpty()) wer = null;
+                abbrechen(server, b, "der Besatzungsblock wurde zerstoert" + (wer == null ? "." : " (von " + wer + ")."));
+                return;
+            }
+            fc = fremderClaim(server, level, d, b);
+            if (fc == 1) return;
         }
-        int fc = fremderClaim(server, level, d, b);
-        if (fc == 1) return;
         if (aufgabe(server, d, b, fc == 2)) return;
         if (fc == 2) return; // angehalten: Angreifer muessen vor Ort bleiben, die Uhr steht
         if (uhrSteht(server, d, b, s.name)) return;
@@ -731,8 +795,7 @@ public final class EroberungService {
         d.setDirty();
         if (b.rest > 0) {
             if (b.rest % 900 == 0) {
-                String text = "Besetzung von " + s.name + ": noch " + TimeUtil.duration(b.rest * 1000L) + ", Block bei "
-                        + b.pos.getX() + " " + b.pos.getY() + " " + b.pos.getZ() + ".";
+                String text = "Besetzung von " + s.name + ": noch " + TimeUtil.duration(b.rest * 1000L) + ", " + ort(b) + ".";
                 Msg.nation(server, angreifer, "§6" + text);
                 Msg.nation(server, verteidiger, "§c" + text);
             }
@@ -795,13 +858,54 @@ public final class EroberungService {
     /** Kurze Zeile fuer Listen. */
     public static String zeile(CrownsData d, Besatzung b) {
         Country c = WorldMap.byCode(b.land);
-        return String.format(Locale.GERMANY, "Nr. %d: %s besetzt %s (%s), Block bei %d %d %d, noch %s", b.id, d.anzeige(b.angreifer),
-                !b.stadt.isEmpty() ? "die Stadt " + b.stadt : c == null ? b.land : c.name(), d.anzeige(b.verteidiger), b.pos.getX(), b.pos.getY(), b.pos.getZ(), TimeUtil.duration(b.rest * 1000L))
+        return String.format(Locale.GERMANY, "Nr. %d: %s besetzt %s (%s), %s, noch %s", b.id, d.anzeige(b.angreifer),
+                !b.stadt.isEmpty() ? "die Stadt " + b.stadt : c == null ? b.land : c.name(), d.anzeige(b.verteidiger), ort(b), TimeUtil.duration(b.rest * 1000L))
+                + (b.anreise > 0 ? ", Anreise der Verteidiger noch " + TimeUtil.duration(b.anreise * 1000L) : "")
                 + switch (UHR_STATUS.getOrDefault(b.id, "")) {
                     case "banner" -> " (Uhr steht: Verteidiger am Banner)";
                     case "gesperrt" -> " (Uhr steht: Verteidiger gekickt oder gebannt)";
                     default -> "";
                 };
+    }
+
+    /** "Block bei x y z" oder "Kampf bei x y z". */
+    static String ort(Besatzung b) {
+        return (b.block ? "Block bei " : "Kampf bei ") + b.pos.getX() + " " + b.pos.getY() + " " + b.pos.getZ();
+    }
+
+    /** Ist ein Verteidiger im RP (nicht gefallen) im Kampfgebiet angekommen? */
+    private static boolean verteidigerAngekommen(MinecraftServer server, CrownsData d, Besatzung b, BlockPos m, int r) {
+        for (ServerPlayer p : spieler(server)) {
+            if (!b.verteidiger.equals(d.nationKeyOf(p.getUUID())) || b.gefallen.contains(p.getUUID()) || !aktiv(p)) continue;
+            if (!p.level().dimension().location().toString().equals(b.dim)) continue;
+            double dx = p.getX() - m.getX(), dz = p.getZ() - m.getZ();
+            if (dx * dx + dz * dz <= (double) r * r) return true;
+        }
+        return false;
+    }
+
+    /** Angreifer, die gerade am Banner stehen (leben, kein Zuschauer). */
+    static int angreiferAmBanner(MinecraftServer server, CrownsData d, Besatzung b) {
+        int n = 0;
+        for (ServerPlayer p : spieler(server)) {
+            if (b.angreifer.equals(d.nationKeyOf(p.getUUID())) && p.isAlive() && !p.isSpectator() && amBanner(p, b.dim, b.pos)) n++;
+        }
+        return n;
+    }
+
+    /** Anreisezeit in Sekunden: Abstand des naechsten Verteidigers im RP zum Banner, pro 100 Bloecke anreiseMinutenPro100Bloecke. */
+    public static long anreise(MinecraftServer server, CrownsData d, String nationKey, String dim, BlockPos pos) {
+        long max = CrownsConfig.EROBERUNG_ANREISE_MAX.get() * 60L;
+        double best = Double.MAX_VALUE;
+        for (ServerPlayer p : spieler(server)) {
+            if (!nationKey.equals(d.nationKeyOf(p.getUUID())) || p.isSpectator()
+                    || de.niklasmetzger.crownscore.mode.ModeService.mode(p.getUUID()) != de.niklasmetzger.crownscore.mode.PlayerMode.RP) continue;
+            if (!p.level().dimension().location().toString().equals(dim)) continue;
+            double dx = p.getX() - (pos.getX() + 0.5), dz = p.getZ() - (pos.getZ() + 0.5);
+            best = Math.min(best, Math.sqrt(dx * dx + dz * dz));
+        }
+        if (best == Double.MAX_VALUE) return max;
+        return Math.min(max, (long) Math.ceil(best / 100.0 * CrownsConfig.EROBERUNG_ANREISE_PRO_100.get() * 60.0 - 1e-6));
     }
 
     public static class EroberungEvents {
@@ -810,7 +914,7 @@ public final class EroberungService {
             if (!(e.getLevel() instanceof ServerLevel level)) return;
             CrownsData d = CrownsData.get(level.getServer());
             for (Besatzung b : d.besatzungen) {
-                if (b.pos.equals(e.getPos()) && b.dim.equals(level.dimension().location().toString())) {
+                if (b.block && b.pos.equals(e.getPos()) && b.dim.equals(level.dimension().location().toString())) {
                     b.zerstoertVon = e.getPlayer() == null ? "" : e.getPlayer().getGameProfile().getName();
                 }
             }
@@ -854,7 +958,7 @@ public final class EroberungService {
             if (d.besatzungen.isEmpty()) return;
             String dim = level.dimension().location().toString();
             for (Besatzung b : d.besatzungen) {
-                if (b.dim.equals(dim) && e.getAffectedBlocks().contains(b.pos)) b.zerstoertVon = "einer Explosion";
+                if (b.block && b.dim.equals(dim) && e.getAffectedBlocks().contains(b.pos)) b.zerstoertVon = "einer Explosion";
             }
         }
     }

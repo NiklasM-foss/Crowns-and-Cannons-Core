@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.7.0
+
+- **Kampf am Hauptbanner** (Antworten von JaydenQ08, gilt mit `eroberung.verteidigerrecht`):
+  - Es wird kein Besatzungsblock mehr gesetzt. Gekämpft wird am Hauptbanner der Stadt, bei einem Land ohne Städte an der Stelle, an der die Besetzung beginnt.
+  - Neuer Befehl `/stadt banner`: Staatschef oder Beamte machen einen Banner im Hauptgebäude zum Hauptbanner. Ohne Hauptbanner gilt die Stadtmitte.
+  - Die Angreifer müssen zum Start am Banner stehen und dort bleiben. Ist 5 Sekunden keiner mehr dort, ist die Besetzung gescheitert (`angreiferAmBannerSekunden`).
+  - Tötet ein Verteidiger einen Angreifer, ist die Besetzung gescheitert, auch wenn er selbst noch nicht gefallen war (`verteidigerKillBeendet` ersetzt `gefallenerBeendetMitKill`).
+  - Anreisezeit: Die Verteidiger haben 1,5 Minuten pro 100 Blöcke Abstand (höchstens 30 Minuten), erst danach läuft die 10-Minuten-Frist, nach der die Stadt ohne Verteidiger fällt. `/nation besetzungen` zeigt die restliche Anreise.
+- Mit `verteidigerrecht = false` bleibt alles wie in 1.5 (Besatzungsblock).
+
 ## 1.6.0
 
 - **Verteidiger am Banner** (Vorschlag von JaydenQ08, Config `eroberung.verteidigerrecht`, standardmäßig an):

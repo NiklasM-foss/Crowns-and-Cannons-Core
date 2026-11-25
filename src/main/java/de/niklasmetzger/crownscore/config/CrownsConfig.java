@@ -115,7 +115,10 @@ public final class CrownsConfig {
     public static final ForgeConfigSpec.BooleanValue EROBERUNG_VERTEIDIGERRECHT;
     public static final ForgeConfigSpec.IntValue EROBERUNG_VERTEIDIGER_RADIUS;
     public static final ForgeConfigSpec.IntValue EROBERUNG_VERTEIDIGER_HOEHE;
-    public static final ForgeConfigSpec.BooleanValue EROBERUNG_GEFALLENER_ABBRUCH;
+    public static final ForgeConfigSpec.BooleanValue EROBERUNG_KILL_ABBRUCH;
+    public static final ForgeConfigSpec.IntValue EROBERUNG_ANGREIFER_BANNER;
+    public static final ForgeConfigSpec.DoubleValue EROBERUNG_ANREISE_PRO_100;
+    public static final ForgeConfigSpec.IntValue EROBERUNG_ANREISE_MAX;
 
     public static final ForgeConfigSpec.IntValue STADT_RADIUS;
     public static final ForgeConfigSpec.IntValue STADT_GEBIET;
@@ -313,18 +316,27 @@ public final class CrownsConfig {
                 .defineInRange("angreiferKulanzSekunden", 30, 0, 86400);
         EROBERUNG_VERTEIDIGER_KULANZ = b.comment("So viele Minuten duerfen die Verteidiger fernbleiben (obwohl jemand online ist), dann ist die Stadt bzw. das Land verloren")
                 .defineInRange("verteidigerKulanzMinuten", 10, 1, 10000);
-        EROBERUNG_VERTEIDIGERRECHT = b.comment("Verteidiger am Banner: Steht ein Verteidiger (online, im RP, nicht gefallen) nahe am Besatzungsblock, kann die",
-                        "Besetzung nicht beginnen und ihre Uhr steht. Beginnen geht nur, wenn jemand aus der angegriffenen Nation im RP online ist,",
-                        "danach laeuft die Uhr auch weiter, wenn die Verteidiger offline gehen (nurWennVerteidigerOnline gilt dann nicht).",
-                        "Wird ein Verteidiger waehrend der Besetzung gekickt oder gebannt, steht die Uhr, bis er wieder online ist.")
+        EROBERUNG_VERTEIDIGERRECHT = b.comment("Verteidiger am Banner: Es wird kein Besatzungsblock gesetzt, gekaempft wird am Hauptbanner der Stadt (/stadt banner,",
+                        "sonst Stadtmitte) bzw. bei einem Land ohne Staedte an der Stelle, an der die Besetzung beginnt. Steht ein Verteidiger (online, im RP,",
+                        "nicht gefallen) dort, kann die Besetzung nicht beginnen und ihre Uhr steht. Die Angreifer muessen dort bleiben (angreiferAmBannerSekunden).",
+                        "Beginnen geht nur, wenn jemand aus der angegriffenen Nation im RP online ist, danach laeuft die Uhr auch weiter, wenn die Verteidiger",
+                        "offline gehen (nurWennVerteidigerOnline gilt dann nicht). Wird ein Verteidiger waehrend der Besetzung gekickt oder gebannt, steht die Uhr,",
+                        "bis er wieder online ist.")
                 .define("verteidigerrecht", true);
-        EROBERUNG_VERTEIDIGER_RADIUS = b.comment("So viele Bloecke waagerecht um den Besatzungsblock zaehlt ein Verteidiger als anwesend")
+        EROBERUNG_VERTEIDIGER_RADIUS = b.comment("So viele Bloecke waagerecht um den Banner zaehlt ein Spieler als am Banner")
                 .defineInRange("verteidigerRadius", 15, 1, 1000);
-        EROBERUNG_VERTEIDIGER_HOEHE = b.comment("So viele Bloecke ueber oder unter dem Besatzungsblock zaehlt ein Verteidiger als anwesend")
+        EROBERUNG_VERTEIDIGER_HOEHE = b.comment("So viele Bloecke ueber oder unter dem Banner zaehlt ein Spieler als am Banner")
                 .defineInRange("verteidigerHoehe", 5, 0, 384);
-        EROBERUNG_GEFALLENER_ABBRUCH = b.comment("Ein gefallener Verteidiger blockiert nicht mehr, kann die Besetzung aber beenden, indem er einen Angreifer toetet",
-                        "(im Umkreis aufgabeRadius). false = gefallene Verteidiger koennen nur noch den Block abbauen.")
-                .define("gefallenerBeendetMitKill", true);
+        EROBERUNG_KILL_ABBRUCH = b.comment("Toetet ein Verteidiger (lebend oder schon gefallen) einen Angreifer im Kampfgebiet (aufgabeRadius), ist die Besetzung gescheitert.",
+                        "Ein gefallener Verteidiger blockiert die Besetzung nicht mehr.")
+                .define("verteidigerKillBeendet", true);
+        EROBERUNG_ANGREIFER_BANNER = b.comment("Mit Verteidigerrecht: Ist so viele Sekunden kein Angreifer mehr am Banner, ist die Besetzung gescheitert")
+                .defineInRange("angreiferAmBannerSekunden", 5, 1, 3600);
+        EROBERUNG_ANREISE_PRO_100 = b.comment("Mit Verteidigerrecht: Anreisezeit der Verteidiger in Minuten pro 100 Bloecke Abstand (naechster Verteidiger im RP beim Start).",
+                        "Erst danach laeuft verteidigerKulanzMinuten. Kommt vorher ein Verteidiger an, ist die Anreise vorbei. 0 = keine Anreisezeit")
+                .defineInRange("anreiseMinutenPro100Bloecke", 1.5, 0.0, 1000.0);
+        EROBERUNG_ANREISE_MAX = b.comment("Hoechstens so viele Minuten Anreise (gilt auch fuer Verteidiger in einer anderen Dimension)")
+                .defineInRange("anreiseMaxMinuten", 30, 0, 10000);
         b.pop();
 
         b.comment("Antraege im Browser entscheiden (Ordner editor/antraege/ beim Rechte-Editor). Der Link geht in den Discord-Webhook antraege.",

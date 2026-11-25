@@ -162,16 +162,24 @@ der Vatikan sind dafür zu klein, die Antarktis ist ausgelassen.
   Stadtmitte, gilt die Besetzung nach `angreiferKulanzSekunden` als aufgegeben.
   Bleiben die Verteidiger fern, obwohl jemand von ihnen online ist, fällt die Stadt
   nach `verteidigerKulanzMinuten`. `/nation aufgeben` geht für beide Seiten.
-- **Verteidiger am Banner** (`verteidigerrecht`, Standard an): Beginnen geht nur, wenn
-  jemand aus der angegriffenen Nation im RP online ist, und nicht, solange ein
-  Verteidiger im RP in `verteidigerRadius` Blöcken (`verteidigerHoehe` nach oben und
-  unten) um die Stelle steht. Läuft die Besetzung, steht die Uhr, solange ein
-  Verteidiger dort ist. Wer im Kampfgebiet (`aufgabeRadius`) fällt, blockiert diese
-  Besetzung nicht mehr; tötet er danach einen Angreifer, ist sie gescheitert
-  (`gefallenerBeendetMitKill`). Nach dem Start läuft die Uhr auch weiter, wenn die
-  Verteidiger offline gehen. Wird einer von ihnen gekickt oder gebannt, steht sie, bis er
-  wieder online ist. Den Banner in die Hauptfestung oder das Rathaus zu stellen und sich
-  nicht einzumauern, regeln die Serverregeln.
+- **Verteidiger am Banner** (`verteidigerrecht`, Standard an): Es wird kein
+  Besatzungsblock gesetzt. Gekämpft wird am Hauptbanner der Stadt (`/stadt banner`,
+  sonst Stadtmitte), bei einem Land ohne Städte an der Stelle, an der die Besetzung
+  beginnt. Am Banner heißt: `verteidigerRadius` Blöcke waagerecht, `verteidigerHoehe`
+  nach oben und unten.
+  - Beginnen geht nur am Banner, nur wenn jemand aus der angegriffenen Nation im RP
+    online ist, und nicht, solange ein Verteidiger im RP am Banner steht.
+  - Läuft die Besetzung, steht die Uhr, solange ein Verteidiger am Banner ist. Ist
+    `angreiferAmBannerSekunden` lang kein Angreifer am Banner, ist sie gescheitert.
+  - Tötet ein Verteidiger im Kampfgebiet (`aufgabeRadius`) einen Angreifer, ist sie
+    gescheitert (`verteidigerKillBeendet`). Wer dort fällt, blockiert sie nicht mehr.
+  - Anreise: Die Verteidiger haben `anreiseMinutenPro100Bloecke` pro 100 Blöcke Abstand
+    (nächster Verteidiger im RP beim Start, höchstens `anreiseMaxMinuten`), erst danach
+    läuft `verteidigerKulanzMinuten`.
+  - Nach dem Start läuft die Uhr auch weiter, wenn die Verteidiger offline gehen. Wird
+    einer von ihnen gekickt oder gebannt, steht sie, bis er wieder online ist.
+  - Den Banner ins Hauptgebäude zu stellen und sich nicht einzumauern, regeln die
+    Serverregeln.
 - **Fremde Claims:** Gesetzt wird nicht im eigenen Gebiet und nicht in fremden
   Spieler-Claims. Claimt nach dem Setzen ein Dritter den Block, hält die Besetzung an,
   bis der Claim weg ist (die Angreifer müssen in der Nähe bleiben, die Kulanz der
@@ -361,7 +369,8 @@ ersten Start mit Kommentaren erzeugt. Wichtig:
   `schutzNeueNationTage`, `sperreNachEroberungTage`, `stammlandGeschuetzt`,
   `gleichzeitigeBesetzungen`, `besatzungsblock`, `aufgabeRadius`,
   `angreiferKulanzSekunden`, `verteidigerKulanzMinuten`, `verteidigerrecht`,
-  `verteidigerRadius`, `verteidigerHoehe`, `gefallenerBeendetMitKill`.
+  `verteidigerRadius`, `verteidigerHoehe`, `verteidigerKillBeendet`,
+  `angreiferAmBannerSekunden`, `anreiseMinutenPro100Bloecke`, `anreiseMaxMinuten`.
 
 Spielstand in `world/data/crownscore.dat`, Blockprotokoll in
 `world/crownscore/protokoll.mv.db`, Rechte in `world/crownscore/permissions.json`,

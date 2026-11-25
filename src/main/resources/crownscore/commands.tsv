@@ -38,7 +38,7 @@
 @eroberung	Länder einnehmen	Freie Länder kauft man aus der Staatskasse, Länder anderer Nationen besetzt man im Krieg mit einem Besatzungsblock, der die Haltezeit überstehen muss. Preise und Regeln stehen in der Config [eroberung].
 /nation land preis <Land>	ALLE	Zeigt Besitzer, Größe, Kaufpreis oder Besatzungsgebühr eines Landes und ob deine Nation es einnehmen darf.
 /nation land kaufen <Land>	CHEF	Kauft ein freies Land (Nation ohne Spieler) aus der Staatskasse. Es muss nahe am eigenen Gebiet liegen. Erst Preis, dann [Kaufen] bestätigen.
-/nation besetzen	BEAMTER	Setzt einen Besatzungsblock an deine Position: in einer Stadt einer Nation, mit der ihr im Krieg seid (Länder mit Städten nur so), sonst im Land. Hält er die Haltezeit, gehört euch die Stadt; wer alle Städte eines Landes hält, bekommt das ganze Land. Wird er zerstört, ist die Gebühr weg. Es muss jemand aus der angegriffenen Nation im RP online sein, und kein Verteidiger darf in 15 Blöcken um die Stelle stehen.
+/nation besetzen	BEAMTER	Greift eine Stadt einer Nation an, mit der ihr im Krieg seid (Länder mit Städten nur so), sonst das Land an deiner Position. Gekämpft wird am Hauptbanner der Stadt (sonst an der Stadtmitte), dort musst du stehen. Haltet ihr die Haltezeit durch, gehört euch die Stadt; wer alle Städte eines Landes hält, bekommt das ganze Land. Es muss jemand aus der angegriffenen Nation im RP online sein, und kein Verteidiger darf in 15 Blöcken um den Banner stehen. Verlasst ihr den Banner länger als 5 Sekunden oder tötet ein Verteidiger einen von euch, ist die Besetzung gescheitert und die Gebühr weg.
 /nation besetzen abbrechen [Nr]	BEAMTER	Bricht die laufende Besetzung deiner Nation ab. Admins können mit Nr jede Besetzung beenden.
 /nation besetzungen	ALLE	Alle laufenden Besetzungen mit Ort des Blocks, Restzeit und ob die Uhr gerade steht.
 /nation aufgeben [Nr]	BEAMTER	Als Angreifer die Belagerung abbrechen, als Verteidiger die Stadt bzw. das Land aufgeben. Wer sich weiter als 100 Blöcke von der Stadtmitte entfernt, gibt ebenfalls auf.
@@ -46,6 +46,7 @@
 /stadt	BUERGER	Zeigt die Städte deiner Nation und wie viele Villager ihr noch kaufen dürft.
 /stadt liste [Nation]	ALLE	Städte einer Nation mit Ort, Betten und Status.
 /stadt pruefen	BEAMTER	Prüft deinen Standort: Betten, Glocke, Abstand zur nächsten Stadt, eigenes Gebiet.
+/stadt banner	BEAMTER	Macht den Banner neben dir (höchstens 2 Blöcke) zum Hauptbanner der Stadt. Er gehört ins Hauptgebäude (Festung, Rathaus), bei einer Besetzung wird dort gekämpft. Während einer Besetzung nicht versetzbar.
 /stadt gruenden <Name>	BEAMTER	Stellt den Antrag auf eine Stadt an deinem Standort. Geht auch per Rechtsklick auf der World Map („Stadt hier beantragen“).
 /stadt wappen <Stadt>	BEAMTER	Link zur Upload-Seite für das Wappen einer Stadt. Ohne Wappen zeigt die Karte die Flagge der Nation.
 /stadt wappen <Stadt> <Code>	BEAMTER	Übernimmt das hochgeladene Wappen, ein Admin gibt es frei.

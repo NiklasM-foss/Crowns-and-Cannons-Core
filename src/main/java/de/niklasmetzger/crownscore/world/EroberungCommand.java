@@ -129,7 +129,9 @@ public final class EroberungCommand {
             Msg.err(src, err);
             return 0;
         }
-        Msg.ok(src, "Besatzungsblock gesetzt. Haltet ihn, bis die Zeit um ist. /nation besetzungen zeigt den Stand.");
+        Msg.ok(src, de.niklasmetzger.crownscore.config.CrownsConfig.EROBERUNG_VERTEIDIGERRECHT.get()
+                ? "Die Besetzung laeuft. Bleibt am Banner und haltet durch, /nation besetzungen zeigt den Stand."
+                : "Besatzungsblock gesetzt. Haltet ihn, bis die Zeit um ist. /nation besetzungen zeigt den Stand.");
         return 1;
     }
 

@@ -6,7 +6,7 @@ import net.minecraft.nbt.CompoundTag;
 
 import java.util.UUID;
 
-/** Eine laufende Besetzung: ein Besatzungsblock steht in einem fremden Land und muss gehalten werden. */
+/** Eine laufende Besetzung: ein Besatzungsblock steht in einem fremden Land (oder es wird am Hauptbanner gekaempft) und muss gehalten werden. */
 public class Besatzung {
     public int id;
     /** Nation, die besetzt. */
@@ -34,6 +34,10 @@ public class Besatzung {
     public final java.util.Set<UUID> gefallen = new java.util.HashSet<>();
     /** Verteidiger, die waehrend dieser Besetzung gekickt oder gebannt wurden und noch nicht zurueck sind. */
     public final java.util.Set<UUID> gesperrt = new java.util.HashSet<>();
+    /** Es steht ein Besatzungsblock (alte Regel). false = Kampf am Hauptbanner bzw. am Startpunkt, kein Block. */
+    public boolean block = true;
+    /** Restliche Anreisezeit der Verteidiger in Sekunden, erst danach zaehlt verteidigerKulanzMinuten. */
+    public long anreise;
 
     public CompoundTag toNbt() {
         CompoundTag t = new CompoundTag();
@@ -55,6 +59,8 @@ public class Besatzung {
         if (zerstoertVon != null) t.putString("zerstoertVon", zerstoertVon);
         t.put("gefallen", uuids(gefallen));
         t.put("gesperrt", uuids(gesperrt));
+        t.putBoolean("block", block);
+        t.putLong("anreise", anreise);
         return t;
     }
 
@@ -78,6 +84,8 @@ public class Besatzung {
         b.zerstoertVon = t.contains("zerstoertVon") ? t.getString("zerstoertVon") : null;
         leseUuids(t, "gefallen", b.gefallen);
         leseUuids(t, "gesperrt", b.gesperrt);
+        b.block = !t.contains("block") || t.getBoolean("block");
+        b.anreise = t.getLong("anreise");
         return b;
     }
 

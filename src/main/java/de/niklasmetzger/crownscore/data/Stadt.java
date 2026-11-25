@@ -23,6 +23,13 @@ public class Stadt {
     public String antragId = "";
     /** Spieler, die schon einmal im Stadtgebiet waren, seit die Stadt anerkannt ist (sehen sie dann auf der Karte). */
     public final java.util.Set<UUID> entdeckt = new java.util.LinkedHashSet<>();
+    /** Hauptbanner im Hauptgebaeude (/stadt banner), dort wird bei einer Besetzung gekaempft; null = Stadtmitte. */
+    public BlockPos banner;
+
+    /** Ort, um den bei einer Besetzung gekaempft wird. */
+    public BlockPos bannerPos() {
+        return banner != null ? banner : pos;
+    }
 
     public CompoundTag toNbt() {
         CompoundTag t = new CompoundTag();
@@ -38,6 +45,7 @@ public class Stadt {
         t.putBoolean("glocke", glocke);
         t.putString("antragId", antragId);
         t.put("entdeckt", NbtUtil.uuids(entdeckt));
+        if (banner != null) t.putLong("banner", banner.asLong());
         return t;
     }
 
@@ -55,6 +63,7 @@ public class Stadt {
         s.glocke = t.getBoolean("glocke");
         s.antragId = t.getString("antragId");
         s.entdeckt.addAll(NbtUtil.uuidSet(t, "entdeckt"));
+        s.banner = t.contains("banner") ? BlockPos.of(t.getLong("banner")) : null;
         return s;
     }
 }

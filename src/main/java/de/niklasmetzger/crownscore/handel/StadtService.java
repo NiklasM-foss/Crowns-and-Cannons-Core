@@ -75,6 +75,35 @@ public final class StadtService {
         return new Pruefung(betten, glocke, naechste, best, n != null && n.key().equals(hier));
     }
 
+    /** Hauptbanner setzen: ein Banner in hoechstens 2 Bloecken Abstand, im Stadtgebiet. null = gesetzt, sonst der Fehler. */
+    public static String bannerSetzen(ServerPlayer p, Nation n, Stadt s) {
+        CrownsData d = CrownsData.get(p.getServer());
+        if (!s.nation.equals(n.key())) return s.name + " gehoert nicht " + n.name + ".";
+        for (de.niklasmetzger.crownscore.data.Besatzung b : d.besatzungen) {
+            if (b.stadt.equalsIgnoreCase(s.name)) return "Waehrend einer Besetzung kann der Hauptbanner nicht versetzt werden.";
+        }
+        List<net.minecraft.world.level.ChunkPos> gebiet = chunks(s);
+        if (!p.level().dimension().location().toString().equals(s.dim) || !gebiet.contains(new net.minecraft.world.level.ChunkPos(p.blockPosition()))) {
+            return "Stell dich in das Stadtgebiet von " + s.name + ".";
+        }
+        BlockPos best = null;
+        double bestDist = Double.MAX_VALUE;
+        BlockPos o = p.blockPosition();
+        for (BlockPos q : BlockPos.betweenClosed(o.offset(-2, -2, -2), o.offset(2, 2, 2))) {
+            if (!p.level().getBlockState(q).is(net.minecraft.tags.BlockTags.BANNERS)) continue;
+            double dist = q.distSqr(o);
+            if (dist < bestDist) {
+                bestDist = dist;
+                best = q.immutable();
+            }
+        }
+        if (best == null) return "Kein Banner in der Naehe. Stell einen Banner in euer Hauptgebaeude (Festung, Rathaus) und stell dich daneben.";
+        if (!gebiet.contains(new net.minecraft.world.level.ChunkPos(best))) return "Der Banner steht nicht im Stadtgebiet von " + s.name + ".";
+        s.banner = best;
+        d.setDirty();
+        return null;
+    }
+
     /** Liegt der Chunk im Gebiet der Stadt? */
     public static boolean imGebiet(Stadt s, String dim, int cx, int cz) {
         int r = CrownsConfig.STADT_GEBIET.get();

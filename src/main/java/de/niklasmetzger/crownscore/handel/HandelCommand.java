@@ -37,6 +37,7 @@ public final class HandelCommand {
                 .executes(ctx -> liste(ctx, null))
                 .then(Commands.literal("gruenden").then(Commands.argument("name", StringArgumentType.greedyString()).executes(HandelCommand::gruenden)))
                 .then(Commands.literal("pruefen").executes(HandelCommand::pruefen))
+                .then(Commands.literal("banner").executes(HandelCommand::banner))
                 .then(Commands.literal("liste").executes(ctx -> liste(ctx, null))
                         .then(Commands.argument("nation", StringArgumentType.greedyString()).suggests(CommandUtil.NATIONS)
                                 .executes(ctx -> liste(ctx, StringArgumentType.getString(ctx, "nation"))))));
@@ -88,6 +89,27 @@ public final class HandelCommand {
             return 0;
         }
         Msg.ok(src, "Antrag gestellt. Ein Admin prueft die Stadt, die Entscheidung kommt ins /postfach.");
+        return 1;
+    }
+
+    private static int banner(CommandContext<CommandSourceStack> ctx) throws CommandSyntaxException {
+        CommandSourceStack src = ctx.getSource();
+        ServerPlayer p = CommandUtil.player(ctx);
+        CrownsData d = CommandUtil.data(ctx);
+        Nation n = CommandUtil.own(src, d, p);
+        if (n == null || !CommandUtil.beamter(src, n, p)) return 0;
+        Stadt s = StadtService.an(d, p.level().dimension().location().toString(), p.blockPosition().getX() >> 4, p.blockPosition().getZ() >> 4);
+        if (s == null) {
+            Msg.err(src, "Hier ist keine anerkannte Stadt. Stell dich in euer Hauptgebaeude.");
+            return 0;
+        }
+        String err = StadtService.bannerSetzen(p, n, s);
+        if (err != null) {
+            Msg.err(src, err);
+            return 0;
+        }
+        Msg.ok(src, "Der Hauptbanner von " + s.name + " steht bei " + s.banner.getX() + " " + s.banner.getY() + " " + s.banner.getZ()
+                + ". Bei einer Besetzung wird hier gekaempft.");
         return 1;
     }
 

@@ -345,6 +345,7 @@ public class SelfTest {
         final long[] gegruendet = {0};
         final de.niklasmetzger.crownscore.data.War[] krieg = {null};
         final FakePlayer[] verteidiger = {null};
+        final double[] apos = new double[3];
         step("Vorbereitung", () -> {
             CrownsData d = CrownsData.get(server);
             Nation sau = nat("SAU"), yem = nat("YEM"), jor = nat("JOR");
@@ -475,7 +476,12 @@ public class SelfTest {
             err = de.niklasmetzger.crownscore.world.EroberungService.besetzen(a, nat("SAU"));
             check("Verteidigerrecht: Verteidiger 40 Bloecke weg, Start geht", err == null, err);
             var b = d.besatzungen.isEmpty() ? null : d.besatzungen.get(0);
+            apos[0] = a.getX();
+            apos[1] = a.getY();
+            apos[2] = a.getZ();
             if (b != null) {
+                check("Verteidigerrecht: kein Besatzungsblock", !b.block && !lvl.getBlockState(b.pos).is(de.niklasmetzger.crownscore.world.EroberungService.block()), b.pos.toShortString());
+                check("Verteidigerrecht: Anreise 40 Bloecke = 36 Sekunden", b.anreise == 36, "anreise " + b.anreise);
                 b.rest = 1000;
                 verteidiger[0].setPos(b.pos.getX() + 3.5, b.pos.getY(), b.pos.getZ() + 3.5);
             }
@@ -504,6 +510,31 @@ public class SelfTest {
             de.niklasmetzger.crownscore.world.EroberungService.tod(server, a, verteidiger[0]);
             check("Verteidigerrecht: Kill des Gefallenen beendet die Besetzung", d.besatzungen.isEmpty(), "");
             check("Verteidigerrecht: Jordanien bleibt bei Jordanien", nat("JOR").laender.contains("JOR"), "");
+        });
+        step("Verteidigerrecht: lebender Verteidiger toetet", () -> {
+            CrownsData d = CrownsData.get(server);
+            d.landSperre.clear();
+            verteidiger[0].setPos(a.getX() + 40, a.getY(), a.getZ());
+            String err = de.niklasmetzger.crownscore.world.EroberungService.besetzen(a, nat("SAU"));
+            check("Verteidigerrecht: dritte Besetzung beginnt", err == null, err);
+            de.niklasmetzger.crownscore.world.EroberungService.tod(server, a, verteidiger[0]);
+            check("Verteidigerrecht: Kill eines lebenden Verteidigers beendet die Besetzung", d.besatzungen.isEmpty(), "");
+            err = de.niklasmetzger.crownscore.world.EroberungService.besetzen(a, nat("SAU"));
+            check("Verteidigerrecht: vierte Besetzung beginnt", err == null, err);
+            a.setPos(apos[0] + 30, apos[1], apos[2]);
+        });
+        stepWait(40, "warten", () -> {});
+        step("Verteidigerrecht: Angreifer kurz weg", () -> {
+            CrownsData d = CrownsData.get(server);
+            var b = d.besatzungen.isEmpty() ? null : d.besatzungen.get(0);
+            check("Verteidigerrecht: nach 2 Sekunden weg laeuft sie noch, der Zaehler steigt", b != null && b.angreiferWeg > 0,
+                    b == null ? "schon beendet" : "weg " + b.angreiferWeg);
+        });
+        stepWait(100, "warten", () -> {});
+        step("Verteidigerrecht: Angreifer weg vom Banner", () -> {
+            CrownsData d = CrownsData.get(server);
+            check("Verteidigerrecht: Angreifer 7 Sekunden weg vom Banner beendet die Besetzung", d.besatzungen.isEmpty(), "");
+            a.setPos(apos[0], apos[1], apos[2]);
         });
         step("Verteidigerrecht: Kick", () -> {
             CrownsData d = CrownsData.get(server);
@@ -682,6 +713,44 @@ public class SelfTest {
             a.setPos(x + 0.5, lvl.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z), z + 0.5);
             String err = de.niklasmetzger.crownscore.world.EroberungService.besetzen(a, nat("SAU"));
             check("Besetzen: Land mit Staedten nur ueber die Staedte", err != null && err.contains("Testamman"), err);
+        });
+        step("Hauptbanner", () -> {
+            CrownsData d = CrownsData.get(server);
+            var s = de.niklasmetzger.crownscore.handel.StadtService.byName(d, "Testamman");
+            FakePlayer v = FakePlayerFactory.get(lvl, new GameProfile(jorBuerger, "Testbuerger_JOR"));
+            BlockPos bp = s.pos.offset(6, 0, 6);
+            v.setPos(bp.getX() + 1.5, bp.getY(), bp.getZ() + 0.5);
+            String err = de.niklasmetzger.crownscore.handel.StadtService.bannerSetzen(v, nat("JOR"), s);
+            check("Hauptbanner: ohne Banner in der Naehe abgelehnt", err != null && err.contains("Kein Banner"), err);
+            lvl.setBlock(bp, net.minecraft.world.level.block.Blocks.RED_BANNER.defaultBlockState(), 2);
+            gesetzt.add(bp);
+            err = de.niklasmetzger.crownscore.handel.StadtService.bannerSetzen(v, nat("SAU"), s);
+            check("Hauptbanner: fremde Nation darf ihn nicht setzen", err != null, err);
+            err = de.niklasmetzger.crownscore.handel.StadtService.bannerSetzen(v, nat("JOR"), s);
+            check("Hauptbanner: gesetzt", err == null && bp.equals(s.banner), err);
+            de.niklasmetzger.crownscore.config.CrownsConfig.EROBERUNG_VERTEIDIGERRECHT.set(true);
+            de.niklasmetzger.crownscore.world.EroberungService.TEST_SPIELER.clear();
+            de.niklasmetzger.crownscore.world.EroberungService.TEST_SPIELER.add(a);
+            de.niklasmetzger.crownscore.world.EroberungService.TEST_SPIELER.add(v);
+            v.setPos(bp.getX() + 160.5, bp.getY(), bp.getZ() + 0.5);
+            de.niklasmetzger.crownscore.treasury.TreasuryService.credit(d, nat("SAU").key(), 1.0E6);
+            a.setPos(s.pos.getX() - 11.5, bp.getY(), s.pos.getZ() - 11.5);
+            err = de.niklasmetzger.crownscore.world.EroberungService.besetzen(a, nat("SAU"));
+            check("Hauptbanner: Start nur am Hauptbanner", err != null && err.contains("am Hauptbanner"), err);
+            a.setPos(bp.getX() - 2.5, bp.getY(), bp.getZ() + 0.5);
+            err = de.niklasmetzger.crownscore.world.EroberungService.besetzen(a, nat("SAU"));
+            check("Hauptbanner: Start am Hauptbanner", err == null, err);
+            var b = d.besatzungen.isEmpty() ? null : d.besatzungen.get(0);
+            check("Hauptbanner: gekaempft wird am Banner", b != null && !b.block && bp.equals(b.pos), b == null ? "" : b.pos.toShortString());
+            if (b != null) {
+                check("Hauptbanner: Anreise 160 Bloecke = 2:24", b.anreise == 144, "anreise " + b.anreise);
+                err = de.niklasmetzger.crownscore.handel.StadtService.bannerSetzen(v, nat("JOR"), s);
+                check("Hauptbanner: waehrend der Besetzung nicht versetzbar", err != null && err.contains("Besetzung"), err);
+                de.niklasmetzger.crownscore.world.EroberungService.abbrechen(server, b, "Selbsttest");
+            }
+            check("Hauptbanner: bleibt nach dem Ende stehen", lvl.getBlockState(bp).is(net.minecraft.world.level.block.Blocks.RED_BANNER), "");
+            de.niklasmetzger.crownscore.world.EroberungService.TEST_SPIELER.clear();
+            de.niklasmetzger.crownscore.config.CrownsConfig.EROBERUNG_VERTEIDIGERRECHT.set(false);
         });
         step("Stadt besetzen", () -> {
             CrownsData d = CrownsData.get(server);
