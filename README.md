@@ -9,18 +9,28 @@ Wahlen, Visa, Post und den Aktivitätszähler. Seit 1.2.0 kommen Spielermodi (RP
 Farm, AFK), ein Blockprotokoll mit Rollback nach dem Vorbild von CoreProtect,
 eine Rechteverwaltung nach dem Vorbild von LuckPerms und die Erdkarte mit allen
 Ländern auf Xaero's Minimap dazu. Seit 1.3.0 trägt jeder Bürger die Flagge seiner
-Nation als Umhang.
+Nation als Umhang. 1.4.0 bringt die Flaggen auf Xaero's Karten und das Kaufen und
+Besetzen von Ländern, 1.5.0 Städte mit Villager-Händlern, Eroberung Stadt für Stadt
+und ein Postfach für jeden Spieler.
 
 Die Regeln laufen auf dem Server. Im Client ist die Mod nur für die Flaggen-Umhänge
 nötig; Spieler ohne sie können trotzdem mitspielen. Alle Anbindungen an andere Mods
-sind optional. Liste aller Länderkürzel mit Flagge: [docs/laender.html](docs/laender.html).
+sind optional.
+
+- **Alle Befehle:** [docs/commandliste.html](docs/commandliste.html), mit Suche und Filter nach Rolle
+  ([im Browser öffnen](https://htmlpreview.github.io/?https://github.com/NiklasM-foss/Crowns-and-Cannons-Core/blob/main/docs/commandliste.html)),
+  zum Drucken als [docs/Befehle.pdf](docs/Befehle.pdf)
+- **Alle Länderkürzel mit Flagge:** [docs/laender.html](docs/laender.html)
+- **Änderungen pro Version:** [CHANGELOG.md](CHANGELOG.md)
 
 **Download:** [CurseForge](https://www.curseforge.com/projects/1802743) ·
 Quellcode auf [GitHub](https://github.com/NiklasM-foss/Crowns-and-Cannons-Core)
 
 ## Module und Commands
 
-Die vollständige Liste mit Rollen steht in [docs/Befehle.pdf](docs/Befehle.pdf). Im
+Die vollständige Liste mit Rollen und Beschreibung steht in
+[docs/commandliste.html](docs/commandliste.html) (durchsuchbar) und
+[docs/Befehle.pdf](docs/Befehle.pdf). Im
 Spiel zeigt `/cccore list` die Befehle, die man selbst nutzen darf, und
 `/cccore list <Modul>` ein einzelnes Modul. Befehle ohne Berechtigung tauchen weder
 in der Liste noch in der Tab-Vervollständigung auf (siehe Rechte).
@@ -31,7 +41,12 @@ in der Liste noch in der Tab-Vervollständigung auf (siehe Rechte).
 | Spielermodus | `/modus`, `rp`, `farm`, `afk <20:00 oder 90m>`, `liste`, `grund <Spieler> <Grund>` | Modusregel |
 | Protokoll | `/cccore admin inspect`, `lookup <Parameter>`, `near [Radius]`, `seite <Nr>`, `rollback <Parameter>`, `restore <Parameter>`, `anwenden`, `abbrechen`, `undo`, `purge t:<Zeit>`, `status` | Griefing, Gericht |
 | Rechte | `/cccore perms info`, `listgroups`, `creategroup`, `deletegroup`, `user <Spieler> ...`, `group <Gruppe> ...`, `track <Laufbahn> ...`, `search <Knoten>`, `reload` | Ränge |
-| Nationen | `/nation liste`, `info`, `beitreten <Land>`, `bestaetigen <Spieler>`, `ablehnen`, `verlassen`, `rauswerfen`, `beamter <Spieler>`, `wahlmodus <KEINE,DIREKT,PARLAMENT> [Amtszeit]`; Admin: `anlegen <Name> <Kürzel>`, `loeschen`, `staatschef <Land> <Spieler>`, `setzen <Spieler> <Land>`, `umbenennen` | Grundlage |
+| Nationen | `/nation liste`, `info`, `beitreten <Land>`, `bestaetigen <Spieler>`, `ablehnen`, `verlassen`, `rauswerfen`, `beamter <Spieler>`, `wahlmodus <KEINE,DIREKT,PARLAMENT> [Amtszeit]`; Admin: `anlegen <Name> <Kürzel>`, `loeschen`, `staatschef <Land> <Spieler>`, `setzen <Spieler> <Land>`, `umbenennen`, `annektieren <Land> <Nation>`, `weltkarte import,info,minimap` | Grundlage |
+| Länder einnehmen | `/nation land preis <Land>`, `land kaufen <Land>` (Staatschef), `besetzen`, `besetzen abbrechen [Nr]`, `besetzungen`, `aufgeben [Nr]` | Krieg, Besitzrecht |
+| Städte | `/stadt`, `liste [Nation]`, `pruefen`, `gruenden <Name>`, `wappen <Stadt> [Code,entfernen]`; Admin: `/cccore staedte [annehmen,ablehnen,uebertragen]`, `/cccore wappen annehmen,ablehnen` | Städte |
+| Villager-Händler | `/haendler`, `kaufen <Angebot> [geld,rohstoffe]`; Admin: `/cccore haendler setzen,entfernen` | Villager |
+| Postfach | `/postfach` | |
+| Flaggen | `/nation flagge`, `flagge anwenden <Code>`, `flagge entfernen`, `/umhang [an,aus]`; Admin: `/cccore flaggen [annehmen,ablehnen,vorschau]` | |
 | Kriege | `/krieg erklaeren <Gegner> <Kriegsart> <Grund>`, `liste`, `arten`, `frieden <Gegner>` (beide Seiten), `wechseln <Gegner> <Kriegsart>` (beide Seiten); Admin: `beenden <Nr> <Ergebnis>` | §4.1, §4.2 |
 | Duell | `/duell <Spieler>`, `annehmen`, `abbrechen` | Zweikampf ohne Krieg |
 | Beweisakte | `/akte spieler <Spieler> [Seite]`, `gebiet <Land>`, `typ <Typ>`, `neueste`, `export <Spieler> [Anzahl]`, `loeschen <Spieler>` | §3, §4.5, §5 |
@@ -44,11 +59,13 @@ in der Liste noch in der Tab-Vervollständigung auf (siehe Rechte).
 | Visa | `/visum erteilen <Spieler> [Tage]`, `entziehen`, `liste`, `meine` | §5.1 |
 | Post | `/post senden <Land> <Text>`, `lesen`, `abgefangen`, `gesendet` | Spionage |
 | Verträge | `/vertrag hinterlegen <Titel>` (Buch in der Hand), `liste`, `lesen <Nr>`, `pruefen <Nr>`, `export <Nr>` | §2 |
-| Gebiete intern | `/gebiet hier`, `claim [Radius]`, `freigeben [Radius]`, `anzahl` | nur ohne OPAC nötig |
+| Gebiete | `/gebiet hier`, `claim [Radius]`, `freigeben [Radius]`, `anzahl`; Admin: `zuweisen <Nation> [Radius]`, `zuruecksetzen [Radius]` | Claims nur ohne OPAC nötig |
 
-Admin ist, wer OP-Level 2 hat, in der Config unter `admins` steht oder das Recht
-`crownscore.admin` hat. Ein ausdrückliches `crownscore.admin = false` nimmt die
-Adminrechte auch einem OP.
+Admin ist, wer OP-Level 2 hat, in der Config unter `admins` steht oder in der
+Rechteverwaltung der Mod (`/cccore perms`) das Recht `crownscore.admin` hat. Ein
+ausdrückliches `crownscore.admin = false` nimmt die Adminrechte auch einem OP. Ein
+in LuckPerms gesetztes `crownscore.admin` zählt nicht, die Mod hat ihr eigenes
+Rechtesystem.
 
 ### Was automatisch passiert
 
@@ -133,12 +150,22 @@ der Vatikan sind dafür zu klein, die Antarktis ist ausgelassen.
   eigenen Gebiet entfernt liegt (Standard 16, damit gehen auch schmale Meerengen;
   0 = direkt angrenzend, −1 = überall).
 - **Besetzen:** Ein Beamter stellt sich im Krieg in ein Land der gegnerischen Nation
-  und gibt `/nation besetzen` ein. Die Gebühr geht aus der Staatskasse, an seiner
-  Position steht der Besatzungsblock (Standard roter Banner). Hält er
-  `haltezeitMinuten`, wechselt das Land wie bei `/nation annektieren`. Wird er
-  abgebaut oder gesprengt, ist die Besetzung gescheitert. Die Zeit läuft nur, solange
-  jemand aus der angegriffenen Nation online ist (`nurWennVerteidigerOnline`).
-  Stand alle 15 Minuten an beide Seiten, `/nation besetzungen` listet alle.
+  (hat das Land Städte, in ein Stadtgebiet) und gibt `/nation besetzen` ein. Die
+  Gebühr geht aus der Staatskasse, an seiner Position steht der Besatzungsblock
+  (Standard roter Banner). Hält er `haltezeitMinuten`, wechselt die Stadt bzw. das
+  Land wie bei `/nation annektieren`. Wird er abgebaut oder gesprengt, ist die
+  Besetzung gescheitert und die Gebühr weg. Die Zeit läuft nur, solange jemand aus
+  der angegriffenen Nation online ist (`nurWennVerteidigerOnline`). Stand alle
+  15 Minuten an beide Seiten, `/nation besetzungen` listet alle, auf der Karte zeigt
+  eine rote Linie den Angriff.
+- **Aufgeben:** Ist kein Angreifer mehr innerhalb von `aufgabeRadius` Blöcken um die
+  Stadtmitte, gilt die Besetzung nach `angreiferKulanzSekunden` als aufgegeben.
+  Bleiben die Verteidiger fern, obwohl jemand von ihnen online ist, fällt die Stadt
+  nach `verteidigerKulanzMinuten`. `/nation aufgeben` geht für beide Seiten.
+- **Fremde Claims:** Gesetzt wird nicht im eigenen Gebiet und nicht in fremden
+  Spieler-Claims. Claimt nach dem Setzen ein Dritter den Block, hält die Besetzung an,
+  bis der Claim weg ist (die Angreifer müssen in der Nähe bleiben, die Kulanz der
+  Verteidiger steht). Claimen ihn die Angreifer selbst, scheitert sie.
 - **Schutz:** Besetzen nur im Krieg mit erlaubtem Kampf, neue Nationen sind
   `schutzNeueNationTage` geschützt, das Stammland ist erst einnehmbar, wenn die
   Nation sonst nichts mehr hat, ein eingenommenes Land ist `sperreNachEroberungTage`
@@ -322,7 +349,8 @@ ersten Start mit Kommentaren erzeugt. Wichtig:
   `besetzen`, `nurImKrieg`, `nurKampfkrieg`, `besatzungGrundgebuehr`,
   `besatzungProChunk`, `haltezeitMinuten`, `nurWennVerteidigerOnline`,
   `schutzNeueNationTage`, `sperreNachEroberungTage`, `stammlandGeschuetzt`,
-  `gleichzeitigeBesetzungen`, `besatzungsblock`.
+  `gleichzeitigeBesetzungen`, `besatzungsblock`, `aufgabeRadius`,
+  `angreiferKulanzSekunden`, `verteidigerKulanzMinuten`.
 
 Spielstand in `world/data/crownscore.dat`, Blockprotokoll in
 `world/crownscore/protokoll.mv.db`, Rechte in `world/crownscore/permissions.json`,
@@ -344,8 +372,10 @@ und sind in `build.gradle` auf die Versionen des Modpacks gepinnt.
 
 Befehlsliste: Alle Befehle stehen einmal in
 `src/main/resources/crownscore/commands.tsv`. Daraus liest `/cccore list` im Spiel,
-und daraus entsteht die PDF. Nach einer Änderung an Befehlen die Datei anpassen und
-die PDF neu bauen (braucht Python 3 und Chrome oder Edge):
+und daraus entstehen `docs/commandliste.html` und `docs/Befehle.pdf`. Nach einer
+Änderung an Befehlen und vor jedem Release die Datei anpassen und beide neu bauen
+(braucht Python 3, für die PDF zusätzlich Chrome oder Edge; `--html` baut nur die
+HTML-Seite):
 
 ```
 python tools/befehle_pdf.py
@@ -357,7 +387,9 @@ Selbsttest: `./gradlew selftestJar` baut `crownscore-<Version>-selftest.jar`. Zu
 mit der Mod auf einen Testserver legen und in der Konsole `/cctest` eingeben. Zwei
 Fake-Spieler spielen dann Kampf und Modi, Blockprotokoll, Rollback, Restore, Undo,
 Inspektor, Befehlssichtbarkeit und Rechte durch, das Ergebnis steht als PASS/FAIL
-im Log. Die Testdatei gehört nicht auf den echten Server.
+im Log. Weitere Suiten: `/cctest eroberung`, `/cctest karte`, `/cctest flagge`
+(nacheinander starten, nie gleichzeitig). Die Testdatei gehört nicht auf den echten
+Server.
 
 ## Installation auf dem Server
 
