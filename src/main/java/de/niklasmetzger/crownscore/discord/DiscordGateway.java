@@ -265,6 +265,14 @@ final class DiscordGateway {
 
         @Override
         public void onOpen(WebSocket webSocket) {
+            // Sofort merken: das Hello kann kommen, bevor buildAsync fertig gemeldet hat
+            synchronized (DiscordGateway.this) {
+                if (meine != gen) {
+                    webSocket.abort();
+                    return;
+                }
+                ws = webSocket;
+            }
             webSocket.request(1);
         }
 

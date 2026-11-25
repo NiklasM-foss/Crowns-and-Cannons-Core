@@ -7,7 +7,7 @@
   - Für Admins: `/ingamezeit <spieler>`, `/wochenbericht`, `/antraege` und Stadtanträge mit Knöpfen, `/akte`, `/kick`, `/ban`, `/say`, `/befehl`, `/geld`, `/staatskasse`.
   - Automatisch: Besetzungsalarm per DM, Discord-Rolle je Nation plus Staatschef und Beamte, Name `[Kürzel] Spielername`, Erinnerung freitags, wenn Spielzeit fehlt, Chat-Brücke in beide Richtungen.
   - Meldungen (Kriegsnews, Aktivität, Anträge usw.) gehen über den Bot, sobald ein Kanal gesetzt ist, sonst wie bisher über den Webhook.
-  - Im Spiel: `/discord`, `/discord verknuepfen <Code>`, `/discord trennen`, `/discord neustart`.
+  - Im Spiel: `/discord`, `/discord verknuepfen <Code>`, `/discord trennen`, `/discord neustart`, für Admins `/discord zuordnen <Code> <Spieler>`.
 - `/aktivitaet` und der Wochenbericht zeigen den Grund einer Pause.
 
 ## 1.7.0

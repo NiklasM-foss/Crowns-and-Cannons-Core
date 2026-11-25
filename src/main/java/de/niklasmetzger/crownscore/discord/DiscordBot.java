@@ -233,20 +233,25 @@ public final class DiscordBot {
 
     /** Im Spiel: /discord verknuepfen CODE. null = verknuepft, sonst der Fehler. */
     public static String verknuepfen(MinecraftServer server, ServerPlayer p, String code) {
+        return verknuepfen(server, p.getUUID(), p.getGameProfile().getName(), code);
+    }
+
+    /** Auch fuer Admins: Code einem (auch offline) Spieler zuordnen. Rueckgabe wie oben. */
+    public static String verknuepfen(MinecraftServer server, UUID spieler, String spielerName, String code) {
         Object[] v = CODES.remove(code.trim().toUpperCase(Locale.ROOT));
         if (v == null || (long) v[1] < System.currentTimeMillis()) return "Unbekannter oder abgelaufener Code. Hol dir im Discord mit /verknuepfen einen neuen.";
         CrownsData d = CrownsData.get(server);
         String discordId = (String) v[0];
         for (Map.Entry<String, UUID> e : d.discord.entrySet()) {
-            if (e.getValue().equals(p.getUUID()) && !e.getKey().equals(discordId)) GETRENNT.add(e.getKey());
+            if (e.getValue().equals(spieler) && !e.getKey().equals(discordId)) GETRENNT.add(e.getKey());
         }
-        d.discord.values().removeIf(u -> u.equals(p.getUUID()));
-        d.discord.put(discordId, p.getUUID());
+        d.discord.values().removeIf(u -> u.equals(spieler));
+        d.discord.put(discordId, spieler);
         GETRENNT.remove(discordId);
         d.setDirty();
         DiscordBot b = bot;
         if (b != null) {
-            b.rest.dm(discordId, "Dein Discord ist jetzt mit " + p.getGameProfile().getName() + " verknuepft.");
+            b.rest.dm(discordId, "Dein Discord ist jetzt mit " + spielerName + " verknuepft.");
             b.syncPlanen();
         }
         return null;

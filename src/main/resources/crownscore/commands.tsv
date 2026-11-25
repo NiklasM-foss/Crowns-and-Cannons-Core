@@ -84,6 +84,7 @@
 /discord	ALLE	Zeigt, ob der Bot läuft und ob dein Konto verknüpft ist.
 /discord verknuepfen <Code>	ALLE	Verknüpft dein Konto mit Discord. Den Code gibt dir der Bot im Discord mit /verknuepfen.
 /discord trennen	ALLE	Löst die Verknüpfung mit Discord.
+/discord zuordnen <Code> <Spieler>	ADMIN	Ordnet einen Discord-Code einem Spieler zu (Name oder UUID), etwa wenn er gerade nicht ins Spiel kommt.
 /discord neustart	ADMIN	Startet den Bot neu und liest dabei die Config [discordbot] neu ein.
 @aktivitaet	Aktivität	Spielzeit pro Woche und am Wochenende (Regel 7.2 und 7.3).
 /aktivitaet	ALLE	Eigene Spielzeit dieser und letzter Woche.

@@ -340,7 +340,9 @@ Token in `token` eintragen (nie in Chats oder Repos). Für die Chat-Brücke den
 Nationsrollen schieben. Server- und Kanal-IDs gibt es im Entwicklermodus per
 Rechtsklick. Nach Änderungen an der Config `/discord neustart`.
 
-**Verknüpfen:** Im Discord `/verknuepfen`, dann im Spiel `/discord verknuepfen <Code>`.
+**Verknüpfen:** Im Discord `/verknuepfen`, dann im Spiel `/discord verknuepfen <Code>`. Admins können einen Code auch
+selbst zuordnen: `/discord zuordnen <Code> <Spieler>`. Zum Testen tippt
+`tools/discord_test_tippen.py` alle Befehle in den Discord-Client (`pip install keyboard`).
 
 **Befehle im Discord**
 
